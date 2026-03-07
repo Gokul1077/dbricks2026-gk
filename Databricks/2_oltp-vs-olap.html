@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OLTP vs OLAP — Why Analytics Needs a Different Stack</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #ffffff;
+    --off: #f8f7f4;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --light: #e8e6e0;
+    --oltp: #c0392b;
+    --olap: #1a5276;
+    --oltp-light: #fdecea;
+    --olap-light: #eaf0fb;
+    --accent: #e67e22;
+    --green: #1e8449;
+    --green-light: #eafaf1;
+    --border: #d9d6ce;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  /* ── TOP STRIPE ── */
+  .top-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, var(--oltp) 0%, var(--oltp) 50%, var(--olap) 50%, var(--olap) 100%);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 0 48px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 28px; }
+
+  .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .breadcrumb span { color: var(--olap); }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+
+  h1 em { font-style: normal; color: var(--oltp); }
+  h1 strong { color: var(--olap); }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .interview-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--white);
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+
+  .section-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+
+  p { font-size: 15px; color: #333; margin-bottom: 14px; line-height: 1.75; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── ANALOGY BOX ── */
+  .analogy {
+    background: var(--off);
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+
+  .analogy-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .analogy p { font-size: 14px; color: var(--ink); margin: 0; }
+
+  /* ── SPLIT COMPARE ── */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1.5px solid var(--border);
+    margin: 28px 0;
+    overflow: hidden;
+  }
+
+  .split-col { padding: 28px; }
+  .split-col.oltp { background: var(--oltp-light); border-right: 1px solid #f0ccc9; }
+  .split-col.olap { background: var(--olap-light); }
+
+  .split-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .split-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .oltp .split-dot { background: var(--oltp); }
+  .olap .split-dot { background: var(--olap); }
+
+  .split-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .oltp .split-title { color: var(--oltp); }
+  .olap .split-title { color: var(--olap); }
+
+  .split-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+  .split-col ul li {
+    font-size: 13.5px;
+    color: var(--ink);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .split-col ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    font-size: 10px;
+    top: 3px;
+  }
+
+  .oltp li::before { color: var(--oltp); }
+  .olap li::before { color: var(--olap); }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 28px 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  thead tr {
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  thead th:nth-child(2) { background: var(--oltp); }
+  thead th:nth-child(3) { background: var(--olap); }
+
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--off); }
+
+  tbody td {
+    padding: 11px 16px;
+    vertical-align: top;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  tbody td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ── SQL BLOCK ── */
+  .sql-block {
+    background: #1a1a2e;
+    border-radius: 0;
+    padding: 20px 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  .sql-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .sql-block pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #e0e0e0;
+    white-space: pre;
+  }
+
+  .kw { color: #569cd6; }
+  .fn { color: #dcdcaa; }
+  .str { color: #ce9178; }
+  .cmt { color: #6a9955; font-style: italic; }
+  .num { color: #b5cea8; }
+  .tbl { color: #4ec9b0; }
+
+  .sql-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  /* ── FLOW DIAGRAM (SVG-based, inline) ── */
+  .flow-box {
+    background: var(--off);
+    border: 1px solid var(--border);
+    padding: 32px 24px;
+    margin: 28px 0;
+    overflow-x: auto;
+  }
+
+  .flow-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .flow-node {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .flow-icon {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 8px;
+    border: 2px solid;
+  }
+
+  .flow-node-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--border);
+    padding: 0 8px;
+    flex-shrink: 0;
+    margin-bottom: 24px;
+  }
+
+  /* ── SCENARIO CARDS ── */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .scenario-card {
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .scenario-head {
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .scenario-card.oltp-card .scenario-head { background: var(--oltp); color: white; }
+  .scenario-card.olap-card .scenario-head { background: var(--olap); color: white; }
+
+  .scenario-body { padding: 16px; background: var(--white); }
+
+  .scenario-body .q {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .scenario-body .a {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── WHY FAIL BOX ── */
+  .fail-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .fail-box {
+    border: 1px solid var(--border);
+    padding: 18px;
+    background: var(--white);
+  }
+
+  .fail-icon { font-size: 24px; margin-bottom: 10px; }
+
+  .fail-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--oltp);
+    margin-bottom: 6px;
+  }
+
+  .fail-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── INTERVIEW CHEATSHEET ── */
+  .cheatsheet {
+    background: var(--ink);
+    color: var(--white);
+    padding: 36px;
+    margin: 0;
+  }
+
+  .cheatsheet h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .cheatsheet .cs-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .qa-list { display: flex; flex-direction: column; gap: 20px; }
+
+  .qa-item {}
+
+  .qa-q {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .qa-a {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.7;
+    padding-left: 12px;
+    border-left: 2px solid rgba(255,255,255,0.1);
+  }
+
+  .qa-a strong { color: #fff; font-weight: 600; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--off);
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 640px) {
+    .split { grid-template-columns: 1fr; }
+    .split-col.oltp { border-right: none; border-bottom: 1px solid #f0ccc9; }
+    .sql-pair { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .fail-boxes { grid-template-columns: 1fr 1fr; }
+    .flow-row { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-stripe"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="breadcrumb">Phase 01 · Foundation → <span>Concept #1</span></div>
+    <h1><em>OLTP</em> vs <strong>OLAP</strong><br>Why Analytics Needs a Different Stack</h1>
+    <p class="hero-sub">The root reason data engineering exists. Understand this and every tool — Spark, Databricks, Delta Lake — starts to make sense.</p>
+    <div class="interview-badge">⚡ Interview-Ready Explanations Included</div>
+  </div>
+</div>
+
+<!-- SECTION 1: THE STORY -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">The Big Picture</div>
+    <h2>Start with a Story — Why Two Systems?</h2>
+
+    <p>Imagine you run an e-commerce company like Amazon. Two very different things happen every second:</p>
+
+    <div class="split">
+      <div class="split-col oltp">
+        <div class="split-header">
+          <div class="split-dot"></div>
+          <div class="split-title">OPERATIONAL (OLTP)</div>
+        </div>
+        <ul>
+          <li>A customer places an order</li>
+          <li>Payment is processed</li>
+          <li>Inventory count decreases by 1</li>
+          <li>A shipping record is created</li>
+          <li>User updates their address</li>
+        </ul>
+      </div>
+      <div class="split-col olap">
+        <div class="split-header">
+          <div class="split-dot"></div>
+          <div class="split-title">ANALYTICAL (OLAP)</div>
+        </div>
+        <ul>
+          <li>What were total sales last quarter?</li>
+          <li>Which product category is trending?</li>
+          <li>Which cities have the most returns?</li>
+          <li>What's the avg order value by age group?</li>
+          <li>Predict next month's demand</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-label">💡 Simple Analogy</div>
+      <p><strong>OLTP</strong> is like the <em>cash register</em> at a store — handles one transaction at a time, fast, precise.<br>
+      <strong>OLAP</strong> is like the <em>accountant's monthly report</em> — reads everything, finds patterns, never writes new sales.</p>
+    </div>
+
+    <p>These two needs are so fundamentally different that trying to use the same database for both causes serious problems. That's exactly <em>why analytics needs its own stack.</em></p>
+  </div>
+</section>
+
+<!-- SECTION 2: WHAT ARE THEY -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Definitions</div>
+    <h2>OLTP vs OLAP — Core Definitions</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>🔴 OLTP (Online Transaction Processing)</th>
+            <th>🔵 OLAP (Online Analytical Processing)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Full Form</td>
+            <td>Online Transaction Processing</td>
+            <td>Online Analytical Processing</td>
+          </tr>
+          <tr>
+            <td>Purpose</td>
+            <td>Record day-to-day business transactions</td>
+            <td>Analyze historical data for decisions</td>
+          </tr>
+          <tr>
+            <td>Users</td>
+            <td>App servers, customers, clerks</td>
+            <td>Data analysts, BI tools, ML models</td>
+          </tr>
+          <tr>
+            <td>Operations</td>
+            <td>INSERT, UPDATE, DELETE (heavy writes)</td>
+            <td>SELECT with GROUP BY, aggregations (reads only)</td>
+          </tr>
+          <tr>
+            <td>Data Size</td>
+            <td>Current data — GBs</td>
+            <td>Historical data — TBs to PBs</td>
+          </tr>
+          <tr>
+            <td>Query Type</td>
+            <td>Simple, single-row lookups</td>
+            <td>Complex, scans millions of rows</td>
+          </tr>
+          <tr>
+            <td>Query Speed</td>
+            <td>Milliseconds (1–10ms)</td>
+            <td>Seconds to minutes (acceptable)</td>
+          </tr>
+          <tr>
+            <td>Schema</td>
+            <td>Normalized (3NF) — no data duplication</td>
+            <td>Denormalized (Star/Snowflake schema)</td>
+          </tr>
+          <tr>
+            <td>Example DBs</td>
+            <td>PostgreSQL, MySQL, Oracle, SQL Server</td>
+            <td>Snowflake, BigQuery, Redshift, Databricks</td>
+          </tr>
+          <tr>
+            <td>Optimization</td>
+            <td>Row-based storage, indexes</td>
+            <td>Columnar storage, partitioning</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: SQL EXAMPLES -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Real SQL Examples</div>
+    <h2>See the Difference in Actual Queries</h2>
+    <p>Same database, completely different query patterns — this is why they need different storage engines.</p>
+
+    <div class="sql-pair">
+      <div>
+        <div class="sql-block">
+          <div class="sql-label" style="color:#f48771;">🔴 OLTP Query — Place an Order</div>
+          <pre><span class="cmt">-- Touches 1 row. Needs to be FAST.</span>
+<span class="cmt">-- Runs thousands of times per second</span>
+
+<span class="kw">INSERT INTO</span> <span class="tbl">orders</span> (
+  order_id, user_id,
+  product_id, amount, status
+)
+<span class="kw">VALUES</span> (
+  <span class="num">10291</span>, <span class="num">4451</span>,
+  <span class="num">8823</span>, <span class="num">499.00</span>, <span class="str">'pending'</span>
+);
+
+<span class="cmt">-- Immediate consistency required</span>
+<span class="cmt">-- Must not fail silently</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="sql-block">
+          <div class="sql-label" style="color:#4fc1ff;">🔵 OLAP Query — Monthly Sales Report</div>
+          <pre><span class="cmt">-- Scans MILLIONS of rows</span>
+<span class="cmt">-- Runs once a day, result cached</span>
+
+<span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date)
+    <span class="kw">AS</span> month,
+  category,
+  <span class="fn">SUM</span>(amount) <span class="kw">AS</span> total_revenue,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> order_count
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">JOIN</span> <span class="tbl">products</span> <span class="kw">USING</span> (product_id)
+<span class="kw">WHERE</span> order_date &gt;= <span class="str">'2024-01-01'</span>
+<span class="kw">GROUP BY</span> <span class="num">1</span>, <span class="num">2</span>
+<span class="kw">ORDER BY</span> total_revenue <span class="kw">DESC</span>;</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-label">💡 Key Insight</div>
+      <p>The OLTP query touches <strong>1 row</strong> and needs to complete in <strong>5ms</strong>. The OLAP query touches <strong>50 million rows</strong> and 5 seconds is fine. Optimizing one database for both is like designing a car that's both a racing car and a truck — it ends up being bad at both.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: WHY OLTP FAILS FOR ANALYTICS -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">The Core Problem</div>
+    <h2>Why Running Analytics on OLTP Breaks Everything</h2>
+    <p>This is the "cause" that created the entire data engineering industry. When companies tried to run analytical queries on their production OLTP databases, three things broke:</p>
+
+    <div class="fail-boxes">
+      <div class="fail-box">
+        <div class="fail-icon">🐢</div>
+        <div class="fail-title">Performance Collapse</div>
+        <div class="fail-desc">Row-based storage reads entire rows even when you only need 2 columns. A query on 50M orders reads <em>all columns</em> — 10× slower than needed.</div>
+      </div>
+      <div class="fail-box">
+        <div class="fail-icon">💥</div>
+        <div class="fail-title">Kills Production DB</div>
+        <div class="fail-desc">A heavy analytics query locks tables and hogs CPU/IO. Your checkout page starts timing out because a dashboard is running in the background.</div>
+      </div>
+      <div class="fail-box">
+        <div class="fail-icon">📏</div>
+        <div class="fail-title">Can't Scale to History</div>
+        <div class="fail-desc">OLTP databases keep only current data. Analyzing 5 years of orders across 200M rows? The normalized schema requires expensive JOINs across 10+ tables.</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-label">💡 Real-World Incident Pattern</div>
+      <p>A BI analyst runs <code style="background:#f0f0f0;padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;">SELECT * FROM orders WHERE year = 2023</code> on the production MySQL DB at 9am. The query takes 8 minutes. During those 8 minutes, customers can't check out. This is the exact incident that forced companies to build separate analytical infrastructure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: THE SOLUTION STACK -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">The Solution → Modern Data Stack</div>
+    <h2>How the Analytics Stack Evolved</h2>
+    <p>The solution was to <strong>copy data out of OLTP</strong> into a separate system optimized for reads. This gave birth to the entire data engineering pipeline.</p>
+
+    <div class="flow-box">
+      <div class="flow-title">Data Flow: From Transactions to Insights</div>
+      <div class="flow-row">
+        <div class="flow-node">
+          <div class="flow-icon" style="background:#fdecea;border-color:var(--oltp);">🛒</div>
+          <div class="flow-node-label" style="color:var(--oltp);">OLTP DB<br/>(Postgres/MySQL)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-icon" style="background:#fff8e1;border-color:var(--accent);">⚙️</div>
+          <div class="flow-node-label" style="color:var(--accent);">ETL / ELT<br/>(Spark / Fivetran)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-icon" style="background:#eafaf1;border-color:var(--green);">🗄️</div>
+          <div class="flow-node-label" style="color:var(--green);">Data Lake / Warehouse<br/>(S3 + Delta Lake)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-icon" style="background:#eaf0fb;border-color:var(--olap);">📊</div>
+          <div class="flow-node-label" style="color:var(--olap);">Analytics<br/>(Databricks / BI)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">
+          <div class="flow-icon" style="background:#f5eef8;border-color:#8e44ad);">💡</div>
+          <div class="flow-node-label" style="color:#8e44ad;">Business<br/>Decisions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Era</th>
+            <th>OLTP System</th>
+            <th>Analytical System</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1990s–2000s</td>
+            <td>Oracle / SQL Server</td>
+            <td>Data Warehouse (Teradata, Oracle DW)</td>
+          </tr>
+          <tr>
+            <td>2010s</td>
+            <td>MySQL / PostgreSQL</td>
+            <td>Hadoop + Hive (Big Data era)</td>
+          </tr>
+          <tr>
+            <td>2015–2020</td>
+            <td>PostgreSQL / MongoDB</td>
+            <td>Cloud DW: Redshift, BigQuery, Snowflake</td>
+          </tr>
+          <tr>
+            <td>2020–Now</td>
+            <td>PostgreSQL / Cassandra</td>
+            <td>Lakehouse: Databricks + Delta Lake ← <strong>You Are Here</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: STORAGE ENGINE DIFFERENCE -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">The Technical Why</div>
+    <h2>Row Storage vs Columnar Storage — The Hidden Reason</h2>
+    <p>This is the technical core. OLTP and OLAP use fundamentally different ways to store data on disk, which is why you can't swap one for the other.</p>
+
+    <div class="split">
+      <div class="split-col oltp">
+        <div class="split-header">
+          <div class="split-dot"></div>
+          <div class="split-title">ROW STORAGE (OLTP)</div>
+        </div>
+        <ul>
+          <li>Stores all columns of a row together on disk</li>
+          <li>Fast for reading/writing entire rows (one record at a time)</li>
+          <li>Inserting a new order = write one block</li>
+          <li>Analytics = reads ALL columns even if you need only 2</li>
+          <li>Examples: PostgreSQL, MySQL</li>
+        </ul>
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(192,57,43,0.07);padding:12px;color:var(--ink);">
+          Disk: [id=1, name="Ali", age=28, city="Chennai", amount=499]<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[id=2, name="Raj", age=31, city="Mumbai", amount=299]
+        </div>
+      </div>
+      <div class="split-col olap">
+        <div class="split-header">
+          <div class="split-dot"></div>
+          <div class="split-title">COLUMNAR STORAGE (OLAP)</div>
+        </div>
+        <ul>
+          <li>Stores each column together on disk, separately</li>
+          <li>Analytics query needs only "amount"? Reads only that column</li>
+          <li>Massive compression — same values cluster together</li>
+          <li>Writes are slower — but analytics is read-heavy</li>
+          <li>Examples: Parquet (Delta Lake), BigQuery, Snowflake</li>
+        </ul>
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(26,82,118,0.07);padding:12px;color:var(--ink);">
+          id col:&nbsp;&nbsp;&nbsp;&nbsp;[1, 2, 3, 4, 5 ...]<br>
+          amount col:&nbsp;[499, 299, 799, 149 ...]<br>
+          city col:&nbsp;&nbsp;&nbsp;[Chennai, Mumbai, Delhi ...]
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-label">💡 Why This Matters for Databricks</div>
+      <p>Databricks stores data in <strong>Parquet format inside Delta Lake</strong> — which is columnar. When you run <code style="background:#f0f0f0;padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;">SELECT SUM(amount) FROM orders</code> on 100M rows, Databricks reads <em>only the amount column file</em> — not names, cities, or emails. This is why Databricks queries are so fast on large data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: REAL SCENARIOS -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Real World Scenarios</div>
+    <h2>Which System Handles What?</h2>
+
+    <div class="scenario-grid">
+      <div class="scenario-card oltp-card">
+        <div class="scenario-head">🔴 Use OLTP For</div>
+        <div class="scenario-body">
+          <div class="q">User signs up on your app</div>
+          <p class="a">Write 1 row to users table. Needs immediate consistency. If it fails, user can't login. → PostgreSQL</p>
+        </div>
+      </div>
+      <div class="scenario-card olap-card">
+        <div class="scenario-head">🔵 Use OLAP For</div>
+        <div class="scenario-body">
+          <div class="q">Product team asks: "What % of users who signed up in Jan 2024 made a purchase within 7 days?"</div>
+          <p class="a">Scan 2M user rows + 10M event rows. Join, filter, aggregate. Takes 4 seconds. Fine. → Databricks</p>
+        </div>
+      </div>
+      <div class="scenario-card oltp-card">
+        <div class="scenario-head">🔴 Use OLTP For</div>
+        <div class="scenario-body">
+          <div class="q">Bank processes a money transfer</div>
+          <p class="a">Debit one account, credit another. Must be atomic — if step 2 fails, step 1 must roll back. ACID transaction. → MySQL / Oracle</p>
+        </div>
+      </div>
+      <div class="scenario-card olap-card">
+        <div class="scenario-head">🔵 Use OLAP For</div>
+        <div class="scenario-body">
+          <div class="q">Finance team: "Total transaction volume by city for Q3, broken by customer segment"</div>
+          <p class="a">Historical scan of 500M transactions. GROUP BY, multi-dimension aggregation. Data freshness: next-day is fine. → Redshift / BigQuery / Databricks</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 8: INTERVIEW CHEATSHEET -->
+<div class="cheatsheet">
+  <div class="container">
+    <div class="section-eyebrow" style="color:rgba(255,255,255,0.4);">Interview Prep</div>
+    <h2>Answer These Without Hesitation</h2>
+    <div class="cs-sub">Most-asked interview questions on this topic</div>
+
+    <div class="qa-list">
+      <div class="qa-item">
+        <div class="qa-q">Q: "What is the difference between OLTP and OLAP?"</div>
+        <div class="qa-a"><strong>Answer:</strong> OLTP is designed for transactional operations — fast reads and writes on individual rows, used by application backends. OLAP is designed for analytical queries — aggregating large volumes of historical data to produce business insights. They differ in schema design, storage engine, query patterns, and the users who consume them.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q: "Why can't we run analytics directly on the production database?"</div>
+        <div class="qa-a"><strong>Answer:</strong> Three reasons — first, heavy analytical queries compete with write transactions and degrade production performance. Second, OLTP uses row-based storage which is inefficient for scanning millions of rows. Third, OLTP databases only hold current state, while analytics needs years of historical data with a denormalized schema for efficient aggregations.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q: "What is a Lakehouse and how does it relate to OLAP?"</div>
+        <div class="qa-a"><strong>Answer:</strong> A Lakehouse combines the scalability and cost of a data lake (store raw files in S3/ADLS) with the ACID transactions and query performance of a data warehouse. Databricks with Delta Lake is a Lakehouse — it stores data in columnar Parquet format with transactional guarantees, serving both batch OLAP analytics and streaming workloads from a single platform.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q: "What is columnar storage and why does it matter for analytics?"</div>
+        <div class="qa-a"><strong>Answer:</strong> Columnar storage keeps each column's values together on disk. When an analytics query aggregates only 2–3 columns out of 50, it reads only those column files — skipping 95% of data. This makes aggregation queries 10–100× faster and allows high compression since similar values are adjacent. Parquet (used by Delta Lake in Databricks) is columnar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-text">Phase 01 — Foundation · Next: Data Lake vs Data Warehouse vs Lakehouse</div>
+      <div class="tag-row">
+        <span class="tag">OLTP</span>
+        <span class="tag">OLAP</span>
+        <span class="tag">Columnar Storage</span>
+        <span class="tag">Parquet</span>
+        <span class="tag">Databricks</span>
+        <span class="tag">Delta Lake</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
