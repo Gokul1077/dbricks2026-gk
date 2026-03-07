@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databricks Data Engineer Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1f2430;
+    --accent: #ff6b2b;
+    --accent2: #ffd166;
+    --accent3: #06d6a0;
+    --accent4: #4ecdc4;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --phase1: #ff6b2b;
+    --phase2: #ffd166;
+    --phase3: #06d6a0;
+    --phase4: #4ecdc4;
+    --phase5: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    padding: 64px 0 48px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 64px;
+  }
+
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(255,107,43,0.1);
+    border: 1px solid rgba(255,107,43,0.25);
+    padding: 4px 12px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .meta-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* PROBLEM BLOCK */
+  .problem-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin-bottom: 56px;
+  }
+
+  .problem-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .problem-block p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* FRAMEWORK */
+  .framework {
+    margin-bottom: 64px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .framework-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .fw-card {
+    background: var(--surface);
+    padding: 24px;
+    border: 1px solid var(--border);
+  }
+
+  .fw-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .fw-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .fw-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* PHASES */
+  .phases { margin-bottom: 80px; }
+
+  .phase {
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .phase:hover { border-color: rgba(255,255,255,0.1); }
+
+  .phase-header {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    padding: 0;
+    cursor: pointer;
+    user-select: none;
+    gap: 0;
+  }
+
+  .phase-number {
+    width: 56px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .phase-title-block {
+    padding: 18px 20px;
+    border-left: 1px solid var(--border);
+  }
+
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .phase-subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .phase-meta {
+    padding: 18px 20px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .phase-duration {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .phase-toggle {
+    font-size: 18px;
+    color: var(--muted);
+    transition: transform 0.3s, color 0.2s;
+    margin-left: 16px;
+  }
+
+  .phase.open .phase-toggle { transform: rotate(45deg); color: var(--text); }
+
+  .phase-body {
+    display: none;
+    padding: 0 24px 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .phase.open .phase-body { display: block; }
+
+  .why-what-how {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .wwh-col h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wwh-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .wwh-col ul li {
+    font-size: 13px;
+    color: var(--muted);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .wwh-col ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    font-size: 10px;
+    top: 2px;
+  }
+
+  .skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 16px;
+  }
+
+  .skill-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .skill-tag.core {
+    border-color: rgba(255,107,43,0.3);
+    color: var(--accent);
+    background: rgba(255,107,43,0.06);
+  }
+
+  .resources-row {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .resources-row h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .resources-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .resource {
+    font-size: 12px;
+    color: var(--accent4);
+    background: rgba(78,205,196,0.07);
+    border: 1px solid rgba(78,205,196,0.2);
+    padding: 4px 10px;
+  }
+
+  .outcome-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    margin-top: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .outcome-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+  .outcome-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .outcome-text strong { color: var(--text); font-weight: 500; }
+
+  /* Color overrides per phase */
+  .phase[data-phase="1"] .phase-number { background: rgba(255,107,43,0.1); color: var(--phase1); }
+  .phase[data-phase="1"] .phase-title { color: var(--phase1); }
+  .phase[data-phase="1"] .wwh-col h4 { color: var(--phase1); border-color: rgba(255,107,43,0.2); }
+
+  .phase[data-phase="2"] .phase-number { background: rgba(255,209,102,0.1); color: var(--phase2); }
+  .phase[data-phase="2"] .phase-title { color: var(--phase2); }
+  .phase[data-phase="2"] .wwh-col h4 { color: var(--phase2); border-color: rgba(255,209,102,0.2); }
+
+  .phase[data-phase="3"] .phase-number { background: rgba(6,214,160,0.1); color: var(--phase3); }
+  .phase[data-phase="3"] .phase-title { color: var(--phase3); }
+  .phase[data-phase="3"] .wwh-col h4 { color: var(--phase3); border-color: rgba(6,214,160,0.2); }
+
+  .phase[data-phase="4"] .phase-number { background: rgba(78,205,196,0.1); color: var(--phase4); }
+  .phase[data-phase="4"] .phase-title { color: var(--phase4); }
+  .phase[data-phase="4"] .wwh-col h4 { color: var(--phase4); border-color: rgba(78,205,196,0.2); }
+
+  .phase[data-phase="5"] .phase-number { background: rgba(167,139,250,0.1); color: var(--phase5); }
+  .phase[data-phase="5"] .phase-title { color: var(--phase5); }
+  .phase[data-phase="5"] .wwh-col h4 { color: var(--phase5); border-color: rgba(167,139,250,0.2); }
+
+  /* ANTI-LOOP SECTION */
+  .antiloop {
+    margin-bottom: 64px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent2);
+    padding: 32px;
+  }
+
+  .antiloop h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 20px;
+  }
+
+  .loop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .loop-item {
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .loop-item .trap {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #f87171;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .loop-item .fix {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .loop-item .fix strong { color: var(--accent3); font-weight: 500; }
+
+  /* CERT PATH */
+  .cert-path {
+    margin-bottom: 64px;
+  }
+
+  .cert-track {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .cert-step {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+  }
+
+  .cert-step + .cert-step {
+    border-left: none;
+  }
+
+  .cert-arrow {
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 16px;
+    z-index: 2;
+    padding: 4px 0;
+  }
+
+  .cert-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  .cert-step:nth-child(1) .cert-badge { background: rgba(255,107,43,0.1); color: var(--phase1); }
+  .cert-step:nth-child(3) .cert-badge { background: rgba(6,214,160,0.1); color: var(--phase3); }
+  .cert-step:nth-child(5) .cert-badge { background: rgba(167,139,250,0.1); color: var(--phase5); }
+
+  .cert-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .cert-when {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* SALARY / MARKET */
+  .market {
+    margin-bottom: 64px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .market-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+  }
+
+  .market-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .market-label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    margin-top: 32px;
+  }
+
+  .footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 680px) {
+    .framework-grid { grid-template-columns: 1fr; }
+    .why-what-how { grid-template-columns: 1fr; }
+    .loop-grid { grid-template-columns: 1fr; }
+    .market { grid-template-columns: 1fr 1fr; }
+    .cert-track { flex-direction: column; }
+    .cert-step + .cert-step { border-left: 1px solid var(--border); border-top: none; }
+    .cert-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="tag">Software Eng → Data Eng Transition</div>
+    <h1>The <span>Databricks</span><br>Engineer Roadmap</h1>
+    <p class="subtitle">A cause-and-effect learning plan for software engineers transitioning to data engineering — structured so every concept unlocks the next, with zero looping.</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Total Duration</span>
+        <span class="meta-value">6–9 Months</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Goal</span>
+        <span class="meta-value">Crack Product Companies</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Primary Platform</span>
+        <span class="meta-value">Databricks + Spark</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Study Hours / Week</span>
+        <span class="meta-value">10–15 hrs</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ANTI-LOOP PROBLEM STATEMENT -->
+  <div class="problem-block">
+    <h3>⚠ Why You're Getting Stuck in Loops</h3>
+    <p>The root cause: you're learning <em>tools</em> before learning <em>problems</em>. Databricks, Spark, Delta Lake, Airflow, Kafka — each feels necessary before starting the next. The fix is a <strong>dependency graph mindset</strong>: learn concept A only when concept B requires it. This roadmap is built exactly that way — each phase's output is the input to the next.</p>
+  </div>
+
+  <!-- MENTAL FRAMEWORK -->
+  <section class="framework">
+    <div class="section-label">The Mental Model</div>
+    <div class="framework-grid">
+      <div class="fw-card">
+        <div class="fw-icon">🔗</div>
+        <div class="fw-title">Cause → Effect Chain</div>
+        <div class="fw-desc">Don't learn Delta Lake before understanding <em>why</em> raw data lakes fail. Context creates retention. Every tool solves a pain you've already felt.</div>
+      </div>
+      <div class="fw-card">
+        <div class="fw-icon">🏗️</div>
+        <div class="fw-title">Build Before Broaden</div>
+        <div class="fw-desc">Build one working pipeline end-to-end before adding any new tool. Breadth without depth is the loop trap. One real project beats five half-learned concepts.</div>
+      </div>
+      <div class="fw-card">
+        <div class="fw-icon">🎯</div>
+        <div class="fw-title">Interview-Back Design</div>
+        <div class="fw-desc">Every topic is mapped to what product companies actually ask. If it doesn't appear in interviews or job descriptions, it's skipped for now.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASES -->
+  <section class="phases">
+    <div class="section-label">The 5-Phase Plan</div>
+
+    <!-- PHASE 1 -->
+    <div class="phase open" data-phase="1">
+      <div class="phase-header" onclick="togglePhase(this)">
+        <div class="phase-number">01</div>
+        <div class="phase-title-block">
+          <div class="phase-title">The "Why Data Engineering" Foundation</div>
+          <div class="phase-subtitle">Weeks 1–3 · Build the mental map first</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-duration">3 weeks</div>
+          <div class="phase-toggle">+</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="why-what-how">
+          <div class="wwh-col">
+            <h4>WHY (cause)</h4>
+            <ul>
+              <li>You need the "why data exists" before writing a single Spark line</li>
+              <li>Without it, every new tool feels disconnected and optional</li>
+              <li>Your SE background gives you a huge edge here — use it</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>WHAT (concepts)</h4>
+            <ul>
+              <li>OLTP vs OLAP — why analytics needs a different stack</li>
+              <li>Data Lake vs Data Warehouse vs Lakehouse</li>
+              <li>Batch vs Streaming data flows</li>
+              <li>ETL vs ELT patterns</li>
+              <li>Medallion Architecture (Bronze → Silver → Gold)</li>
+              <li>Cloud storage basics: S3 / ADLS / GCS</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>HOW (actions)</h4>
+            <ul>
+              <li>Read: "Fundamentals of Data Engineering" (Reis & Housley) — Chapters 1–4</li>
+              <li>Draw your own data flow diagram for a fake e-commerce app</li>
+              <li>Sign up for free Databricks Community Edition</li>
+              <li>Run 3 sample notebooks to feel the platform</li>
+              <li>Don't touch Spark internals yet</li>
+            </ul>
+          </div>
+        </div>
+        <div class="skills-grid">
+          <span class="skill-tag core">Medallion Architecture</span>
+          <span class="skill-tag core">Lakehouse Concept</span>
+          <span class="skill-tag">ETL vs ELT</span>
+          <span class="skill-tag">Cloud Storage (S3/ADLS)</span>
+          <span class="skill-tag">Batch vs Streaming</span>
+        </div>
+        <div class="outcome-block">
+          <div class="outcome-icon">✅</div>
+          <div class="outcome-text"><strong>Exit condition:</strong> You can explain to someone in 5 minutes why companies use Databricks instead of a traditional data warehouse, and sketch the Medallion Architecture on paper.</div>
+        </div>
+        <div class="resources-row">
+          <h4>Resources</h4>
+          <div class="resources-list">
+            <span class="resource">Databricks Community Edition (free)</span>
+            <span class="resource">Book: Fundamentals of Data Engineering</span>
+            <span class="resource">Databricks Academy — Lakehouse Fundamentals (free)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase" data-phase="2">
+      <div class="phase-header" onclick="togglePhase(this)">
+        <div class="phase-number">02</div>
+        <div class="phase-title-block">
+          <div class="phase-title">SQL + PySpark Core (Your SE Skills Pay Off)</div>
+          <div class="phase-subtitle">Weeks 4–8 · The engine room of every interview</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-duration">5 weeks</div>
+          <div class="phase-toggle">+</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="why-what-how">
+          <div class="wwh-col">
+            <h4>WHY (cause)</h4>
+            <ul>
+              <li>95% of data engineering interviews test SQL and PySpark heavily</li>
+              <li>PySpark is just Python + distributed mindset — your SE skills directly transfer</li>
+              <li>Without this, you can't build anything in Databricks meaningfully</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>WHAT (concepts)</h4>
+            <ul>
+              <li>Spark architecture: Driver, Executors, DAG</li>
+              <li>RDDs → DataFrames → Datasets (understand the evolution)</li>
+              <li>Spark SQL: window functions, CTEs, complex joins</li>
+              <li>PySpark transformations and actions</li>
+              <li>Lazy evaluation — why it matters for performance</li>
+              <li>Partitioning and shuffle — the most asked interview topic</li>
+              <li>UDFs and when NOT to use them</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>HOW (actions)</h4>
+            <ul>
+              <li>Complete Databricks Academy: "Apache Spark Programming" path</li>
+              <li>Solve 20 SQL problems on StrataScratch (data eng track)</li>
+              <li>Write PySpark equivalents of each SQL query you solve</li>
+              <li>Explain each Spark job using the Spark UI — read DAGs</li>
+              <li>Mini-project: ingest a CSV, clean it, write to Parquet with partitioning</li>
+            </ul>
+          </div>
+        </div>
+        <div class="skills-grid">
+          <span class="skill-tag core">PySpark DataFrames</span>
+          <span class="skill-tag core">Spark SQL</span>
+          <span class="skill-tag core">Window Functions</span>
+          <span class="skill-tag core">Partitioning / Shuffle</span>
+          <span class="skill-tag">Lazy Evaluation</span>
+          <span class="skill-tag">Spark UI / DAGs</span>
+          <span class="skill-tag">UDFs</span>
+          <span class="skill-tag">RDDs</span>
+        </div>
+        <div class="outcome-block">
+          <div class="outcome-icon">✅</div>
+          <div class="outcome-text"><strong>Exit condition:</strong> You can write a multi-stage PySpark job (ingest → filter → join → aggregate → write), explain what happens in the DAG, and debug a shuffle bottleneck using Spark UI.</div>
+        </div>
+        <div class="resources-row">
+          <h4>Resources</h4>
+          <div class="resources-list">
+            <span class="resource">Databricks Academy: Apache Spark Programming (free)</span>
+            <span class="resource">StrataScratch — Data Engineering SQL track</span>
+            <span class="resource">Learning Spark (2nd Ed) — O'Reilly</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase" data-phase="3">
+      <div class="phase-header" onclick="togglePhase(this)">
+        <div class="phase-number">03</div>
+        <div class="phase-title-block">
+          <div class="phase-title">Delta Lake + Databricks Platform Deep Dive</div>
+          <div class="phase-subtitle">Weeks 9–14 · The core of every Databricks role</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-duration">6 weeks</div>
+          <div class="phase-toggle">+</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="why-what-how">
+          <div class="wwh-col">
+            <h4>WHY (cause)</h4>
+            <ul>
+              <li>Delta Lake is what separates a "data lake" from a real Lakehouse</li>
+              <li>Every Databricks job description mentions Delta Lake, Unity Catalog, Auto Loader</li>
+              <li>ATS will filter you out without these keywords — and interviews will expose shallow knowledge</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>WHAT (concepts)</h4>
+            <ul>
+              <li>Delta Lake: ACID transactions, transaction log (_delta_log)</li>
+              <li>Time Travel: RESTORE, VERSION AS OF</li>
+              <li>MERGE INTO (SCD Type 1 & 2)</li>
+              <li>OPTIMIZE + ZORDER — the small file problem & solution</li>
+              <li>Auto Loader (cloudFiles) for incremental ingestion</li>
+              <li>Unity Catalog: data governance, lineage, permissions</li>
+              <li>Databricks Workflows: job orchestration, task dependencies</li>
+              <li>Lakeflow Declarative Pipelines (formerly Delta Live Tables)</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>HOW (actions)</h4>
+            <ul>
+              <li>Complete Databricks Academy: "Data Engineering with Databricks"</li>
+              <li>Build a full Bronze → Silver → Gold pipeline using Delta tables</li>
+              <li>Implement a CDC pipeline using MERGE INTO</li>
+              <li>Set up a Workflow with 3 tasks and a failure alert</li>
+              <li>Create a Unity Catalog schema with access policies</li>
+              <li>Study interview Q&A from DataVidhya's 50 Databricks questions</li>
+            </ul>
+          </div>
+        </div>
+        <div class="skills-grid">
+          <span class="skill-tag core">Delta Lake ACID</span>
+          <span class="skill-tag core">MERGE INTO / CDC</span>
+          <span class="skill-tag core">OPTIMIZE + ZORDER</span>
+          <span class="skill-tag core">Auto Loader</span>
+          <span class="skill-tag core">Unity Catalog</span>
+          <span class="skill-tag core">Lakeflow Pipelines (DLT)</span>
+          <span class="skill-tag">Time Travel</span>
+          <span class="skill-tag">Workflows / Orchestration</span>
+          <span class="skill-tag">Photon Engine</span>
+        </div>
+        <div class="outcome-block">
+          <div class="outcome-icon">✅</div>
+          <div class="outcome-text"><strong>Exit condition:</strong> You can build a full Medallion Architecture pipeline, implement SCD Type 2 with MERGE INTO, explain why ZORDER improves query performance, and demonstrate data lineage in Unity Catalog.</div>
+        </div>
+        <div class="resources-row">
+          <h4>Resources</h4>
+          <div class="resources-list">
+            <span class="resource">Databricks Academy: Data Eng with Databricks (free)</span>
+            <span class="resource">delta.io official documentation</span>
+            <span class="resource">DataVidhya: 50 Databricks Interview Questions</span>
+            <span class="resource">Databricks Certified DE Associate ($200) — attempt now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase" data-phase="4">
+      <div class="phase-header" onclick="togglePhase(this)">
+        <div class="phase-number">04</div>
+        <div class="phase-title-block">
+          <div class="phase-title">Production Pipelines + Ecosystem Tools</div>
+          <div class="phase-subtitle">Weeks 15–22 · What product companies actually run</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-duration">8 weeks</div>
+          <div class="phase-toggle">+</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="why-what-how">
+          <div class="wwh-col">
+            <h4>WHY (cause)</h4>
+            <ul>
+              <li>Interviews at product companies go beyond Databricks — they test if you can operate in a full data stack</li>
+              <li>Streaming, CI/CD, and monitoring are what separate junior from senior candidates</li>
+              <li>Building a "real" project unlocks your portfolio — the most powerful job application asset</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>WHAT (concepts)</h4>
+            <ul>
+              <li>Structured Streaming: watermarks, event time, checkpointing</li>
+              <li>Kafka basics — source for streaming pipelines</li>
+              <li>dbt (data build tool) — transformations in SQL with testing</li>
+              <li>Apache Airflow — external orchestration with Databricks operators</li>
+              <li>Git + CI/CD with Databricks Asset Bundles (DAB)</li>
+              <li>Performance tuning: AQE, broadcast joins, caching strategies</li>
+              <li>Data quality: expectations in DLT, Great Expectations basics</li>
+              <li>Monitoring: Spark UI deep dive, cluster metrics, alerting</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>HOW (actions)</h4>
+            <ul>
+              <li>Build a streaming pipeline: Kafka → Auto Loader → Delta (Gold)</li>
+              <li>Add dbt models on top of your Silver layer</li>
+              <li>Deploy your pipeline with a Databricks Asset Bundle via GitHub Actions</li>
+              <li>Add data quality checks using DLT expectations</li>
+              <li>Write a README explaining architecture decisions (interviewers love this)</li>
+              <li>Time yourself solving production scenario questions from AccentFuture</li>
+            </ul>
+          </div>
+        </div>
+        <div class="skills-grid">
+          <span class="skill-tag core">Structured Streaming</span>
+          <span class="skill-tag core">Watermarks + Checkpointing</span>
+          <span class="skill-tag core">dbt on Databricks</span>
+          <span class="skill-tag core">CI/CD + Asset Bundles</span>
+          <span class="skill-tag">Kafka Basics</span>
+          <span class="skill-tag">Apache Airflow</span>
+          <span class="skill-tag">AQE + Broadcast Joins</span>
+          <span class="skill-tag">Data Quality / Expectations</span>
+          <span class="skill-tag">GitHub Actions</span>
+        </div>
+        <div class="outcome-block">
+          <div class="outcome-icon">✅</div>
+          <div class="outcome-text"><strong>Exit condition:</strong> You have a GitHub repo with a real end-to-end Databricks project — ingestion, streaming, Medallion layers, dbt transforms, CI/CD deployment, and documented architecture decisions. This is your interview weapon.</div>
+        </div>
+        <div class="resources-row">
+          <h4>Resources</h4>
+          <div class="resources-list">
+            <span class="resource">Databricks Academy: Advanced Data Engineering (paid)</span>
+            <span class="resource">dbt Learn — free dbt fundamentals course</span>
+            <span class="resource">AccentFuture: Scenario Interview Questions</span>
+            <span class="resource">GitHub: awesome-databricks repos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase" data-phase="5">
+      <div class="phase-header" onclick="togglePhase(this)">
+        <div class="phase-number">05</div>
+        <div class="phase-title-block">
+          <div class="phase-title">Interview Sprint + Certification</div>
+          <div class="phase-subtitle">Weeks 23–28 · Convert knowledge into offers</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-duration">6 weeks</div>
+          <div class="phase-toggle">+</div>
+        </div>
+      </div>
+      <div class="phase-body">
+        <div class="why-what-how">
+          <div class="wwh-col">
+            <h4>WHY (cause)</h4>
+            <ul>
+              <li>Most people fail interviews not from lack of knowledge, but lack of interview-format practice</li>
+              <li>DE Professional cert + portfolio = pass the ATS + impress the interviewer</li>
+              <li>Mock interviews reveal the gaps that self-study hides</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>WHAT (practice focus)</h4>
+            <ul>
+              <li>Scenario-based DE questions (pipeline failures, schema drift, backfill strategies)</li>
+              <li>Spark optimization questions (skew, AQE, Z-ordering)</li>
+              <li>System design: design a data platform for X company</li>
+              <li>SQL hard problems — window functions, recursive CTEs</li>
+              <li>Behavioral: explain architecture tradeoffs you made in your project</li>
+              <li>DE Professional certification exam prep (60 questions, 120 min)</li>
+            </ul>
+          </div>
+          <div class="wwh-col">
+            <h4>HOW (actions)</h4>
+            <ul>
+              <li>Do 3 mock interviews on Pramp or with peers</li>
+              <li>Take Databricks DE Professional practice exams (CertifHub, Udemy)</li>
+              <li>Apply to 5 companies/week; tailor JD keywords to resume</li>
+              <li>Add "Databricks Certified DE Associate" to LinkedIn + Credly badge</li>
+              <li>Prepare 3 STAR stories from your project and any past SE work</li>
+              <li>Research each company's data stack before screening call</li>
+            </ul>
+          </div>
+        </div>
+        <div class="skills-grid">
+          <span class="skill-tag core">System Design (Data)</span>
+          <span class="skill-tag core">Scenario Debugging</span>
+          <span class="skill-tag core">DE Professional Cert</span>
+          <span class="skill-tag">SQL Hard</span>
+          <span class="skill-tag">STAR Behavioral Stories</span>
+          <span class="skill-tag">Resume ATS Optimization</span>
+        </div>
+        <div class="outcome-block">
+          <div class="outcome-icon">🎯</div>
+          <div class="outcome-text"><strong>Exit condition:</strong> You have passed the Databricks Certified Data Engineer Professional exam, have a strong portfolio project on GitHub, and are actively interviewing with confidence in scenario-based rounds at product companies.</div>
+        </div>
+        <div class="resources-row">
+          <h4>Resources</h4>
+          <div class="resources-list">
+            <span class="resource">CertifHub: 120+ DE Professional Practice Qs</span>
+            <span class="resource">Udemy: 710 DE Associate Practice Questions</span>
+            <span class="resource">Pramp / Interviewing.io — mock interviews</span>
+            <span class="resource">ResumeAdapter — ATS keyword scan (free)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANTI LOOP TIPS -->
+  <section class="antiloop">
+    <h2>⚡ Anti-Loop Rules — Follow These Strictly</h2>
+    <div class="loop-grid">
+      <div class="loop-item">
+        <div class="trap">TRAP: "I need to learn Kafka before Spark"</div>
+        <div class="fix"><strong>Fix:</strong> Kafka is Phase 4. Learn it only when you need a streaming source for your pipeline. The order in this roadmap is intentional.</div>
+      </div>
+      <div class="loop-item">
+        <div class="trap">TRAP: "Let me finish one more course before building"</div>
+        <div class="fix"><strong>Fix:</strong> After each week, build something — even small. Doing beats watching. Courses alone do not prepare you for scenario-based interviews.</div>
+      </div>
+      <div class="loop-item">
+        <div class="trap">TRAP: "I should also learn Snowflake / Redshift / BigQuery"</div>
+        <div class="fix"><strong>Fix:</strong> You are going deep on Databricks. Breadth comes after depth. One platform mastered >> three platforms half-known.</div>
+      </div>
+      <div class="loop-item">
+        <div class="trap">TRAP: "I don't feel ready to apply yet"</div>
+        <div class="fix"><strong>Fix:</strong> Start applying at the end of Phase 3 (month 3–4). Interviews teach you what to study. Real feedback beats self-assessment always.</div>
+      </div>
+      <div class="loop-item">
+        <div class="trap">TRAP: "My project isn't good enough to show"</div>
+        <div class="fix"><strong>Fix:</strong> A working Bronze → Silver → Gold pipeline with documented decisions is better than 90% of candidate portfolios. Ship it.</div>
+      </div>
+      <div class="loop-item">
+        <div class="trap">TRAP: "I need Scala before I'm a real Spark engineer"</div>
+        <div class="fix"><strong>Fix:</strong> PySpark is the industry standard in 2026. Scala is a bonus. Python + SQL fluency is what hiring managers test. Add Scala in month 9+.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATION PATH -->
+  <section class="cert-path">
+    <div class="section-label">Certification Strategy</div>
+    <div class="cert-track">
+      <div class="cert-step">
+        <div class="cert-badge">Free</div>
+        <div class="cert-name">Lakehouse Fundamentals Accreditation</div>
+        <div class="cert-when">Month 1 — validates your foundation</div>
+        <div class="cert-arrow">›</div>
+      </div>
+      <div class="cert-step">
+        <div class="cert-badge">$200</div>
+        <div class="cert-name">Databricks Certified DE Associate</div>
+        <div class="cert-when">Month 3–4 — first paid cert, ATS gold</div>
+        <div class="cert-arrow">›</div>
+      </div>
+      <div class="cert-step">
+        <div class="cert-badge">$200</div>
+        <div class="cert-name">Databricks Certified DE Professional</div>
+        <div class="cert-when">Month 6–7 — production-level signal</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET -->
+  <section>
+    <div class="section-label">2026 Market Reality</div>
+    <div class="market">
+      <div class="market-card">
+        <div class="market-num" style="color:var(--accent)">$129K</div>
+        <div class="market-label">Avg US salary for Databricks Data Engineer (2025)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-num" style="color:var(--accent3)">$65K–$175K</div>
+        <div class="market-label">Salary range based on exp. & location</div>
+      </div>
+      <div class="market-card">
+        <div class="market-num" style="color:var(--accent2)">97%</div>
+        <div class="market-label">Companies use ATS — Delta Lake & PySpark keywords are mandatory</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="footer-note">
+      Built for: Software Engineer → Data Engineer transition via Databricks<br>
+      Key ATS terms to include: Apache Spark · Delta Lake · PySpark · Unity Catalog · Medallion Architecture · Auto Loader · Lakeflow · ETL/ELT Pipelines · Databricks Certified<br>
+      Sources: Databricks Academy, Databricks Certification pages, DataVidhya, FlashGenius, ResumeAdapter (2025–2026)
+    </p>
+  </footer>
+</div>
+
+<script>
+  function togglePhase(header) {
+    const phase = header.closest('.phase');
+    phase.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
