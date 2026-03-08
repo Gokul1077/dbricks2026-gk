@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Governance Architecture – Azure + Databricks</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --surface: #0d1420;
+    --surface2: #111a2e;
+    --border: #1e2d4a;
+    --accent: #00c2ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6e;
+    --accent4: #c084fc;
+    --text: #d4e4f7;
+    --muted: #6b8aad;
+    --warn: #fbbf24;
+    --red: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #060d1c 0%, #0a1628 50%, #06101e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 70% 50%, rgba(0,194,255,0.07), transparent);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,194,255,0.1);
+    border: 1px solid rgba(0,194,255,0.25);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px; border-radius: 20px;
+    margin-bottom: 20px;
+    letter-spacing: 0.08em;
+  }
+  .hero-tag::before { content: '▶'; font-size: 8px; }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    max-width: 800px;
+    margin-bottom: 16px;
+  }
+  h1 span { color: var(--accent); }
+  .hero-scenario {
+    background: rgba(255,107,53,0.08);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin-top: 24px;
+    max-width: 860px;
+    font-size: 14px;
+    color: #b8cfe8;
+  }
+  .hero-scenario strong { color: var(--accent2); font-family: 'Syne', sans-serif; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── SECTIONS ── */
+  section { padding: 48px 40px; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  h2 .num {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    vertical-align: middle;
+  }
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 24px 0 10px;
+  }
+
+  p { color: var(--text); margin-bottom: 12px; }
+
+  /* ── CARDS ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card-icon { font-size: 26px; margin-bottom: 12px; }
+  .card h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .card p { font-size: 13px; color: var(--muted); margin: 0; }
+  .card-accent { border-left: 3px solid var(--accent2); }
+  .card-accent2 { border-left: 3px solid var(--accent); }
+  .card-accent3 { border-left: 3px solid var(--accent3); }
+  .card-accent4 { border-left: 3px solid var(--accent4); }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 24px;
+    overflow-x: auto;
+  }
+  .arch-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.1em; }
+  .arch-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .arch-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap;
+  }
+  .arch-box.src { border-color: var(--accent2); color: var(--accent2); }
+  .arch-box.mid { border-color: var(--accent); color: var(--accent); }
+  .arch-box.dst { border-color: var(--accent3); color: var(--accent3); }
+  .arch-box.gov { border-color: var(--accent4); color: var(--accent4); }
+  .arch-arrow { color: var(--muted); font-size: 18px; }
+
+  /* ── PILLARS TABLE ── */
+  .pillars { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  .pillars th {
+    background: var(--surface2);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+  }
+  .pillars td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  .pillars tr:last-child td { border-bottom: none; }
+  .pillars tr:hover td { background: rgba(0,194,255,0.04); }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0,194,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(0,194,255,0.2);
+    white-space: nowrap;
+  }
+  .badge.orange { background: rgba(255,107,53,0.12); color: var(--accent2); border-color: rgba(255,107,53,0.2); }
+  .badge.green { background: rgba(127,255,110,0.1); color: var(--accent3); border-color: rgba(127,255,110,0.2); }
+  .badge.purple { background: rgba(192,132,252,0.1); color: var(--accent4); border-color: rgba(192,132,252,0.2); }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #050a12;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  .code-block .label {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.1em;
+  }
+  .kw { color: #7dd3fc; }
+  .str { color: #86efac; }
+  .cm { color: #475569; font-style: italic; }
+  .fn { color: #c084fc; }
+  .val { color: #fdba74; }
+
+  /* ── STEPS ── */
+  .steps { margin-top: 16px; }
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .step-body p { font-size: 13px; color: var(--muted); margin: 0; }
+
+  /* ── INTERVIEW BOX ── */
+  .interview-section {
+    background: linear-gradient(135deg, #0a1628 0%, #0d1a2e 100%);
+    border: 1px solid rgba(192,132,252,0.25);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 24px;
+  }
+  .interview-section .ititle {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent4);
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .q-block {
+    background: var(--surface);
+    border-left: 3px solid var(--accent4);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .q-block .q { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 10px; }
+  .q-block .q::before { content: 'Q: '; color: var(--accent4); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .q-block .a { font-size: 13px; color: var(--muted); }
+  .q-block .a::before { content: 'A: '; color: var(--accent3); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .answer-struct { margin-top: 10px; }
+  .answer-struct li { font-size: 12.5px; color: var(--text); padding: 4px 0; list-style: none; padding-left: 16px; position: relative; }
+  .answer-struct li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-size: 11px; top: 5px; }
+
+  /* ── QUIZ ── */
+  .quiz-section {
+    background: linear-gradient(135deg, #0d1220 0%, #0a1628 100%);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 24px;
+  }
+  .quiz-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--warn); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .quiz-q { font-size: 14px; color: #fff; margin-bottom: 20px; line-height: 1.6; }
+  .quiz-opts { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-opt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .quiz-opt:hover { border-color: var(--warn); color: var(--warn); }
+  .quiz-opt.correct { border-color: var(--accent3); background: rgba(127,255,110,0.07); color: var(--accent3); }
+  .quiz-opt.wrong { border-color: var(--red); background: rgba(248,113,113,0.07); color: var(--red); }
+  .quiz-opt .opt-letter { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; color: var(--muted); width: 20px; }
+  #quiz-feedback { margin-top: 16px; padding: 14px 18px; border-radius: 8px; font-size: 13px; display: none; }
+  #quiz-feedback.show { display: block; }
+  #quiz-feedback.correct-fb { background: rgba(127,255,110,0.1); border: 1px solid rgba(127,255,110,0.3); color: var(--accent3); }
+  #quiz-feedback.wrong-fb { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--red); }
+
+  /* ── CONNECTION POV ── */
+  .conn-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 12px;
+  }
+  .conn-box h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent3); margin-bottom: 12px; }
+
+  /* ── KEY POINT ── */
+  .keypoint {
+    background: rgba(0,194,255,0.06);
+    border: 1px solid rgba(0,194,255,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--accent);
+    margin: 12px 0;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .keypoint::before { content: '💡'; flex-shrink: 0; }
+
+  ul.list { padding-left: 0; margin: 12px 0; }
+  ul.list li { list-style: none; padding: 6px 0 6px 20px; position: relative; font-size: 13.5px; color: var(--text); border-bottom: 1px solid rgba(30,45,74,0.5); }
+  ul.list li:last-child { border-bottom: none; }
+  ul.list li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  @media (max-width: 640px) {
+    section, .hero { padding: 32px 20px; }
+    .arch-flow { flex-direction: column; align-items: flex-start; }
+    .arch-arrow { transform: rotate(90deg); }
+    table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Azure + Databricks · Data Engineering Interview</div>
+  <h1>Designing a <span>Data Governance Architecture</span><br>for Secure & Compliant Ingestion</h1>
+  <div class="hero-scenario">
+    <strong>📋 Scenario:</strong> Your company is moving datasets from <strong>Azure SQL Database</strong>, <strong>Azure Blob Storage</strong>, and <strong>Azure Data Lake Storage Gen2 (ADLS Gen2)</strong> into <strong>Databricks</strong> for analytics and machine learning. The leadership team is concerned about <strong>data security, lineage, and compliance</strong>.
+    <br><br>
+    <strong>❓ Question:</strong> How would you design a data governance architecture to ensure that data ingestion from Azure to Databricks is <em>secure, auditable, and compliant</em>?
+  </div>
+</div>
+
+<!-- SECTION 1: WHAT IS DATA GOVERNANCE -->
+<section>
+  <div class="container">
+    <div class="section-label">01 / Foundation</div>
+    <h2><span class="num">01</span>What is Data Governance? (The 30-Second Answer)</h2>
+
+    <p>Data Governance is a <strong>set of policies, processes, and technologies</strong> that ensure data is <strong>accurate, secure, consistent, and used responsibly</strong> across an organisation.</p>
+
+    <div class="keypoint">In a banking context: Think of it as the rulebook that ensures customer PII (Personally Identifiable Information), transaction data, and loan records are not leaked, tampered with, or accessed by unauthorised engineers — even while moving between systems.</div>
+
+    <div class="card-grid">
+      <div class="card card-accent2">
+        <div class="card-icon">🔒</div>
+        <h4>Security</h4>
+        <p>Who can read, write, or delete data? Enforced via RBAC, encryption, and network isolation.</p>
+      </div>
+      <div class="card card-accent2">
+        <div class="card-icon">🧾</div>
+        <h4>Auditability</h4>
+        <p>Every access and transformation is logged — who touched what, when, and why.</p>
+      </div>
+      <div class="card card-accent2">
+        <div class="card-icon">📏</div>
+        <h4>Compliance</h4>
+        <p>Adherence to regulations like GDPR, PCI-DSS, and internal banking data policies.</p>
+      </div>
+      <div class="card card-accent2">
+        <div class="card-icon">🔗</div>
+        <h4>Data Lineage</h4>
+        <p>Tracking data's journey: source → transformation → consumption. Essential for root-cause analysis.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: ARCHITECTURE OVERVIEW -->
+<section>
+  <div class="container">
+    <div class="section-label">02 / Architecture</div>
+    <h2><span class="num">02</span>High-Level Governance Architecture</h2>
+
+    <p>The architecture is built across <strong>3 layers</strong>: ingestion, governance enforcement, and consumption — with a <strong>Unity Catalog + Microsoft Purview</strong> overlay.</p>
+
+    <div class="arch">
+      <div class="arch-title">// ARCHITECTURE FLOW — Banking Data Platform</div>
+      <div class="arch-flow">
+        <div class="arch-box src">Azure SQL DB<br><small>Loan / Txn Data</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box src">Azure Blob Storage<br><small>Documents / PDFs</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box src">ADLS Gen2<br><small>Raw Data Lake</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box mid">Azure Data Factory<br><small>Secure Ingestion</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box dst">Databricks<br><small>Unity Catalog</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box dst">Delta Lake<br><small>Bronze→Silver→Gold</small></div>
+      </div>
+      <div style="margin-top: 16px;" class="arch-flow">
+        <div class="arch-box gov">Microsoft Purview<br><small>Lineage + Classification</small></div>
+        <div class="arch-arrow">↕</div>
+        <div class="arch-box gov">Azure Key Vault<br><small>Secrets + Encryption</small></div>
+        <div class="arch-arrow">↕</div>
+        <div class="arch-box gov">Azure Monitor / Logs<br><small>Audit + Alerts</small></div>
+        <div class="arch-box gov" style="margin-left:8px;">Azure AD / Entra ID<br><small>Identity + RBAC</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: 5 PILLARS -->
+<section>
+  <div class="container">
+    <div class="section-label">03 / Core Pillars</div>
+    <h2><span class="num">03</span>5 Pillars of the Governance Design</h2>
+
+    <table class="pillars">
+      <thead>
+        <tr>
+          <th>Pillar</th>
+          <th>What It Covers</th>
+          <th>Azure Tool</th>
+          <th>Databricks Tool</th>
+          <th>Banking Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Identity & Access</strong></td>
+          <td>Who can access what</td>
+          <td><span class="badge orange">Azure AD / Entra ID</span></td>
+          <td><span class="badge">Unity Catalog RBAC</span></td>
+          <td>Only Credit Risk team can read loan_default table</td>
+        </tr>
+        <tr>
+          <td><strong>2. Encryption</strong></td>
+          <td>Data at rest & in transit</td>
+          <td><span class="badge orange">Azure Key Vault</span></td>
+          <td><span class="badge">Cluster encryption</span></td>
+          <td>Customer SSN encrypted with CMK (Customer Managed Key)</td>
+        </tr>
+        <tr>
+          <td><strong>3. Data Lineage</strong></td>
+          <td>Where data came from, transformations</td>
+          <td><span class="badge purple">Microsoft Purview</span></td>
+          <td><span class="badge purple">Unity Catalog Lineage</span></td>
+          <td>Track how raw txn → fraud_score was derived</td>
+        </tr>
+        <tr>
+          <td><strong>4. Data Classification</strong></td>
+          <td>Labelling PII/sensitive data</td>
+          <td><span class="badge purple">Purview Data Map</span></td>
+          <td><span class="badge">Column-level tags</span></td>
+          <td>Tag pan_number, aadhaar as PII — auto-mask in BI tools</td>
+        </tr>
+        <tr>
+          <td><strong>5. Audit Logging</strong></td>
+          <td>Full trail of who did what</td>
+          <td><span class="badge orange">Azure Monitor + Diagnostics</span></td>
+          <td><span class="badge">Audit logs in Unity Catalog</span></td>
+          <td>Log every SELECT on customer_accounts table</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION 4: STEP-BY-STEP IMPLEMENTATION -->
+<section>
+  <div class="container">
+    <div class="section-label">04 / Implementation</div>
+    <h2><span class="num">04</span>Step-by-Step Implementation</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Secure the Ingestion Layer — Azure Data Factory (ADF)</h4>
+          <p>Use <strong>Managed Identity</strong> (not stored credentials) for ADF to connect to Azure SQL DB and ADLS Gen2. Store all connection strings in <strong>Azure Key Vault</strong> and reference them in ADF Linked Services. Enable <strong>Private Endpoints</strong> so data never travels over public internet.</p>
+          <div class="tag-row">
+            <span class="tag">Managed Identity</span>
+            <span class="tag">Key Vault Reference</span>
+            <span class="tag">Private Endpoints</span>
+            <span class="tag">ADF Integration Runtime</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Configure Unity Catalog in Databricks</h4>
+          <p>Unity Catalog is the <strong>central metadata and access control layer</strong> for Databricks. Create a 3-level namespace: <code>catalog.schema.table</code> (e.g., <code>banking_prod.lending.loan_applications</code>). Assign groups via Azure AD. Grant fine-grained privileges at table, column, or row level.</p>
+          <div class="code-block">
+            <span class="label">SQL // Unity Catalog</span>
+<span class="cm">-- Create catalog bound to ADLS Gen2 storage</span>
+<span class="kw">CREATE</span> CATALOG banking_prod
+  <span class="kw">MANAGED LOCATION</span> <span class="str">'abfss://data@bankingstorage.dfs.core.windows.net/'</span>;
+
+<span class="cm">-- Grant access to Credit Risk team only</span>
+<span class="kw">GRANT</span> <span class="fn">SELECT</span> <span class="kw">ON</span> TABLE banking_prod.lending.loan_applications
+  <span class="kw">TO</span> <span class="str">`credit_risk_analysts`</span>;
+
+<span class="cm">-- Column-level masking for PII (pan_number)</span>
+<span class="kw">ALTER</span> TABLE banking_prod.lending.customers
+  <span class="kw">ALTER COLUMN</span> pan_number <span class="kw">SET MASK</span> <span class="fn">mask_pan_number</span>
+  <span class="kw">USING COLUMNS</span> (is_data_steward);
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Register Sources in Microsoft Purview</h4>
+          <p>Register Azure SQL DB, ADLS Gen2, and Databricks in <strong>Microsoft Purview</strong>. Run automated scans to discover and classify sensitive columns (PAN, Aadhaar, account numbers) using built-in and custom classification rules. Purview will automatically build a <strong>lineage graph</strong> when ADF pipelines run.</p>
+          <div class="keypoint">Microsoft Purview + Databricks Unity Catalog can be connected natively — Purview pulls lineage events from Unity Catalog audit logs automatically via the Purview-Databricks connector.</div>
+          <div class="tag-row">
+            <span class="tag">Purview Data Map</span>
+            <span class="tag">Auto-Classification</span>
+            <span class="tag">Lineage Graph</span>
+            <span class="tag">Sensitivity Labels</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Enable Audit Logging End-to-End</h4>
+          <p>Turn on <strong>Diagnostic Settings</strong> on all Azure resources (ADLS, Azure SQL, Key Vault) to send logs to <strong>Azure Log Analytics Workspace</strong>. In Databricks, enable <strong>Unity Catalog Audit Logs</strong> which capture every data access, query, and permission change. Set up <strong>Azure Monitor Alerts</strong> for unusual access patterns (e.g., bulk export of customer data after hours).</p>
+          <div class="code-block">
+            <span class="label">KQL // Azure Log Analytics</span>
+<span class="cm">// Detect suspicious bulk reads on customer data</span>
+<span class="fn">DatabricksAuditLogs</span>
+| <span class="kw">where</span> ActionName == <span class="str">"runCommand"</span>
+  <span class="kw">and</span> RequestParams contains <span class="str">"customer_accounts"</span>
+  <span class="kw">and</span> bin(TimeGenerated, <span class="val">1h</span>) &gt; ago(<span class="val">1d</span>)
+| <span class="fn">summarize</span> count() by UserName, bin(TimeGenerated, <span class="val">1h</span>)
+| <span class="kw">where</span> count_ &gt; <span class="val">1000</span>   <span class="cm">// Alert if &gt;1000 queries/hour</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Implement Medallion Architecture with Governance Tags</h4>
+          <p>Organise Databricks data into <strong>Bronze → Silver → Gold</strong> layers. Each layer has stricter access controls. Raw PII lives only in Bronze (restricted). Silver contains masked/anonymised data. Gold contains aggregated, compliance-safe data for BI and ML teams.</p>
+          <div class="tag-row">
+            <span class="tag">Bronze: Raw + Restricted</span>
+            <span class="tag">Silver: Cleaned + Masked PII</span>
+            <span class="tag">Gold: Aggregated + Open to Analysts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: AZURE + DATABRICKS CONNECTIVITY -->
+<section>
+  <div class="container">
+    <div class="section-label">05 / Integration POV</div>
+    <h2><span class="num">05</span>How Azure Services Connect to Databricks</h2>
+
+    <p>All these governance tools are <strong>natively connectable</strong>. Here's how the integration works end-to-end:</p>
+
+    <div class="card-grid">
+      <div class="card card-accent3">
+        <div class="card-icon">🔑</div>
+        <h4>Azure AD → Databricks</h4>
+        <p>Use Azure AD (Entra ID) as the identity provider for Databricks. Users/groups sync automatically. Unity Catalog enforces the same AD group memberships as permissions.</p>
+      </div>
+      <div class="card card-accent3">
+        <div class="card-icon">🗄️</div>
+        <h4>ADLS Gen2 → Databricks</h4>
+        <p>Mount ADLS Gen2 using Databricks Access Connector (Managed Identity). No service principal keys stored in notebooks — secure by default.</p>
+      </div>
+      <div class="card card-accent3">
+        <div class="card-icon">🌐</div>
+        <h4>Purview → Unity Catalog</h4>
+        <p>Purview's native Databricks connector reads Unity Catalog audit logs to auto-generate lineage graphs without any manual configuration.</p>
+      </div>
+      <div class="card card-accent3">
+        <div class="card-icon">🔐</div>
+        <h4>Key Vault → Databricks</h4>
+        <p>Use Databricks Secret Scopes backed by Azure Key Vault. Notebooks read secrets via <code>dbutils.secrets.get()</code> — keys never appear in plain text.</p>
+      </div>
+    </div>
+
+    <div class="conn-box">
+      <h4>🔗 Complete Connection Code — ADLS Gen2 to Databricks (Secure)</h4>
+      <div class="code-block">
+        <span class="label">Python // Databricks Notebook</span>
+<span class="cm"># Secure ADLS Gen2 mount using Managed Identity (no keys!)</span>
+configs = {
+  <span class="str">"fs.azure.account.auth.type"</span>: <span class="str">"OAuth"</span>,
+  <span class="str">"fs.azure.account.oauth.provider.type"</span>:
+    <span class="str">"org.apache.hadoop.fs.azurebfs.oauth2.MsiTokenProvider"</span>,
+  <span class="str">"fs.azure.account.oauth2.msi.endpoint"</span>:
+    <span class="str">"http://169.254.169.254/metadata/identity/oauth2/token"</span>
+}
+
+<span class="fn">dbutils.fs.mount</span>(
+  source = <span class="str">"abfss://raw@bankingstorage.dfs.core.windows.net/"</span>,
+  mount_point = <span class="str">"/mnt/banking/raw"</span>,
+  extra_configs = configs
+)
+
+<span class="cm"># Read secrets from Key Vault backed scope</span>
+db_password = <span class="fn">dbutils.secrets.get</span>(scope=<span class="str">"banking-kv"</span>, key=<span class="str">"sql-db-password"</span>)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: INTERVIEW INSIGHTS -->
+<section>
+  <div class="container">
+    <div class="section-label">06 / Interview Prep</div>
+    <h2><span class="num">06</span>Interview Insights — How to Answer This</h2>
+
+    <div class="interview-section">
+      <div class="ititle">🎯 Possible Interview Questions & Structured Answers</div>
+
+      <div class="q-block">
+        <div class="q">What is Unity Catalog and how does it help with governance?</div>
+        <div class="a">Unity Catalog is Databricks' centralised data governance layer that provides unified access control, auditing, and lineage across all data assets in a workspace. It uses a 3-level namespace (catalog.schema.table), integrates with Azure AD for identity, and supports column-level masking and row-level filters.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q">How would you prevent a junior analyst from accessing raw customer PII during ingestion?</div>
+        <div class="answer-struct">
+          <ul class="answer-struct">
+            <li>Use <strong>Unity Catalog RBAC</strong> — grant SELECT only on Silver/Gold schemas, not Bronze</li>
+            <li>Apply <strong>column masking</strong> on PAN, Aadhaar columns at the Unity Catalog level</li>
+            <li>Use <strong>Azure AD group memberships</strong> — analysts in a restricted group can only see anonymised views</li>
+            <li>Log all access attempts via <strong>Unity Catalog audit logs</strong> → routed to Azure Monitor</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q">How do you prove to auditors that customer data was not tampered with? (indirect governance question)</div>
+        <div class="a">Use Delta Lake's transaction log (time travel) to show data history. Combine with Unity Catalog audit logs exported to Azure Log Analytics. Purview lineage graph shows every transformation from source to consumption — providing end-to-end proof for regulators (RBI, GDPR auditors).</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q">What's the difference between Microsoft Purview and Unity Catalog?</div>
+        <div class="answer-struct">
+          <ul class="answer-struct">
+            <li><strong>Unity Catalog</strong> = Databricks-native governance (access control, lineage within Databricks)</li>
+            <li><strong>Microsoft Purview</strong> = Enterprise-wide governance across ALL Azure services (SQL, Blob, ADF, Databricks)</li>
+            <li>They are <strong>complementary, not competing</strong> — Purview provides the org-level view; Unity Catalog enforces at the compute layer</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q">How do you store secrets securely in Databricks notebooks?</div>
+        <div class="a">Never hardcode credentials. Use Databricks Secret Scopes backed by Azure Key Vault. Notebooks call <code>dbutils.secrets.get(scope, key)</code> — the value is never printed or logged. Combine with Managed Identity so ADF and Databricks authenticate without storing any passwords at all.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <h3>📝 How to Structure Your Answer in an Interview (STAR Format)</h3>
+      <ul class="list">
+        <li><strong>Situation:</strong> "We're moving sensitive banking data from 3 Azure sources to Databricks."</li>
+        <li><strong>Task:</strong> "We need to ensure security, lineage, and compliance."</li>
+        <li><strong>Action:</strong> "I'd design a 5-pillar governance framework: Identity (Azure AD + Unity Catalog), Encryption (Key Vault + CMK), Lineage (Purview + Delta), Classification (Purview auto-scan + column tags), Auditing (Diagnostic logs + Monitor alerts)."</li>
+        <li><strong>Result:</strong> "This gives us end-to-end traceability, zero-trust access, and audit-ready logs for RBI/GDPR compliance."</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: QUIZ -->
+<section>
+  <div class="container">
+    <div class="quiz-section">
+      <div class="quiz-title">🧠 Quiz Time</div>
+      <div class="quiz-q">
+        A data engineer in your banking team accidentally grants <code>SELECT</code> privilege on the raw <code>customer_pii</code> table in Databricks Unity Catalog to all analysts. Which combination of Databricks + Azure features would help you <strong>detect</strong> this access violation AND <strong>prevent</strong> data leakage automatically?
+      </div>
+      <div class="quiz-opts" id="quiz-opts">
+        <div class="quiz-opt" onclick="checkAnswer(this, false)">
+          <span class="opt-letter">A</span>
+          Azure Blob Storage versioning + Delta Lake time travel
+        </div>
+        <div class="quiz-opt" onclick="checkAnswer(this, false)">
+          <span class="opt-letter">B</span>
+          ADF pipeline alerts + Azure SQL row-level security
+        </div>
+        <div class="quiz-opt" onclick="checkAnswer(this, true)">
+          <span class="opt-letter">C</span>
+          Unity Catalog audit logs (detect) + Column-level masking function on PII columns (prevent leakage)
+        </div>
+        <div class="quiz-opt" onclick="checkAnswer(this, false)">
+          <span class="opt-letter">D</span>
+          Azure Monitor + Azure Backup policies
+        </div>
+      </div>
+      <div id="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  let answered = false;
+  function checkAnswer(el, correct) {
+    if (answered) return;
+    answered = true;
+    const opts = document.querySelectorAll('.quiz-opt');
+    opts.forEach(o => o.style.pointerEvents = 'none');
+    const fb = document.getElementById('quiz-feedback');
+    if (correct) {
+      el.classList.add('correct');
+      fb.className = 'show correct-fb';
+      fb.innerHTML = '✅ <strong>Correct!</strong> Unity Catalog audit logs track every <code>SELECT</code> on <code>customer_pii</code>, alerting you to the breach. Column masking functions ensure that even if SELECT is granted, PAN/Aadhaar values are shown as <code>XXXX-XXXX</code> to non-privileged users — preventing actual data exposure. This is the gold standard in production banking platforms.';
+    } else {
+      el.classList.add('wrong');
+      opts.forEach(o => { if (o.querySelector('.opt-letter').textContent === 'C') o.classList.add('correct'); });
+      fb.className = 'show wrong-fb';
+      fb.innerHTML = '❌ <strong>Not quite.</strong> The correct answer is <strong>C</strong>. Unity Catalog audit logs are the detection mechanism; column masking prevents actual data from being exposed even when SELECT is mistakenly granted. The other options address different concerns (versioning, backup, SQL security) but not the Unity Catalog governance layer.';
+    }
+  }
+</script>
+
+</body>
+</html>
