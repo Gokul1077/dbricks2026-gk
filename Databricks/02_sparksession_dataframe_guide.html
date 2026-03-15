@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SparkSession & DataFrame Creation — Interview-Ready Guide</title>
+<style>
+  :root {
+    --bg:         #0c0e16;
+    --surface:    #13161f;
+    --surface2:   #1b1f2e;
+    --surface3:   #222740;
+    --border:     #2a2f47;
+    --text:       #dde3f0;
+    --muted:      #7a85a0;
+    --blue:       #60a5fa;
+    --blue-d:     #1a3a6e;
+    --green:      #34d399;
+    --green-d:    #0a2e22;
+    --yellow:     #fbbf24;
+    --yellow-d:   #322000;
+    --red:        #f87171;
+    --red-d:      #3a0f0f;
+    --purple:     #a78bfa;
+    --purple-d:   #261a56;
+    --orange:     #fb923c;
+    --orange-d:   #3a1800;
+    --teal:       #2dd4bf;
+    --teal-d:     #0a2b28;
+    --pink:       #f472b6;
+    --pink-d:     #3a1030;
+    --cyan:       #67e8f9;
+    --cyan-d:     #0a2a30;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ═══ HERO ═══ */
+  .hero {
+    background: linear-gradient(160deg, #0c0e16 0%, #13161f 45%, #0a1e3a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 44px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(96,165,250,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue-d);
+    color: var(--blue);
+    border: 1px solid rgba(96,165,250,0.4);
+    border-radius: 24px;
+    padding: 5px 18px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+  .hero h1 .accent { color: var(--blue); }
+  .hero h1 .accent2 { color: var(--green); }
+  .hero p { color: var(--muted); max-width: 660px; margin: 0 auto; font-size: 1rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+  .hero-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ═══ LAYOUT ═══ */
+  .container { max-width: 1120px; margin: 0 auto; padding: 44px 24px 60px; }
+
+  /* ═══ TOC ═══ */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 30px;
+    margin-bottom: 44px;
+  }
+  .toc-title {
+    color: var(--blue);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px 24px; }
+  .toc-item { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; }
+  .toc-num { color: var(--border); font-size: 0.75rem; font-weight: 700; min-width: 22px; }
+  .toc a { color: var(--muted); text-decoration: none; font-size: 0.88rem; transition: color 0.2s; }
+  .toc a:hover { color: var(--blue); }
+
+  /* ═══ SECTION CARDS ═══ */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 34px 36px;
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .s-blue::before   { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+  .s-green::before  { background: linear-gradient(90deg, var(--green), var(--teal)); }
+  .s-yellow::before { background: linear-gradient(90deg, var(--yellow), var(--orange)); }
+  .s-purple::before { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+  .s-orange::before { background: linear-gradient(90deg, var(--orange), var(--red)); }
+  .s-teal::before   { background: linear-gradient(90deg, var(--teal), var(--blue)); }
+  .s-red::before    { background: linear-gradient(90deg, var(--red), var(--pink)); }
+  .s-pink::before   { background: linear-gradient(90deg, var(--pink), var(--purple)); }
+  .s-cyan::before   { background: linear-gradient(90deg, var(--cyan), var(--green)); }
+
+  .section-hdr {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-hdr .icon { font-size: 1.6rem; line-height: 1; }
+  .section-hdr h2 { font-size: 1.3rem; font-weight: 700; color: #fff; }
+  .section-hdr .sub { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin: 26px 0 10px;
+    padding-left: 12px;
+    border-left: 3px solid var(--cyan);
+  }
+  h4 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--yellow);
+    margin: 18px 0 8px;
+  }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 5px; }
+  strong { color: #fff; }
+  em { color: var(--muted); font-style: italic; }
+
+  /* ═══ CALLOUTS ═══ */
+  .note {
+    border-radius: 10px;
+    padding: 13px 17px;
+    margin: 14px 0;
+    font-size: 0.88rem;
+    border-left: 4px solid;
+    line-height: 1.6;
+  }
+  .note.blue   { background: var(--blue-d);   border-color: var(--blue);   color: #bfdbfe; }
+  .note.green  { background: var(--green-d);  border-color: var(--green);  color: #a7f3d0; }
+  .note.yellow { background: var(--yellow-d); border-color: var(--yellow); color: #fde68a; }
+  .note.red    { background: var(--red-d);    border-color: var(--red);    color: #fecaca; }
+  .note.purple { background: var(--purple-d); border-color: var(--purple); color: #ddd6fe; }
+  .note.orange { background: var(--orange-d); border-color: var(--orange); color: #fed7aa; }
+  .note.teal   { background: var(--teal-d);   border-color: var(--teal);   color: #99f6e4; }
+  .note.cyan   { background: var(--cyan-d);   border-color: var(--cyan);   color: #a5f3fc; }
+
+  /* ═══ CODE BLOCKS ═══ */
+  .code-wrap { position: relative; margin: 16px 0; }
+  .code-label {
+    display: inline-block;
+    background: var(--surface3);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+  }
+  pre {
+    background: #080a12;
+    border: 1px solid var(--border);
+    border-radius: 0 10px 10px 10px;
+    padding: 20px 22px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .code-label + pre { margin-top: 0; }
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+    color: #e2e8f0;
+  }
+  /* syntax tokens */
+  .kw  { color: #c084fc; font-weight: 600; }     /* keywords */
+  .fn  { color: #60a5fa; }                        /* functions */
+  .str { color: #34d399; }                        /* strings */
+  .cm  { color: #4a5568; font-style: italic; }    /* comments */
+  .num { color: #fb923c; }                        /* numbers */
+  .cl  { color: #fbbf24; }                        /* class names */
+  .op  { color: #f472b6; }                        /* operators */
+  .dc  { color: #67e8f9; }                        /* decorators/special */
+  .tp  { color: #a78bfa; }                        /* types */
+
+  /* output simulation */
+  .output-block {
+    background: #04060d;
+    border: 1px solid #1e2235;
+    border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 8px;
+    padding: 14px 18px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 12.5px;
+    color: #a7f3d0;
+    margin-top: -1px;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+  .output-label {
+    display: inline-block;
+    background: var(--green-d);
+    color: var(--green);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid var(--green);
+    border-bottom: none;
+    margin-top: 6px;
+  }
+
+  /* ═══ TABLES ═══ */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 480px; }
+  th {
+    background: var(--surface3);
+    color: var(--blue);
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  td { padding: 10px 14px; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+  td:first-child { color: var(--yellow); font-weight: 600; white-space: nowrap; }
+
+  /* ═══ PILLS / BADGES ═══ */
+  .pill {
+    display: inline-block;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+    margin: 1px 2px;
+  }
+  .p-blue   { background: var(--blue-d);   color: var(--blue); }
+  .p-green  { background: var(--green-d);  color: var(--green); }
+  .p-yellow { background: var(--yellow-d); color: var(--yellow); }
+  .p-red    { background: var(--red-d);    color: var(--red); }
+  .p-purple { background: var(--purple-d); color: var(--purple); }
+  .p-orange { background: var(--orange-d); color: var(--orange); }
+  .p-teal   { background: var(--teal-d);   color: var(--teal); }
+  .p-cyan   { background: var(--cyan-d);   color: var(--cyan); }
+
+  /* ═══ STEP FLOW ═══ */
+  .steps { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .step {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 20px;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+    position: relative;
+    z-index: 1;
+  }
+  .step:not(:last-child) .step-num::after {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc(100% + 16px);
+    background: var(--border);
+  }
+  .step-num.blue   { background: var(--blue-d);   color: var(--blue);   border: 1px solid var(--blue); }
+  .step-num.green  { background: var(--green-d);  color: var(--green);  border: 1px solid var(--green); }
+  .step-num.yellow { background: var(--yellow-d); color: var(--yellow); border: 1px solid var(--yellow); }
+  .step-num.purple { background: var(--purple-d); color: var(--purple); border: 1px solid var(--purple); }
+  .step-num.orange { background: var(--orange-d); color: var(--orange); border: 1px solid var(--orange); }
+  .step-body { flex: 1; }
+  .step-body h4 { margin-top: 4px; margin-bottom: 4px; }
+  .step-body p  { margin-bottom: 0; font-size: 0.88rem; color: var(--muted); }
+
+  /* ═══ TWO-COL GRID ═══ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .grid-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .grid-card h4 { margin-top: 0; margin-bottom: 10px; font-size: 0.88rem; }
+
+  /* ═══ INTERVIEW CARDS ═══ */
+  .int-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .int-q {
+    color: var(--yellow);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .int-q::before { content: '🎙️'; flex-shrink: 0; }
+  .int-a { font-size: 0.88rem; line-height: 1.65; color: var(--text); }
+  .int-a strong { color: var(--green); }
+
+  .mistake-box {
+    background: var(--red-d);
+    border: 1px solid var(--red);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 16px;
+  }
+  .mistake-box h4 { color: var(--red); margin-bottom: 10px; }
+
+  /* ═══ PRO TIPS ═══ */
+  .tip {
+    display: flex;
+    gap: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px 18px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 1.2rem; flex-shrink: 0; padding-top: 1px; }
+  .tip-text { font-size: 0.88rem; line-height: 1.6; }
+
+  /* ═══ QUIZ ═══ */
+  .quiz-box {
+    background: var(--surface2);
+    border: 1px solid var(--purple);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+  }
+  .quiz-q { color: var(--purple); font-weight: 700; margin-bottom: 16px; font-size: 0.95rem; }
+  .quiz-opts { list-style: none; padding: 0; }
+  .quiz-opts li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 0.87rem;
+    cursor: default;
+  }
+  .quiz-answer {
+    background: var(--green-d);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: #a7f3d0;
+  }
+  .quiz-answer strong { color: var(--green); }
+
+  /* ═══ SPARKSESSION VISUAL ═══ */
+  .ss-visual {
+    background: #080a12;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 18px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .ss-box {
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    border: 1.5px solid;
+    min-width: 200px;
+  }
+  .ss-arrow { color: var(--muted); font-size: 1.2rem; }
+  .ss-row   { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .ss-small { font-size: 0.75rem; font-weight: 400; color: var(--muted); margin-top: 3px; }
+
+  /* ═══ SCHEMA DISPLAY ═══ */
+  .schema-display {
+    background: #04060d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 12.5px;
+    color: var(--text);
+    margin: 12px 0;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+  .sch-root { color: var(--blue); }
+  .sch-field { color: var(--green); }
+  .sch-type { color: var(--orange); }
+  .sch-null { color: var(--purple); }
+
+  /* ═══ DATAFRAME SHOW OUTPUT ═══ */
+  .df-show {
+    background: #04060d;
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--green);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 12px;
+    color: #d1fae5;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 8px 0 16px;
+    line-height: 1.6;
+  }
+
+  /* ═══ COMPARISON BAND ═══ */
+  .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+  .compare-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    border-top: 3px solid;
+  }
+  .compare-card.blue   { border-top-color: var(--blue); }
+  .compare-card.green  { border-top-color: var(--green); }
+  .compare-card.yellow { border-top-color: var(--yellow); }
+  .compare-card.purple { border-top-color: var(--purple); }
+  .compare-card.orange { border-top-color: var(--orange); }
+  .compare-card h4 { font-size: 0.88rem; margin: 0 0 10px; }
+  .compare-card ul { font-size: 0.82rem; padding-left: 16px; }
+  .compare-card li { margin-bottom: 4px; color: var(--text); }
+
+  /* footer */
+  .footer { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 36px 0 20px; border-top: 1px solid var(--border); margin-top: 12px; }
+
+  @media (max-width: 680px) {
+    .two-col { grid-template-columns: 1fr; }
+    .section { padding: 20px 18px; }
+    .hero { padding: 44px 20px 32px; }
+    .compare-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 420px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <div class="hero-badge">🚀 Interview-Ready Deep Dive · Module 2</div>
+  <h1><span class="accent">SparkSession</span> &amp; <span class="accent2">DataFrame</span> Creation</h1>
+  <p>Master the entry point to Spark, create DataFrames from every source, understand schemas, and use the essential DataFrame inspection API — all from an interview-first perspective.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">SparkSession</span>
+    <span class="hero-tag">SparkContext</span>
+    <span class="hero-tag">DataFrame</span>
+    <span class="hero-tag">RDD</span>
+    <span class="hero-tag">Schema &amp; StructType</span>
+    <span class="hero-tag">spark.read API</span>
+    <span class="hero-tag">CSV / JSON / Parquet</span>
+    <span class="hero-tag">printSchema()</span>
+    <span class="hero-tag">show() / display()</span>
+    <span class="hero-tag">Azure ADLS Gen2</span>
+    <span class="hero-tag">Databricks</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════ TOC ═══════════════════ -->
+<div class="toc">
+  <div class="toc-title">📋 Table of Contents</div>
+  <div class="toc-grid">
+    <div class="toc-item"><span class="toc-num">01</span><a href="#s1">SparkSession — The Entry Point</a></div>
+    <div class="toc-item"><span class="toc-num">02</span><a href="#s2">SparkSession vs SparkContext</a></div>
+    <div class="toc-item"><span class="toc-num">03</span><a href="#s3">Creating a SparkSession</a></div>
+    <div class="toc-item"><span class="toc-num">04</span><a href="#s4">What is a DataFrame?</a></div>
+    <div class="toc-item"><span class="toc-num">05</span><a href="#s5">DataFrame vs RDD vs Dataset</a></div>
+    <div class="toc-item"><span class="toc-num">06</span><a href="#s6">Create DF from Python List / Dict</a></div>
+    <div class="toc-item"><span class="toc-num">07</span><a href="#s7">Create DF from CSV</a></div>
+    <div class="toc-item"><span class="toc-num">08</span><a href="#s8">Create DF from JSON</a></div>
+    <div class="toc-item"><span class="toc-num">09</span><a href="#s9">Create DF from Parquet &amp; Delta</a></div>
+    <div class="toc-item"><span class="toc-num">10</span><a href="#s10">Schema — StructType &amp; StructField</a></div>
+    <div class="toc-item"><span class="toc-num">11</span><a href="#s11">Inspecting DataFrames</a></div>
+    <div class="toc-item"><span class="toc-num">12</span><a href="#s12">spark.read Full API Reference</a></div>
+    <div class="toc-item"><span class="toc-num">13</span><a href="#s13">Banking Production Example</a></div>
+    <div class="toc-item"><span class="toc-num">14</span><a href="#s14">Interview Insights</a></div>
+    <div class="toc-item"><span class="toc-num">15</span><a href="#s15">Pro Tips</a></div>
+    <div class="toc-item"><span class="toc-num">16</span><a href="#s16">Quiz</a></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ 01 SparkSession Entry Point ═══════════════════ -->
+<section class="section s-blue" id="s1">
+  <div class="section-hdr">
+    <span class="icon">🔷</span>
+    <div>
+      <h2>SparkSession — The Single Entry Point to Spark</h2>
+      <div class="sub">WHAT · WHY · WHERE it lives · What it gives you access to</div>
+    </div>
+  </div>
+
+  <p><strong>SparkSession</strong> is the <strong>unified entry point</strong> to all of Spark's functionality. It is a Python/JVM object created inside the <strong>Driver Process</strong> and is the first thing you create before doing anything in Spark.</p>
+
+  <div class="note blue">
+    <strong>🍕 Analogy:</strong> SparkSession is like the <em>front desk of a hotel</em>. You check in through the front desk and it gives you access to the room (data), the restaurant (SQL engine), the gym (streaming), and the concierge (catalog). You never go directly to these services — everything routes through the front desk.
+  </div>
+
+  <h3>Where Does SparkSession Live?</h3>
+  <div class="ss-visual">
+    <div class="ss-box" style="background:var(--blue-d);border-color:var(--blue);color:var(--blue);">
+      🖥️ Driver Process (JVM)
+      <div class="ss-small">Your PySpark script / Databricks notebook cell</div>
+    </div>
+    <div class="ss-arrow">↓ contains</div>
+    <div class="ss-box" style="background:var(--yellow-d);border-color:var(--yellow);color:var(--yellow);">
+      ✨ SparkSession object
+      <div class="ss-small">Created ONCE per application · lives only on the driver</div>
+    </div>
+    <div class="ss-arrow">↓ provides access to</div>
+    <div class="ss-row">
+      <div class="ss-box" style="background:var(--green-d);border-color:var(--green);color:var(--green);min-width:110px;">SQL Engine</div>
+      <div class="ss-box" style="background:var(--purple-d);border-color:var(--purple);color:var(--purple);min-width:110px;">DataFrame API</div>
+      <div class="ss-box" style="background:var(--orange-d);border-color:var(--orange);color:var(--orange);min-width:110px;">Catalog</div>
+      <div class="ss-box" style="background:var(--teal-d);border-color:var(--teal);color:var(--teal);min-width:110px;">Configuration</div>
+      <div class="ss-box" style="background:var(--cyan-d);border-color:var(--cyan);color:var(--cyan);min-width:110px;">SparkContext</div>
+    </div>
+  </div>
+
+  <h3>What Does SparkSession Give You Access To?</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Access Point</th><th>How to Use</th><th>What It Does</th></tr>
+      <tr><td>spark.read</td><td><code>spark.read.csv(...)</code></td><td>Read data from files/databases into a DataFrame</td></tr>
+      <tr><td>spark.sql</td><td><code>spark.sql("SELECT ...")</code></td><td>Run SQL queries, returns a DataFrame</td></tr>
+      <tr><td>spark.createDataFrame</td><td><code>spark.createDataFrame(data)</code></td><td>Create DataFrame from Python lists/Pandas</td></tr>
+      <tr><td>spark.catalog</td><td><code>spark.catalog.listTables()</code></td><td>Manage tables, views, databases, functions</td></tr>
+      <tr><td>spark.conf</td><td><code>spark.conf.set("key","val")</code></td><td>Get/set runtime configuration dynamically</td></tr>
+      <tr><td>spark.sparkContext</td><td><code>spark.sparkContext</code></td><td>Access low-level RDD API and cluster info</td></tr>
+      <tr><td>spark.streams</td><td><code>spark.streams.active</code></td><td>Manage active streaming queries</td></tr>
+      <tr><td>spark.udf</td><td><code>spark.udf.register(...)</code></td><td>Register User-Defined Functions for SQL use</td></tr>
+    </table>
+  </div>
+
+  <div class="note yellow">
+    <strong>⚠️ Key Rule from your notes (confirmed correct):</strong> SparkSession lives <em>only on the Driver</em>. Executors do NOT have a SparkSession. When Spark ships tasks to executor JVMs, those JVMs execute bytecode — they never see or use the SparkSession object.
+  </div>
+</section>
+
+<!-- ═══════════════════ 02 SparkSession vs SparkContext ═══════════════════ -->
+<section class="section s-purple" id="s2">
+  <div class="section-hdr">
+    <span class="icon">⚔️</span>
+    <div>
+      <h2>SparkSession vs SparkContext vs SQLContext</h2>
+      <div class="sub">History, evolution, and why SparkSession unified everything</div>
+    </div>
+  </div>
+
+  <p>Understanding this history is a <strong>very common interview question</strong>. Spark's entry point has evolved across versions:</p>
+
+  <div class="compare-grid">
+    <div class="compare-card purple">
+      <h4 style="color:var(--purple)">SparkContext <span class="pill p-purple">Spark 1.x</span></h4>
+      <ul>
+        <li>Original entry point (Spark 1.x)</li>
+        <li>Low-level API — works with RDDs only</li>
+        <li>Creates and manages the connection to the cluster</li>
+        <li>One SparkContext per JVM (hard rule)</li>
+        <li>Still accessible via <code>spark.sparkContext</code></li>
+      </ul>
+    </div>
+    <div class="compare-card yellow">
+      <h4 style="color:var(--yellow)">SQLContext <span class="pill p-yellow">Spark 1.x</span></h4>
+      <ul>
+        <li>Added to support SQL and DataFrames</li>
+        <li>Wrapped around SparkContext</li>
+        <li>Required separate import and setup</li>
+        <li><strong>Deprecated</strong> since Spark 2.0</li>
+      </ul>
+    </div>
+    <div class="compare-card orange">
+      <h4 style="color:var(--orange)">HiveContext <span class="pill p-orange">Spark 1.x</span></h4>
+      <ul>
+        <li>Extended SQLContext with Hive support</li>
+        <li>Needed for HiveQL, UDFs, SerDes</li>
+        <li><strong>Deprecated</strong> since Spark 2.0</li>
+      </ul>
+    </div>
+    <div class="compare-card green">
+      <h4 style="color:var(--green)">SparkSession <span class="pill p-green">Spark 2.0+</span></h4>
+      <ul>
+        <li>Unified replacement for ALL of the above</li>
+        <li>Automatically creates a SparkContext internally</li>
+        <li>Supports RDD, SQL, DataFrame, Dataset, Hive</li>
+        <li>Use <code>.builder</code> pattern to create</li>
+        <li><strong>This is what you always use today</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note green">
+    <strong>✅ Interview answer:</strong> "In Spark 1.x you needed separate SparkContext, SQLContext, and HiveContext. Spark 2.0 unified all of them into SparkSession. SparkSession internally creates a SparkContext but you access it all through one object. You never create SparkContext directly in modern PySpark."
+  </div>
+
+  <h3>The Relationship Diagram</h3>
+  <div class="ss-visual">
+    <div class="ss-box" style="background:var(--purple-d);border-color:var(--purple);color:var(--purple);">SparkSession (Spark 2.0+)</div>
+    <div class="ss-arrow">↓ internally creates and wraps</div>
+    <div class="ss-row">
+      <div class="ss-box" style="background:var(--blue-d);border-color:var(--blue);color:var(--blue);min-width:130px;">SparkContext<div class="ss-small">Cluster connection · RDD API</div></div>
+      <div class="ss-box" style="background:var(--yellow-d);border-color:var(--yellow);color:var(--yellow);min-width:130px;">SQLContext<div class="ss-small">SQL engine · DataFrame</div></div>
+      <div class="ss-box" style="background:var(--orange-d);border-color:var(--orange);color:var(--orange);min-width:130px;">HiveContext<div class="ss-small">Hive tables · metastore</div></div>
+    </div>
+  </div>
+
+  <div class="note blue">
+    <strong>One SparkContext per JVM — Still True:</strong> Although SparkSession allows multiple sessions (e.g., for multi-tenant isolation on Databricks), each session shares the <em>same underlying SparkContext</em>. There is still only ONE SparkContext active per JVM process. Calling <code>SparkSession.builder.getOrCreate()</code> returns the existing session if one already exists.
+  </div>
+</section>
+
+<!-- ═══════════════════ 03 Creating SparkSession ═══════════════════ -->
+<section class="section s-teal" id="s3">
+  <div class="section-hdr">
+    <span class="icon">⚙️</span>
+    <div>
+      <h2>Creating a SparkSession — All Patterns</h2>
+      <div class="sub">Builder pattern · configs · getOrCreate() · Databricks behavior</div>
+    </div>
+  </div>
+
+  <h3>Pattern 1: Basic Creation (Local / Dev)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Basic</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"MySparkApp"</span>) \           <span class="cm"># Name visible in Spark UI</span>
+    .<span class="fn">master</span>(<span class="str">"local[*]"</span>) \             <span class="cm"># local[*] = use all CPU cores on this machine</span>
+    .<span class="fn">getOrCreate</span>()                   <span class="cm"># Returns existing session if already running</span>
+
+<span class="cm"># Verify it was created</span>
+<span class="fn">print</span>(spark.version)               <span class="cm"># e.g., "3.5.0"</span>
+<span class="fn">print</span>(spark.sparkContext.appName)  <span class="cm"># "MySparkApp"</span></code></pre>
+  </div>
+
+  <div class="note blue">
+    <strong>local[*] explained:</strong> <code>local</code> = run on this single machine (no cluster). The <code>[*]</code> means use ALL available CPU cores. <code>local[4]</code> would use exactly 4 cores. <code>local[1]</code> = single-threaded (useful for debugging sequential logic).
+  </div>
+
+  <h3>Pattern 2: Production Configuration (Azure + Databricks)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Production / Azure ADLS</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"BankingFraudPipeline_v2"</span>) \
+    <span class="cm"># ── Performance Configs ─────────────────────────────</span>
+    .<span class="fn">config</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"200"</span>) \        <span class="cm"># Default 200 — tune for cluster</span>
+    .<span class="fn">config</span>(<span class="str">"spark.sql.files.maxPartitionBytes"</span>, <span class="str">"134217728"</span>) \ <span class="cm"># 128MB per partition</span>
+    .<span class="fn">config</span>(<span class="str">"spark.sql.adaptive.enabled"</span>, <span class="str">"true"</span>) \           <span class="cm"># AQE: auto-tune at runtime</span>
+    .<span class="fn">config</span>(<span class="str">"spark.sql.adaptive.coalescePartitions.enabled"</span>, <span class="str">"true"</span>) \
+    <span class="cm"># ── Delta Lake ──────────────────────────────────────</span>
+    .<span class="fn">config</span>(<span class="str">"spark.sql.extensions"</span>, <span class="str">"io.delta.sql.DeltaSparkSessionExtension"</span>) \
+    .<span class="fn">config</span>(<span class="str">"spark.sql.catalog.spark_catalog"</span>, <span class="str">"org.apache.spark.sql.delta.catalog.DeltaCatalog"</span>) \
+    <span class="cm"># ── Azure ADLS Gen2 Auth (Service Principal) ─────────</span>
+    .<span class="fn">config</span>(<span class="str">"fs.azure.account.auth.type.bankadls.dfs.core.windows.net"</span>, <span class="str">"OAuth"</span>) \
+    .<span class="fn">config</span>(<span class="str">"fs.azure.account.oauth.provider.type.bankadls.dfs.core.windows.net"</span>,
+           <span class="str">"org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"</span>) \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># Dynamically change config at runtime (no restart needed for most configs)</span>
+spark.conf.<span class="fn">set</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"400"</span>)</code></pre>
+  </div>
+
+  <h3>Pattern 3: Databricks — SparkSession is Pre-Created</h3>
+  <div class="code-wrap">
+    <span class="code-label">Databricks Notebook</span>
+    <pre><code><span class="cm"># ✅ In Databricks, SparkSession is ALREADY created for you</span>
+<span class="cm"># The variable 'spark' is available in every notebook cell automatically</span>
+<span class="cm"># You do NOT need SparkSession.builder in Databricks!</span>
+
+<span class="cm"># Just use it directly:</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/mnt/adls/transactions.csv"</span>, header=<span class="kw">True</span>)
+
+<span class="cm"># Access the SparkContext (also pre-created as 'sc'):</span>
+<span class="fn">print</span>(sc.defaultParallelism)     <span class="cm"># Number of cores available</span>
+<span class="fn">print</span>(spark.version)             <span class="cm"># Databricks Runtime Spark version</span>
+
+<span class="cm"># If you need a custom session in Databricks (rare), use getOrCreate</span>
+<span class="cm"># It will simply return the EXISTING session — won't create a new one</span>
+custom_spark = SparkSession.<span class="fn">builder</span>.<span class="fn">getOrCreate</span>()
+<span class="fn">print</span>(custom_spark <span class="op">is</span> spark)  <span class="cm"># True — same object!</span></code></pre>
+  </div>
+
+  <h3>Stopping a SparkSession</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Cleanup</span>
+    <pre><code><span class="cm"># Stop the SparkSession (and underlying SparkContext)</span>
+<span class="cm"># Always do this in standalone scripts to free cluster resources</span>
+spark.<span class="fn">stop</span>()
+
+<span class="cm"># ⚠️ Do NOT call spark.stop() in Databricks notebooks!</span>
+<span class="cm"># It will stop the shared cluster session — affecting all users/jobs.</span></code></pre>
+  </div>
+
+  <div class="note red">
+    <strong>🚨 Never call spark.stop() in a Databricks notebook.</strong> The SparkSession is shared across the cluster. Stopping it terminates all running jobs for other users on that cluster.
+  </div>
+</section>
+
+<!-- ═══════════════════ 04 What is a DataFrame ═══════════════════ -->
+<section class="section s-green" id="s4">
+  <div class="section-hdr">
+    <span class="icon">📊</span>
+    <div>
+      <h2>What is a Spark DataFrame?</h2>
+      <div class="sub">WHAT · WHY it exists · How it's different from Pandas</div>
+    </div>
+  </div>
+
+  <p>A Spark <strong>DataFrame</strong> is a <strong>distributed, immutable, lazily-evaluated tabular data structure</strong> — like a spreadsheet or SQL table, but spread across potentially thousands of machines in parallel.</p>
+
+  <div class="two-col">
+    <div class="grid-card">
+      <h4 style="color:var(--green)">✅ What a DataFrame IS</h4>
+      <ul>
+        <li>Named columns with a defined <strong>schema</strong></li>
+        <li>Organized into logical <strong>partitions</strong> across executors</li>
+        <li><strong>Immutable</strong> — transformations create new DataFrames, never modify in place</li>
+        <li><strong>Lazy</strong> — transformations don't execute until an action is called</li>
+        <li>Distributed across executor JVMs in the cluster</li>
+        <li>An abstraction <em>on top of</em> RDDs</li>
+      </ul>
+    </div>
+    <div class="grid-card">
+      <h4 style="color:var(--red)">❌ What a DataFrame is NOT</h4>
+      <ul>
+        <li>NOT stored on the driver machine (unless you <code>collect()</code>)</li>
+        <li>NOT mutable — you can't change a cell in place</li>
+        <li>NOT eagerly computed like Pandas</li>
+        <li>NOT a single-node data structure</li>
+        <li>NOT the same as a Pandas DataFrame (different API, different execution model)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>DataFrame vs Pandas DataFrame — Key Differences</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Aspect</th><th>Spark DataFrame</th><th>Pandas DataFrame</th></tr>
+      <tr><td>Execution</td><td>Lazy — no computation until action</td><td>Eager — runs immediately</td></tr>
+      <tr><td>Distribution</td><td>Distributed across cluster nodes</td><td>Single machine (RAM)</td></tr>
+      <tr><td>Scale</td><td>Terabytes to Petabytes</td><td>Limited to machine RAM (~GBs)</td></tr>
+      <tr><td>Mutability</td><td>Immutable — every op returns new DF</td><td>Mutable — in-place operations possible</td></tr>
+      <tr><td>API style</td><td>Functional / SQL</td><td>Pandas-style indexing</td></tr>
+      <tr><td>Column access</td><td><code>df["col"]</code> or <code>df.col</code> or <code>F.col("col")</code></td><td><code>df["col"]</code> or <code>df.col</code></td></tr>
+      <tr><td>Row indexing</td><td>❌ No row index</td><td>✅ Integer row index</td></tr>
+      <tr><td>Type system</td><td>Strict schema (StructType)</td><td>Inferred dtypes</td></tr>
+      <tr><td>Where data lives</td><td>Executor JVM memory / disk</td><td>Driver/local machine RAM</td></tr>
+    </table>
+  </div>
+
+  <div class="note blue">
+    <strong>Converting between them:</strong> Use <code>df.toPandas()</code> to pull a Spark DataFrame to the driver as a Pandas DataFrame (only safe for small datasets!). Use <code>spark.createDataFrame(pandas_df)</code> to push a Pandas DataFrame into Spark.
+  </div>
+</section>
+
+<!-- ═══════════════════ 05 DataFrame vs RDD vs Dataset ═══════════════════ -->
+<section class="section s-orange" id="s5">
+  <div class="section-hdr">
+    <span class="icon">⚖️</span>
+    <div>
+      <h2>DataFrame vs RDD vs Dataset</h2>
+      <div class="sub">The three data abstractions in Spark — when to use which</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Aspect</th><th>RDD <span class="pill p-purple">Spark 1.0+</span></th><th>DataFrame <span class="pill p-blue">Spark 1.3+</span></th><th>Dataset <span class="pill p-green">Spark 1.6+ (Scala/Java)</span></th></tr>
+      <tr><td>Full Name</td><td>Resilient Distributed Dataset</td><td>DataFrame</td><td>Dataset[T]</td></tr>
+      <tr><td>Type Safety</td><td>✅ Strongly typed (compile-time)</td><td>❌ No compile-time checks (runtime)</td><td>✅ Strongly typed</td></tr>
+      <tr><td>Schema</td><td>❌ No schema — raw objects</td><td>✅ Named columns + schema</td><td>✅ Schema + type</td></tr>
+      <tr><td>Catalyst Optimizer</td><td>❌ Not optimized</td><td>✅ Full Catalyst optimization</td><td>✅ Full Catalyst optimization</td></tr>
+      <tr><td>Tungsten Engine</td><td>❌ No code generation</td><td>✅ Whole-stage codegen</td><td>✅ Whole-stage codegen</td></tr>
+      <tr><td>API Level</td><td>Low-level (map, filter, reduce)</td><td>High-level (SQL-like, columnar)</td><td>High-level + typed</td></tr>
+      <tr><td>Available in PySpark?</td><td>✅ Yes</td><td>✅ Yes</td><td>⚠️ Python = DataFrame only (Dataset not exposed in PySpark)</td></tr>
+      <tr><td>Performance</td><td>Slowest (no optimization)</td><td>Fastest for structured data</td><td>As fast as DataFrame</td></tr>
+      <tr><td>When to use</td><td>Unstructured data, custom logic, fine-grained control</td><td>Structured data, SQL, most use cases</td><td>Scala/Java when type safety needed</td></tr>
+    </table>
+  </div>
+
+  <div class="note green">
+    <strong>✅ In PySpark, you almost always use DataFrames.</strong> RDDs exist but since Spark 2.0, the DataFrame API is preferred — it's faster (Catalyst + Tungsten), more readable, and easier to debug via Spark UI. RDDs are used when you need truly unstructured data processing (e.g., binary files, custom partitioners).
+  </div>
+
+  <h3>Internal Relationship</h3>
+  <div class="ss-visual">
+    <div class="ss-row">
+      <div class="ss-box" style="background:var(--purple-d);border-color:var(--purple);color:var(--purple);min-width:150px;">RDD[Row]<div class="ss-small">Low-level foundation</div></div>
+      <div style="color:var(--muted);display:flex;align-items:center;font-size:1.2rem;">→</div>
+      <div class="ss-box" style="background:var(--blue-d);border-color:var(--blue);color:var(--blue);min-width:150px;">DataFrame<div class="ss-small">= RDD[Row] + Schema</div></div>
+      <div style="color:var(--muted);display:flex;align-items:center;font-size:1.2rem;">→</div>
+      <div class="ss-box" style="background:var(--green-d);border-color:var(--green);color:var(--green);min-width:150px;">Dataset[T]<div class="ss-small">= DataFrame + Type</div></div>
+    </div>
+    <div style="color:var(--muted);font-size:0.78rem;margin-top:12px;">A DataFrame is internally represented as an RDD of Row objects, plus a schema (StructType). Every DataFrame can be converted to RDD via <code>df.rdd</code>.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════ 06 Create from List/Dict ═══════════════════ -->
+<section class="section s-blue" id="s6">
+  <div class="section-hdr">
+    <span class="icon">🐍</span>
+    <div>
+      <h2>Creating DataFrames from Python Lists &amp; Dictionaries</h2>
+      <div class="sub">spark.createDataFrame() · with and without schema</div>
+    </div>
+  </div>
+
+  <h3>Method 1: List of Tuples (Most Common in Unit Tests)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StructField, StringType, IntegerType, DoubleType
+
+spark = SparkSession.<span class="fn">builder</span>.<span class="fn">appName</span>(<span class="str">"Demo"</span>).<span class="fn">getOrCreate</span>()
+
+<span class="cm"># ── Data as list of tuples ──────────────────────────────────────────</span>
+data = [
+    (<span class="str">"TXN001"</span>, <span class="str">"Alice"</span>,  <span class="str">"IN"</span>, <span class="num">15000.0</span>, <span class="str">"COMPLETED"</span>),
+    (<span class="str">"TXN002"</span>, <span class="str">"Bob"</span>,    <span class="str">"US"</span>, <span class="num">82000.0</span>, <span class="str">"FLAGGED"</span>),
+    (<span class="str">"TXN003"</span>, <span class="str">"Carol"</span>,  <span class="str">"UK"</span>, <span class="num">3200.0</span>,  <span class="str">"COMPLETED"</span>),
+    (<span class="str">"TXN004"</span>, <span class="str">"David"</span>,  <span class="str">"IN"</span>, <span class="num">120000.0</span>,<span class="str">"FLAGGED"</span>),
+]
+
+<span class="cm"># ── Option A: Let Spark infer column names from the list ────────────</span>
+<span class="cm">#    Pass column names as a second argument (list of strings)</span>
+df = spark.<span class="fn">createDataFrame</span>(data, schema=[<span class="str">"txn_id"</span>, <span class="str">"name"</span>, <span class="str">"country"</span>, <span class="str">"amount"</span>, <span class="str">"status"</span>])
+df.<span class="fn">show</span>()
+
+<span class="cm"># ── Option B: Define explicit schema (safer for production) ─────────</span>
+schema = StructType([
+    StructField(<span class="str">"txn_id"</span>,  StringType(),  nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"name"</span>,    StringType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"country"</span>, StringType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"amount"</span>,  DoubleType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"status"</span>,  StringType(),  nullable=<span class="kw">True</span>),
+])
+df = spark.<span class="fn">createDataFrame</span>(data, schema=schema)
+df.<span class="fn">printSchema</span>()
+df.<span class="fn">show</span>()</code></pre>
+  </div>
+
+  <span class="output-label">▶ OUTPUT — df.show()</span>
+  <div class="df-show">+------+-----+-------+--------+---------+
+|txn_id| name|country|  amount|   status|
++------+-----+-------+--------+---------+
+|TXN001|Alice|     IN| 15000.0|COMPLETED|
+|TXN002|  Bob|     US| 82000.0|  FLAGGED|
+|TXN003|Carol|     UK|  3200.0|COMPLETED|
+|TXN004|David|     IN|120000.0|  FLAGGED|
++------+-----+-------+--------+---------+</div>
+
+  <h3>Method 2: List of Dictionaries (Very Readable)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — List of Dicts</span>
+    <pre><code><span class="cm"># Each dict = one row. Keys become column names automatically.</span>
+data_dicts = [
+    {<span class="str">"txn_id"</span>: <span class="str">"TXN001"</span>, <span class="str">"amount"</span>: <span class="num">15000.0</span>, <span class="str">"status"</span>: <span class="str">"COMPLETED"</span>},
+    {<span class="str">"txn_id"</span>: <span class="str">"TXN002"</span>, <span class="str">"amount"</span>: <span class="num">82000.0</span>, <span class="str">"status"</span>: <span class="str">"FLAGGED"</span>},
+    {<span class="str">"txn_id"</span>: <span class="str">"TXN003"</span>, <span class="str">"amount"</span>: <span class="num">3200.0</span>,  <span class="str">"status"</span>: <span class="str">"COMPLETED"</span>},
+]
+
+df = spark.<span class="fn">createDataFrame</span>(data_dicts)
+df.<span class="fn">show</span>()
+<span class="cm"># Column ORDER is dict key order (Python 3.7+: insertion order guaranteed)</span></code></pre>
+  </div>
+
+  <h3>Method 3: From Pandas DataFrame</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — From Pandas</span>
+    <pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+pandas_df = pd.<span class="cl">DataFrame</span>({
+    <span class="str">"txn_id"</span>: [<span class="str">"TXN001"</span>, <span class="str">"TXN002"</span>],
+    <span class="str">"amount"</span>: [<span class="num">15000.0</span>, <span class="num">82000.0</span>],
+})
+
+<span class="cm"># Convert Pandas → Spark DataFrame</span>
+<span class="cm"># Spark infers schema from Pandas dtypes automatically</span>
+spark_df = spark.<span class="fn">createDataFrame</span>(pandas_df)
+spark_df.<span class="fn">printSchema</span>()
+
+<span class="cm"># Convert back: Spark → Pandas (only safe for small data!)</span>
+back_to_pandas = spark_df.<span class="fn">toPandas</span>()
+<span class="cm"># ⚠️ toPandas() pulls ALL data to the driver — never use on large datasets</span></code></pre>
+  </div>
+
+  <div class="note orange">
+    <strong>⚠️ createDataFrame() is an Action, not a Transformation!</strong> Unlike <code>spark.read</code> (which is lazy), <code>spark.createDataFrame()</code> immediately serializes your Python list and distributes it to executors. For large datasets this is slow — use <code>spark.read</code> to load from files instead.
+  </div>
+
+  <h3>Method 4: Using Row Objects</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Row Objects</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> Row
+
+<span class="cm"># Row is a named tuple — access fields by name or position</span>
+data_rows = [
+    Row(txn_id=<span class="str">"TXN001"</span>, amount=<span class="num">15000.0</span>, status=<span class="str">"COMPLETED"</span>),
+    Row(txn_id=<span class="str">"TXN002"</span>, amount=<span class="num">82000.0</span>, status=<span class="str">"FLAGGED"</span>),
+]
+
+df = spark.<span class="fn">createDataFrame</span>(data_rows)
+df.<span class="fn">show</span>()
+
+<span class="cm"># Access a Row's field:</span>
+row = data_rows[<span class="num">0</span>]
+<span class="fn">print</span>(row.txn_id)      <span class="cm"># "TXN001"</span>
+<span class="fn">print</span>(row[<span class="num">0</span>])          <span class="cm"># "TXN001" (positional)</span></code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ 07 Create from CSV ═══════════════════ -->
+<section class="section s-green" id="s7">
+  <div class="section-hdr">
+    <span class="icon">📄</span>
+    <div>
+      <h2>Creating DataFrames from CSV</h2>
+      <div class="sub">spark.read.csv() · All options explained · Schema inference vs explicit</div>
+    </div>
+  </div>
+
+  <h3>Basic CSV Read</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — CSV Read</span>
+    <pre><code><span class="cm"># ── Simplest form (bad practice in production) ──────────────────────</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/path/to/transactions.csv"</span>)
+<span class="cm"># Problem: Spark gives columns default names _c0, _c1, _c2 etc.</span>
+<span class="cm"># All types default to StringType — no real type inference</span>
+
+<span class="cm"># ── With header and basic type inference ────────────────────────────</span>
+df = spark.read \
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>) \          <span class="cm"># 1st row = column names</span>
+    .<span class="fn">option</span>(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>) \     <span class="cm"># Scan data to guess types (SLOW — reads twice!)</span>
+    .<span class="fn">csv</span>(<span class="str">"/path/to/transactions.csv"</span>)</code></pre>
+  </div>
+
+  <h3>Production-Grade CSV Read (All Options)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Production CSV</span>
+    <pre><code><span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StructField, StringType, DoubleType, DateType, IntegerType
+
+<span class="cm"># Always define schema explicitly in production — never use inferSchema on large files</span>
+txn_schema = StructType([
+    StructField(<span class="str">"txn_id"</span>,    StringType(),  nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"account_id"</span>,StringType(),  nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"country"</span>,   StringType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"amount"</span>,    DoubleType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"currency"</span>,  StringType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"status"</span>,    StringType(),  nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"txn_date"</span>,  StringType(),  nullable=<span class="kw">True</span>),
+])
+
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"csv"</span>) \                          <span class="cm"># Explicit format</span>
+    .<span class="fn">schema</span>(txn_schema) \                       <span class="cm"># Our schema — no scan needed</span>
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>) \               <span class="cm"># First row is header</span>
+    .<span class="fn">option</span>(<span class="str">"sep"</span>, <span class="str">","</span>) \                       <span class="cm"># Delimiter (default comma)</span>
+    .<span class="fn">option</span>(<span class="str">"quote"</span>, <span class="str">'"'</span>) \                    <span class="cm"># Quote char for fields with commas</span>
+    .<span class="fn">option</span>(<span class="str">"escape"</span>, <span class="str">"\\"</span>) \                  <span class="cm"># Escape character</span>
+    .<span class="fn">option</span>(<span class="str">"nullValue"</span>, <span class="str">"NA"</span>) \               <span class="cm"># Treat "NA" string as null</span>
+    .<span class="fn">option</span>(<span class="str">"emptyValue"</span>, <span class="str">""</span>) \               <span class="cm"># Treat empty fields as empty string</span>
+    .<span class="fn">option</span>(<span class="str">"ignoreLeadingWhiteSpace"</span>, <span class="str">"true"</span>) \
+    .<span class="fn">option</span>(<span class="str">"ignoreTrailingWhiteSpace"</span>, <span class="str">"true"</span>) \
+    .<span class="fn">option</span>(<span class="str">"mode"</span>, <span class="str">"PERMISSIVE"</span>) \            <span class="cm"># PERMISSIVE=null bad rows, DROPMALFORMED=skip, FAILFAST=error</span>
+    .<span class="fn">option</span>(<span class="str">"columnNameOfCorruptRecord"</span>, <span class="str">"_corrupt_record"</span>) \ <span class="cm"># Track bad rows</span>
+    .<span class="fn">option</span>(<span class="str">"encoding"</span>, <span class="str">"UTF-8"</span>) \            <span class="cm"># Character encoding</span>
+    .<span class="fn">load</span>(<span class="str">"abfss://raw@bankadls.dfs.core.windows.net/transactions/*.csv"</span>)
+    <span class="cm"># ↑ Glob pattern — reads ALL CSV files in the folder</span>
+
+<span class="fn">print</span>(<span class="str">f"Rows: {df.count()}, Partitions: {df.rdd.getNumPartitions()}"</span>)
+df.<span class="fn">printSchema</span>()
+df.<span class="fn">show</span>(<span class="num">5</span>, truncate=<span class="kw">False</span>)</code></pre>
+  </div>
+
+  <h3>CSV Read Modes — Critical Interview Topic</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Mode</th><th>Behaviour on Malformed Rows</th><th>When to Use</th></tr>
+      <tr><td>PERMISSIVE</td><td>Sets fields to <code>null</code>; optionally stores bad row in <code>_corrupt_record</code> column</td><td><strong>Default.</strong> Good for debugging — keeps bad rows visible</td></tr>
+      <tr><td>DROPMALFORMED</td><td>Silently drops (ignores) rows that can't be parsed</td><td>When bad rows are expected and you want clean data</td></tr>
+      <tr><td>FAILFAST</td><td>Immediately throws an exception on the first bad row</td><td>Production pipelines where data quality must be 100%</td></tr>
+    </table>
+  </div>
+
+  <div class="note yellow">
+    <strong>inferSchema vs explicit schema — always use explicit in production:</strong>
+    <br>• <code>inferSchema=true</code> reads the entire file <em>twice</em> (once to infer types, once to load) — doubles I/O cost.
+    <br>• With explicit schema, Spark reads once and trusts you for the types.
+    <br>• <code>inferSchema</code> can guess wrong (e.g., an integer column with one "N/A" row becomes String).
+  </div>
+</section>
+
+<!-- ═══════════════════ 08 Create from JSON ═══════════════════ -->
+<section class="section s-yellow" id="s8">
+  <div class="section-hdr">
+    <span class="icon">{ }</span>
+    <div>
+      <h2>Creating DataFrames from JSON</h2>
+      <div class="sub">spark.read.json() · Nested JSON · multiLine · Schema for nested structures</div>
+    </div>
+  </div>
+
+  <div class="note blue">
+    <strong>Important:</strong> Spark reads <strong>JSON Lines format</strong> (newline-delimited JSON) by default — one JSON object per line. If your file has a single JSON array or pretty-printed JSON spanning multiple lines, you must use <code>multiLine=true</code>.
+  </div>
+
+  <h3>JSON Lines (Default — One Object Per Line)</h3>
+  <div class="code-wrap">
+    <span class="code-label">JSON Lines File (transactions.json)</span>
+    <pre><code>{"txn_id":"TXN001","amount":15000.0,"status":"COMPLETED","country":"IN"}
+{"txn_id":"TXN002","amount":82000.0,"status":"FLAGGED","country":"US"}
+{"txn_id":"TXN003","amount":3200.0,"status":"COMPLETED","country":"UK"}</code></pre>
+  </div>
+
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Read JSON Lines</span>
+    <pre><code><span class="cm"># Spark infers schema from JSON keys automatically (reasonable for JSON)</span>
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"json"</span>) \
+    .<span class="fn">option</span>(<span class="str">"mode"</span>, <span class="str">"PERMISSIVE"</span>) \
+    .<span class="fn">load</span>(<span class="str">"/path/to/transactions.json"</span>)
+
+df.<span class="fn">printSchema</span>()
+df.<span class="fn">show</span>()</code></pre>
+  </div>
+
+  <h3>Multi-Line JSON (Pretty-Printed / Array Format)</h3>
+  <div class="code-wrap">
+    <span class="code-label">Multi-Line JSON File</span>
+    <pre><code>[
+  {"txn_id": "TXN001", "amount": 15000.0, "status": "COMPLETED"},
+  {"txn_id": "TXN002", "amount": 82000.0, "status": "FLAGGED"}
+]</code></pre>
+  </div>
+
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Multi-Line JSON</span>
+    <pre><code>df = spark.read \
+    .<span class="fn">option</span>(<span class="str">"multiLine"</span>, <span class="str">"true"</span>) \   <span class="cm"># ← required for array / pretty-printed JSON</span>
+    .<span class="fn">option</span>(<span class="str">"mode"</span>, <span class="str">"PERMISSIVE"</span>) \
+    .<span class="fn">json</span>(<span class="str">"/path/to/transactions_array.json"</span>)</code></pre>
+  </div>
+
+  <h3>Nested JSON — Flattening with dot notation and explode()</h3>
+  <div class="code-wrap">
+    <span class="code-label">Nested JSON File</span>
+    <pre><code>{"txn_id":"TXN001","amount":15000.0,"customer":{"name":"Alice","tier":"Gold"},"tags":["urgent","review"]}</code></pre>
+  </div>
+
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Handling Nested JSON</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+df = spark.read.<span class="fn">json</span>(<span class="str">"/path/to/nested_txns.json"</span>)
+
+df.<span class="fn">printSchema</span>()
+<span class="cm"># Spark auto-detects nested struct and array:</span>
+<span class="cm"># root</span>
+<span class="cm">#  |-- txn_id: string</span>
+<span class="cm">#  |-- amount: double</span>
+<span class="cm">#  |-- customer: struct              ← nested object</span>
+<span class="cm">#  |    |-- name: string</span>
+<span class="cm">#  |    |-- tier: string</span>
+<span class="cm">#  |-- tags: array&lt;string&gt;          ← array</span>
+
+<span class="cm"># Access nested struct field using dot notation:</span>
+df_flat = df.<span class="fn">select</span>(
+    <span class="str">"txn_id"</span>,
+    <span class="str">"amount"</span>,
+    <span class="str">"customer.name"</span>,         <span class="cm"># Dot notation for struct field</span>
+    <span class="str">"customer.tier"</span>,
+    F.<span class="fn">col</span>(<span class="str">"customer.name"</span>).<span class="fn">alias</span>(<span class="str">"cust_name"</span>),  <span class="cm"># Rename</span>
+)
+
+<span class="cm"># Explode array — creates one row per array element:</span>
+df_exploded = df.<span class="fn">select</span>(<span class="str">"txn_id"</span>, F.<span class="fn">explode</span>(F.<span class="fn">col</span>(<span class="str">"tags"</span>)).<span class="fn">alias</span>(<span class="str">"tag"</span>))
+df_exploded.<span class="fn">show</span>()</code></pre>
+  </div>
+
+  <h3>JSON with Explicit Schema (Nested StructType)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Nested Schema Definition</span>
+    <pre><code><span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StructField, StringType, DoubleType, ArrayType
+
+customer_schema = StructType([
+    StructField(<span class="str">"name"</span>, StringType(), nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"tier"</span>, StringType(), nullable=<span class="kw">True</span>),
+])
+
+full_schema = StructType([
+    StructField(<span class="str">"txn_id"</span>,   StringType(),           nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"amount"</span>,   DoubleType(),           nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"customer"</span>, customer_schema,         nullable=<span class="kw">True</span>),   <span class="cm"># nested struct</span>
+    StructField(<span class="str">"tags"</span>,     ArrayType(StringType()), nullable=<span class="kw">True</span>),   <span class="cm"># array of strings</span>
+])
+
+df = spark.read.<span class="fn">schema</span>(full_schema).<span class="fn">json</span>(<span class="str">"/path/to/nested.json"</span>)</code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ 09 Parquet & Delta ═══════════════════ -->
+<section class="section s-purple" id="s9">
+  <div class="section-hdr">
+    <span class="icon">🗄️</span>
+    <div>
+      <h2>Creating DataFrames from Parquet, Delta, and Other Formats</h2>
+      <div class="sub">Why Parquet is the production standard · Delta Lake · ORC · Avro</div>
+    </div>
+  </div>
+
+  <h3>Why Parquet (Not CSV) in Production?</h3>
+  <div class="compare-grid">
+    <div class="compare-card green">
+      <h4 style="color:var(--green)">✅ Parquet</h4>
+      <ul>
+        <li>Columnar storage — reads only needed columns</li>
+        <li>Stores schema inside the file — no inferSchema needed</li>
+        <li>Built-in compression (Snappy/ZSTD) — 10-20x smaller than CSV</li>
+        <li>Supports predicate pushdown — reads only matching row groups</li>
+        <li><strong>Industry standard for big data</strong></li>
+      </ul>
+    </div>
+    <div class="compare-card yellow">
+      <h4 style="color:var(--yellow)">⚠️ CSV</h4>
+      <ul>
+        <li>Row-oriented — reads all columns even if not needed</li>
+        <li>No schema — must infer or define manually</li>
+        <li>No compression by default</li>
+        <li>No predicate pushdown</li>
+        <li>Good for: data exchange, Excel exports, source ingestion</li>
+      </ul>
+    </div>
+    <div class="compare-card blue">
+      <h4 style="color:var(--blue)">🔵 Delta Lake</h4>
+      <ul>
+        <li>Parquet + transaction log (<code>_delta_log</code>)</li>
+        <li>ACID transactions, time travel, schema evolution</li>
+        <li>Optimized for Databricks / ADLS Gen2</li>
+        <li><strong>Recommended format for all Databricks pipelines</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Reading Parquet</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Parquet</span>
+    <pre><code><span class="cm"># No schema needed — Parquet embeds schema in the file footer</span>
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"parquet"</span>) \
+    .<span class="fn">load</span>(<span class="str">"abfss://silver@bankadls.dfs.core.windows.net/transactions/"</span>)
+
+<span class="cm"># Shorthand (same result):</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"abfss://silver@bankadls.dfs.core.windows.net/transactions/"</span>)
+
+<span class="cm"># Reading a partitioned Parquet folder (e.g., partitioned by date):</span>
+<span class="cm"># /transactions/year=2024/month=01/part-0000.parquet</span>
+<span class="cm"># /transactions/year=2024/month=02/part-0000.parquet</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"abfss://silver@bankadls.dfs.core.windows.net/transactions/"</span>)
+<span class="cm"># Spark automatically picks up partition columns year, month as DF columns</span>
+
+<span class="cm"># ── Partition Pruning (huge performance win): ──────────────────────</span>
+df_jan = df.<span class="fn">filter</span>((df.year == <span class="num">2024</span>) &amp; (df.month == <span class="num">1</span>))
+<span class="cm"># Spark reads ONLY /year=2024/month=01/ folder — skips everything else!</span></code></pre>
+  </div>
+
+  <h3>Reading Delta Lake</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Delta Lake (Databricks / Azure)</span>
+    <pre><code><span class="cm"># Read current version (latest snapshot)</span>
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">load</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud_summary/"</span>)
+
+<span class="cm"># ── Time Travel: Read a previous version ──────────────────────────</span>
+df_v3 = spark.read \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">option</span>(<span class="str">"versionAsOf"</span>, <span class="num">3</span>) \       <span class="cm"># Read version 3</span>
+    .<span class="fn">load</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud_summary/"</span>)
+
+<span class="cm"># ── Time Travel: Read by timestamp ────────────────────────────────</span>
+df_ts = spark.read \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">option</span>(<span class="str">"timestampAsOf"</span>, <span class="str">"2024-01-15 00:00:00"</span>) \
+    .<span class="fn">load</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud_summary/"</span>)
+
+<span class="cm"># ── Read as SQL Table (Unity Catalog) ─────────────────────────────</span>
+df = spark.<span class="fn">read</span>.<span class="fn">table</span>(<span class="str">"banking_catalog.fraud.summary"</span>)
+<span class="cm"># Equivalent SQL:</span>
+df = spark.<span class="fn">sql</span>(<span class="str">"SELECT * FROM banking_catalog.fraud.summary"</span>)</code></pre>
+  </div>
+
+  <h3>Format Quick Reference</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Format</th><th>Read Method</th><th>Schema Embedded?</th><th>Compression</th><th>Best For</th></tr>
+      <tr><td>CSV</td><td><code>spark.read.csv()</code></td><td>❌ No</td><td>Optional (gzip etc.)</td><td>Source ingestion, Excel exports</td></tr>
+      <tr><td>JSON</td><td><code>spark.read.json()</code></td><td>❌ No (inferred)</td><td>Optional</td><td>API responses, event data</td></tr>
+      <tr><td>Parquet</td><td><code>spark.read.parquet()</code></td><td>✅ Yes</td><td>Yes (Snappy/ZSTD)</td><td>Data lake silver/gold layers</td></tr>
+      <tr><td>Delta</td><td><code>spark.read.format("delta")</code></td><td>✅ Yes + txn log</td><td>Yes</td><td>ACID pipelines, Databricks</td></tr>
+      <tr><td>ORC</td><td><code>spark.read.orc()</code></td><td>✅ Yes</td><td>Yes (ZLIB)</td><td>Hive-based workloads</td></tr>
+      <tr><td>Avro</td><td><code>spark.read.format("avro")</code></td><td>✅ Yes</td><td>Optional</td><td>Kafka message serialization</td></tr>
+      <tr><td>JDBC</td><td><code>spark.read.jdbc()</code></td><td>✅ Yes (DB schema)</td><td>No</td><td>Reading from SQL databases</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════ 10 Schema ═══════════════════ -->
+<section class="section s-orange" id="s10">
+  <div class="section-hdr">
+    <span class="icon">🏗️</span>
+    <div>
+      <h2>Schema — StructType, StructField &amp; All Data Types</h2>
+      <div class="sub">Defining schemas explicitly · Why it matters · All Spark types</div>
+    </div>
+  </div>
+
+  <p>A <strong>Schema</strong> in Spark describes the structure of a DataFrame: the column names, their data types, and whether they can contain null values. It is represented as a <code>StructType</code> object.</p>
+
+  <h3>Anatomy of a Schema</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Full Schema Definition</span>
+    <pre><code><span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> (
+    StructType, StructField,
+    <span class="cm"># String</span>
+    StringType,
+    <span class="cm"># Numeric</span>
+    IntegerType, LongType, FloatType, DoubleType, DecimalType,
+    ShortType, ByteType,
+    <span class="cm"># Boolean</span>
+    BooleanType,
+    <span class="cm"># Date &amp; Time</span>
+    DateType, TimestampType, TimestampNTZType,
+    <span class="cm"># Complex Types</span>
+    ArrayType, MapType,
+    <span class="cm"># Binary</span>
+    BinaryType,
+)
+
+banking_schema = StructType([
+    <span class="cm"># StructField(name, dataType, nullable)</span>
+    <span class="cm">#                              ↑ True = column CAN have null values</span>
+    StructField(<span class="str">"txn_id"</span>,      StringType(),          nullable=<span class="kw">False</span>), <span class="cm"># Primary key — never null</span>
+    StructField(<span class="str">"account_id"</span>,  StringType(),          nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"txn_date"</span>,    TimestampType(),       nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"amount"</span>,      DecimalType(<span class="num">18</span>, <span class="num">4</span>),    nullable=<span class="kw">True</span>), <span class="cm"># 18 total digits, 4 decimal</span>
+    StructField(<span class="str">"currency"</span>,    StringType(),          nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"country"</span>,     StringType(),          nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"is_flagged"</span>,  BooleanType(),         nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"risk_score"</span>,  DoubleType(),          nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"tags"</span>,         ArrayType(StringType()),nullable=<span class="kw">True</span>), <span class="cm"># array column</span>
+    StructField(<span class="str">"metadata"</span>,    MapType(StringType(), StringType()), nullable=<span class="kw">True</span>), <span class="cm"># map column</span>
+    StructField(<span class="str">"customer"</span>,    StructType([            <span class="cm"># nested struct</span>
+        StructField(<span class="str">"name"</span>, StringType(), <span class="kw">True</span>),
+        StructField(<span class="str">"tier"</span>, StringType(), <span class="kw">True</span>),
+    ]), nullable=<span class="kw">True</span>),
+])</code></pre>
+  </div>
+
+  <h3>All Spark Data Types Reference</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Category</th><th>Spark Type</th><th>Python Equivalent</th><th>Notes</th></tr>
+      <tr><td>String</td><td><code>StringType()</code></td><td><code>str</code></td><td>UTF-8 encoded string</td></tr>
+      <tr><td>Integer</td><td><code>IntegerType()</code></td><td><code>int</code></td><td>32-bit signed integer</td></tr>
+      <tr><td>Long</td><td><code>LongType()</code></td><td><code>int</code></td><td>64-bit signed integer (default for large numbers)</td></tr>
+      <tr><td>Float</td><td><code>FloatType()</code></td><td><code>float</code></td><td>32-bit floating point</td></tr>
+      <tr><td>Double</td><td><code>DoubleType()</code></td><td><code>float</code></td><td>64-bit floating point (default for decimals)</td></tr>
+      <tr><td>Decimal</td><td><code>DecimalType(p, s)</code></td><td><code>Decimal</code></td><td>Exact precision — use for financial amounts!</td></tr>
+      <tr><td>Boolean</td><td><code>BooleanType()</code></td><td><code>bool</code></td><td>True/False</td></tr>
+      <tr><td>Date</td><td><code>DateType()</code></td><td><code>datetime.date</code></td><td>Date without time</td></tr>
+      <tr><td>Timestamp</td><td><code>TimestampType()</code></td><td><code>datetime.datetime</code></td><td>Date + time with timezone</td></tr>
+      <tr><td>Array</td><td><code>ArrayType(elementType)</code></td><td><code>list</code></td><td>List of elements</td></tr>
+      <tr><td>Map</td><td><code>MapType(keyType, valueType)</code></td><td><code>dict</code></td><td>Key-value pairs</td></tr>
+      <tr><td>Struct</td><td><code>StructType([StructField...])</code></td><td><code>dict</code></td><td>Nested object/row</td></tr>
+      <tr><td>Binary</td><td><code>BinaryType()</code></td><td><code>bytes</code></td><td>Raw byte array</td></tr>
+    </table>
+  </div>
+
+  <div class="note red">
+    <strong>🚨 Use DecimalType for Money!</strong> Never use DoubleType or FloatType for monetary amounts. Floating-point arithmetic has precision errors (e.g., 0.1 + 0.2 ≠ 0.3 in IEEE 754). Always use <code>DecimalType(18, 4)</code> for financial data — it gives you exact decimal arithmetic.
+  </div>
+
+  <h3>Schema Using DDL String (Shorthand)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — DDL Schema String</span>
+    <pre><code><span class="cm"># Quicker to write — uses SQL-like DDL syntax</span>
+schema_ddl = <span class="str">"txn_id STRING NOT NULL, amount DOUBLE, txn_date TIMESTAMP, is_flagged BOOLEAN"</span>
+
+df = spark.read \
+    .<span class="fn">schema</span>(schema_ddl) \
+    .<span class="fn">csv</span>(<span class="str">"/path/to/file.csv"</span>, header=<span class="kw">True</span>)
+
+<span class="cm"># Convert DDL string to StructType object if needed:</span>
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> _parse_datatype_string
+struct_schema = spark.<span class="fn">_jvm</span>.org.apache.spark.sql.types.DataType \
+    .<span class="fn">fromDDL</span>(schema_ddl)  <span class="cm"># internal conversion</span>
+
+<span class="cm"># Easier way: get schema from an existing DataFrame or table</span>
+existing_schema = df.<span class="fn">schema</span>         <span class="cm"># Returns StructType object</span>
+schema_as_json = df.schema.<span class="fn">json</span>()   <span class="cm"># Returns schema as JSON string</span>
+schema_as_ddl  = df.schema.<span class="fn">simpleString</span>()  <span class="cm"># Returns DDL-like string</span></code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ 11 Inspecting DataFrames ═══════════════════ -->
+<section class="section s-teal" id="s11">
+  <div class="section-hdr">
+    <span class="icon">🔍</span>
+    <div>
+      <h2>Inspecting DataFrames — Complete API</h2>
+      <div class="sub">printSchema() · show() · display() · describe() · explain() and more</div>
+    </div>
+  </div>
+
+  <h3>printSchema() — Understanding the Schema</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — printSchema()</span>
+    <pre><code>df.<span class="fn">printSchema</span>()
+<span class="cm"># Prints the schema as a tree — shows column names, types, and nullable flag</span>
+<span class="cm"># This is a DRIVER-side operation — no Spark job triggered</span></code></pre>
+  </div>
+
+  <div class="schema-display">
+<span class="sch-root">root</span>
+ |-- <span class="sch-field">txn_id</span>: <span class="sch-type">string</span> (<span class="sch-null">nullable = false</span>)
+ |-- <span class="sch-field">account_id</span>: <span class="sch-type">string</span> (<span class="sch-null">nullable = false</span>)
+ |-- <span class="sch-field">txn_date</span>: <span class="sch-type">timestamp</span> (<span class="sch-null">nullable = true</span>)
+ |-- <span class="sch-field">amount</span>: <span class="sch-type">decimal(18,4)</span> (<span class="sch-null">nullable = true</span>)
+ |-- <span class="sch-field">country</span>: <span class="sch-type">string</span> (<span class="sch-null">nullable = true</span>)
+ |-- <span class="sch-field">is_flagged</span>: <span class="sch-type">boolean</span> (<span class="sch-null">nullable = true</span>)
+ |-- <span class="sch-field">customer</span>: <span class="sch-type">struct</span> (<span class="sch-null">nullable = true</span>)
+ |    |-- <span class="sch-field">name</span>: <span class="sch-type">string</span> (<span class="sch-null">nullable = true</span>)
+ |    |-- <span class="sch-field">tier</span>: <span class="sch-type">string</span> (<span class="sch-null">nullable = true</span>)
+ |-- <span class="sch-field">tags</span>: <span class="sch-type">array</span> (<span class="sch-null">nullable = true</span>)
+ |    |-- element: <span class="sch-type">string</span> (<span class="sch-null">containsNull = true</span>)</div>
+
+  <h3>show() — Preview Rows</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — show() all options</span>
+    <pre><code><span class="cm"># Basic show — displays 20 rows, truncates long values at 20 chars</span>
+df.<span class="fn">show</span>()
+
+<span class="cm"># Show with all options:</span>
+df.<span class="fn">show</span>(
+    n=<span class="num">10</span>,             <span class="cm"># number of rows to display (default: 20)</span>
+    truncate=<span class="kw">False</span>,   <span class="cm"># False = show full column values (no truncation)</span>
+    vertical=<span class="kw">False</span>    <span class="cm"># True = display each row as key:value pairs (for wide tables)</span>
+)
+
+<span class="cm"># Vertical mode (great for wide DataFrames with many columns):</span>
+df.<span class="fn">show</span>(<span class="num">5</span>, truncate=<span class="kw">False</span>, vertical=<span class="kw">True</span>)
+<span class="cm"># Output:</span>
+<span class="cm"># -RECORD 0------------------</span>
+<span class="cm"># txn_id   | TXN001</span>
+<span class="cm"># amount   | 15000.0</span>
+<span class="cm"># ...</span>
+
+<span class="cm"># ⚠️ show() is an ACTION — it triggers a Spark job!</span>
+<span class="cm"># Spark must compute results to display them</span></code></pre>
+  </div>
+
+  <div class="note yellow">
+    <strong>show() vs display() in Databricks:</strong> <code>show()</code> is standard PySpark — outputs plain text in a notebook. <code>display(df)</code> is Databricks-specific and renders an interactive HTML table with sorting, charting, and download buttons. In Databricks notebooks, always prefer <code>display(df)</code> for exploration.
+  </div>
+
+  <h3>All DataFrame Inspection Methods</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Complete Inspection API</span>
+    <pre><code><span class="cm"># ── Schema & Structure ─────────────────────────────────────────────</span>
+df.<span class="fn">printSchema</span>()          <span class="cm"># Print schema tree (no job triggered)</span>
+df.<span class="fn">schema</span>                  <span class="cm"># Returns StructType object</span>
+df.<span class="fn">dtypes</span>                  <span class="cm"># List of (column_name, type_string) tuples</span>
+df.<span class="fn">columns</span>                 <span class="cm"># List of column name strings</span>
+
+<span class="cm"># ── Shape & Size (these trigger jobs!) ────────────────────────────</span>
+df.<span class="fn">count</span>()                  <span class="cm"># Number of rows — triggers a full scan job</span>
+<span class="fn">len</span>(df.<span class="fn">columns</span>)            <span class="cm"># Number of columns — no job needed</span>
+
+<span class="cm"># ── Preview Data ──────────────────────────────────────────────────</span>
+df.<span class="fn">show</span>(<span class="num">10</span>)                 <span class="cm"># Print first 10 rows (triggers job)</span>
+df.<span class="fn">head</span>(<span class="num">5</span>)                  <span class="cm"># Returns list of 5 Row objects (triggers job)</span>
+df.<span class="fn">first</span>()                  <span class="cm"># Returns the first Row (triggers job)</span>
+df.<span class="fn">take</span>(<span class="num">3</span>)                  <span class="cm"># Returns list of 3 Row objects</span>
+df.<span class="fn">tail</span>(<span class="num">3</span>)                  <span class="cm"># Returns last 3 rows (Spark 3.0+)</span>
+df.<span class="fn">collect</span>()                <span class="cm"># Returns ALL rows — DANGER on large data!</span>
+
+<span class="cm"># ── Statistics ────────────────────────────────────────────────────</span>
+df.<span class="fn">describe</span>()                   <span class="cm"># count, mean, stddev, min, max for numeric columns</span>
+df.<span class="fn">describe</span>(<span class="str">"amount"</span>, <span class="str">"risk_score"</span>)  <span class="cm"># Only for specified columns</span>
+df.<span class="fn">summary</span>()                    <span class="cm"># Like describe + percentiles (25%, 50%, 75%)</span>
+
+<span class="cm"># ── Query Plan (optimization debugging) ───────────────────────────</span>
+df.<span class="fn">explain</span>()                 <span class="cm"># Print physical plan</span>
+df.<span class="fn">explain</span>(extended=<span class="kw">True</span>)    <span class="cm"># Print all 4 plans: parsed/analyzed/optimized/physical</span>
+df.<span class="fn">explain</span>(mode=<span class="str">"formatted"</span>) <span class="cm"># Formatted output (Spark 3.0+)</span>
+df.<span class="fn">explain</span>(mode=<span class="str">"codegen"</span>)   <span class="cm"># See the generated Java bytecode</span>
+
+<span class="cm"># ── Partitions ────────────────────────────────────────────────────</span>
+df.rdd.<span class="fn">getNumPartitions</span>()    <span class="cm"># Number of partitions (no job needed)</span></code></pre>
+  </div>
+
+  <h3>describe() and summary() Output</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — describe()</span>
+    <pre><code>df.<span class="fn">describe</span>(<span class="str">"amount"</span>).<span class="fn">show</span>()</code></pre>
+  </div>
+  <div class="df-show">+-------+------------------+
+|summary|            amount|
++-------+------------------+
+|  count|                 4|
+|   mean|          55050.00|
+| stddev|        49456.2271|
+|    min|            3200.0|
+|    max|          120000.0|
++-------+------------------+</div>
+
+  <h3>explain() — Reading the Query Plan</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — explain()</span>
+    <pre><code>df_result = df.<span class="fn">filter</span>(df.amount > <span class="num">10000</span>).<span class="fn">groupBy</span>(<span class="str">"country"</span>).<span class="fn">agg</span>({<span class="str">"amount"</span>: <span class="str">"sum"</span>})
+df_result.<span class="fn">explain</span>(extended=<span class="kw">True</span>)
+
+<span class="cm"># Output shows:
+# == Parsed Logical Plan ==      ← raw syntax tree
+# == Analyzed Logical Plan ==    ← column names resolved
+# == Optimized Logical Plan ==   ← after Catalyst (filter pushed down etc.)
+# == Physical Plan ==            ← actual execution operators</span></code></pre>
+  </div>
+
+  <div class="note purple">
+    <strong>💡 How to read explain() output:</strong> Read from the <em>bottom up</em>. The bottom is where data comes from (file scan). Each step above applies an operation. Look for <strong>Filter</strong> near the bottom (good — predicate pushdown worked) vs. at the top (bad — full scan first). Look for <strong>BroadcastHashJoin</strong> instead of <strong>SortMergeJoin</strong> for small table joins.
+  </div>
+</section>
+
+<!-- ═══════════════════ 12 spark.read API ═══════════════════ -->
+<section class="section s-cyan" id="s12">
+  <div class="section-hdr">
+    <span class="icon">📖</span>
+    <div>
+      <h2>spark.read — Full API Reference</h2>
+      <div class="sub">DataFrameReader · format chains · JDBC · multiple files · write API</div>
+    </div>
+  </div>
+
+  <h3>The DataFrameReader Chain</h3>
+  <p>Every <code>spark.read</code> call returns a <strong>DataFrameReader</strong> object. You chain methods on it to configure the read, then call a load method (<code>.load()</code>, <code>.csv()</code>, etc.) to get a DataFrame. <strong>This is lazy — no actual reading happens until an action.</strong></p>
+
+  <div class="code-wrap">
+    <span class="code-label">PySpark — DataFrameReader Pattern</span>
+    <pre><code><span class="cm"># Full generic pattern:</span>
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"format_name"</span>) \   <span class="cm"># csv / json / parquet / delta / jdbc / orc / avro</span>
+    .<span class="fn">schema</span>(my_schema) \        <span class="cm"># Optional: provide explicit StructType or DDL string</span>
+    .<span class="fn">option</span>(<span class="str">"key"</span>, <span class="str">"value"</span>) \  <span class="cm"># Format-specific options</span>
+    .<span class="fn">option</span>(<span class="str">"key2"</span>, <span class="str">"val2"</span>) \  <span class="cm"># Chain multiple options</span>
+    .<span class="fn">options</span>({<span class="str">"k"</span>:<span class="str">"v"</span>, <span class="str">"k2"</span>:<span class="str">"v2"</span>}) \ <span class="cm"># Or pass a dict of options</span>
+    .<span class="fn">load</span>(<span class="str">"path/to/data"</span>)      <span class="cm"># Path — can be a file, folder, glob, list</span>
+
+<span class="cm"># Shorthand for common formats (skips .format() and .load()):</span>
+df_csv     = spark.read.<span class="fn">csv</span>(<span class="str">"path"</span>)
+df_json    = spark.read.<span class="fn">json</span>(<span class="str">"path"</span>)
+df_parquet = spark.read.<span class="fn">parquet</span>(<span class="str">"path"</span>)
+df_orc     = spark.read.<span class="fn">orc</span>(<span class="str">"path"</span>)
+df_table   = spark.read.<span class="fn">table</span>(<span class="str">"catalog.database.table_name"</span>)
+df_text    = spark.read.<span class="fn">text</span>(<span class="str">"path"</span>)  <span class="cm"># Each line as a row in "value" column</span></code></pre>
+  </div>
+
+  <h3>Reading Multiple Files</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Multiple Files / Glob</span>
+    <pre><code><span class="cm"># Option 1: Glob pattern — read all matching files</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/data/transactions/2024/*.csv"</span>)   <span class="cm"># all CSVs in folder</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/data/transactions/202401*.csv"</span>)  <span class="cm"># Jan 2024 files</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"/data/transactions/"</span>)         <span class="cm"># entire folder</span>
+
+<span class="cm"># Option 2: List of paths</span>
+paths = [
+    <span class="str">"/data/jan.csv"</span>,
+    <span class="str">"/data/feb.csv"</span>,
+    <span class="str">"/data/mar.csv"</span>,
+]
+df = spark.read.<span class="fn">csv</span>(paths, header=<span class="kw">True</span>, schema=my_schema)
+
+<span class="cm"># Track which file each row came from:</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+df = df.<span class="fn">withColumn</span>(<span class="str">"source_file"</span>, F.<span class="fn">input_file_name</span>())</code></pre>
+  </div>
+
+  <h3>Reading from JDBC (SQL Databases)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — JDBC (Azure SQL / PostgreSQL)</span>
+    <pre><code><span class="cm"># Read from Azure SQL Database using JDBC</span>
+df = spark.read \
+    .<span class="fn">format</span>(<span class="str">"jdbc"</span>) \
+    .<span class="fn">option</span>(<span class="str">"url"</span>, <span class="str">"jdbc:sqlserver://myserver.database.windows.net:1433;database=banking"</span>) \
+    .<span class="fn">option</span>(<span class="str">"dbtable"</span>, <span class="str">"dbo.transactions"</span>) \         <span class="cm"># or a subquery</span>
+    .<span class="fn">option</span>(<span class="str">"user"</span>, <span class="str">"sqladmin"</span>) \
+    .<span class="fn">option</span>(<span class="str">"password"</span>, dbutils.secrets.<span class="fn">get</span>(<span class="str">"kv-scope"</span>, <span class="str">"sql-password"</span>)) \  <span class="cm"># Azure Key Vault</span>
+    .<span class="fn">option</span>(<span class="str">"numPartitions"</span>, <span class="str">"10"</span>) \               <span class="cm"># Parallel reads — splits the table</span>
+    .<span class="fn">option</span>(<span class="str">"partitionColumn"</span>, <span class="str">"txn_id"</span>) \          <span class="cm"># Column to split on (must be numeric)</span>
+    .<span class="fn">option</span>(<span class="str">"lowerBound"</span>, <span class="str">"1"</span>) \                    <span class="cm"># Min value of partition column</span>
+    .<span class="fn">option</span>(<span class="str">"upperBound"</span>, <span class="str">"1000000"</span>) \              <span class="cm"># Max value</span>
+    .<span class="fn">option</span>(<span class="str">"fetchsize"</span>, <span class="str">"10000"</span>) \                 <span class="cm"># Rows per JDBC fetch</span>
+    .<span class="fn">load</span>()
+
+<span class="cm"># Use a SQL query instead of full table:</span>
+query = <span class="str">"(SELECT * FROM dbo.transactions WHERE txn_date >= '2024-01-01') t"</span>
+df = spark.read.<span class="fn">jdbc</span>(url=jdbc_url, table=query, properties=conn_props)</code></pre>
+  </div>
+
+  <h3>Writing DataFrames (The Opposite of spark.read)</h3>
+  <div class="code-wrap">
+    <span class="code-label">PySpark — DataFrameWriter</span>
+    <pre><code><span class="cm"># Generic pattern (mirrors spark.read):</span>
+df.<span class="fn">write</span> \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>) \        <span class="cm"># overwrite | append | ignore | errorIfExists</span>
+    .<span class="fn">partitionBy</span>(<span class="str">"year"</span>, <span class="str">"month"</span>) \ <span class="cm"># Create folder partitions</span>
+    .<span class="fn">option</span>(<span class="str">"compression"</span>, <span class="str">"snappy"</span>) \
+    .<span class="fn">save</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud_summary/"</span>)
+
+<span class="cm"># Write as Hive table (Unity Catalog):</span>
+df.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">saveAsTable</span>(<span class="str">"banking_catalog.fraud.daily_summary"</span>)
+
+<span class="cm"># Write modes:</span>
+<span class="cm"># overwrite     — delete existing data and write new</span>
+<span class="cm"># append        — add rows to existing data</span>
+<span class="cm"># ignore        — do nothing if data already exists</span>
+<span class="cm"># errorIfExists — throw error if data already exists (default)</span></code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ 13 Banking Example ═══════════════════ -->
+<section class="section s-pink" id="s13">
+  <div class="section-hdr">
+    <span class="icon">🏦</span>
+    <div>
+      <h2>Real-World Banking Production Example</h2>
+      <div class="sub">Azure ADLS Gen2 + Databricks · Bronze → Silver → Gold ingestion pipeline</div>
+    </div>
+  </div>
+
+  <p><strong>Scenario:</strong> Ingest daily transaction CSV files from Azure ADLS Gen2 Bronze layer, validate schema, handle bad records, enrich with customer JSON reference data, and write enriched data to Delta Lake Silver layer.</p>
+
+  <div class="code-wrap">
+    <span class="code-label">PySpark — Full Ingestion Pipeline (Databricks Notebook)</span>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession, functions <span class="kw">as</span> F
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> (
+    StructType, StructField, StringType, DecimalType,
+    TimestampType, BooleanType, LongType
+)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 1: SparkSession (pre-created in Databricks — just reference it)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="cm"># In Databricks: 'spark' is already available. Configure runtime props:</span>
+spark.conf.<span class="fn">set</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"200"</span>)
+spark.conf.<span class="fn">set</span>(<span class="str">"spark.sql.adaptive.enabled"</span>, <span class="str">"true"</span>)
+
+<span class="cm"># ADLS paths (using ADLS Gen2 abfss protocol)</span>
+BRONZE = <span class="str">"abfss://bronze@bankadls.dfs.core.windows.net"</span>
+SILVER = <span class="str">"abfss://silver@bankadls.dfs.core.windows.net"</span>
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 2: Define Explicit Schema (NEVER use inferSchema in production)
+# ═══════════════════════════════════════════════════════════</span>
+txn_schema = StructType([
+    StructField(<span class="str">"txn_id"</span>,     StringType(),         nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"account_id"</span>, StringType(),         nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"cust_id"</span>,    StringType(),         nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"amount"</span>,     DecimalType(<span class="num">18</span>, <span class="num">4</span>),   nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"currency"</span>,   StringType(),         nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"country"</span>,    StringType(),         nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"txn_ts"</span>,     TimestampType(),      nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"status"</span>,     StringType(),         nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"channel"</span>,    StringType(),         nullable=<span class="kw">True</span>),
+])
+
+cust_schema = StructType([
+    StructField(<span class="str">"cust_id"</span>,   StringType(), nullable=<span class="kw">False</span>),
+    StructField(<span class="str">"cust_name"</span>, StringType(), nullable=<span class="kw">True</span>),
+    StructField(<span class="str">"risk_tier"</span>, StringType(), nullable=<span class="kw">True</span>),   <span class="cm"># LOW / MEDIUM / HIGH</span>
+    StructField(<span class="str">"is_active"</span>, BooleanType(),nullable=<span class="kw">True</span>),
+])
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 3: Read CSV Transactions from Bronze Layer
+# ═══════════════════════════════════════════════════════════</span>
+df_raw = spark.read \
+    .<span class="fn">format</span>(<span class="str">"csv"</span>) \
+    .<span class="fn">schema</span>(txn_schema) \
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .<span class="fn">option</span>(<span class="str">"nullValue"</span>, <span class="str">"NA"</span>) \
+    .<span class="fn">option</span>(<span class="str">"mode"</span>, <span class="str">"PERMISSIVE"</span>) \
+    .<span class="fn">option</span>(<span class="str">"columnNameOfCorruptRecord"</span>, <span class="str">"_corrupt_record"</span>) \
+    .<span class="fn">option</span>(<span class="str">"encoding"</span>, <span class="str">"UTF-8"</span>) \
+    .<span class="fn">load</span>(<span class="str">f"{BRONZE}/transactions/2024/</span><span class="dc">*.csv</span><span class="str">"</span>)       <span class="cm"># All daily files</span>
+    .<span class="fn">withColumn</span>(<span class="str">"source_file"</span>, F.<span class="fn">input_file_name</span>())    <span class="cm"># Track origin file</span>
+    .<span class="fn">withColumn</span>(<span class="str">"ingestion_ts"</span>, F.<span class="fn">current_timestamp</span>())  <span class="cm"># Add watermark</span>
+
+<span class="cm"># ── Inspect what we got ──────────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">f"Raw rows: {df_raw.count()}"</span>)
+<span class="fn">print</span>(<span class="str">f"Partitions: {df_raw.rdd.getNumPartitions()}"</span>)
+df_raw.<span class="fn">printSchema</span>()
+df_raw.<span class="fn">show</span>(<span class="num">5</span>, truncate=<span class="kw">False</span>)
+
+<span class="cm"># ── Separate bad records ─────────────────────────────────────────</span>
+df_bad  = df_raw.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"_corrupt_record"</span>).<span class="fn">isNotNull</span>())
+df_good = df_raw.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"_corrupt_record"</span>).<span class="fn">isNull</span>()).<span class="fn">drop</span>(<span class="str">"_corrupt_record"</span>)
+<span class="fn">print</span>(<span class="str">f"Good rows: {df_good.count()}, Bad rows: {df_bad.count()}"</span>)
+
+<span class="cm"># ─── Write bad records to quarantine zone ────────────────────────</span>
+df_bad.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">save</span>(<span class="str">f"{BRONZE}/quarantine/transactions/"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 4: Read Customer Reference Data (JSON from Bronze)
+# ═══════════════════════════════════════════════════════════</span>
+df_cust = spark.read \
+    .<span class="fn">schema</span>(cust_schema) \
+    .<span class="fn">option</span>(<span class="str">"multiLine"</span>, <span class="str">"false"</span>) \   <span class="cm"># JSON Lines format</span>
+    .<span class="fn">json</span>(<span class="str">f"{BRONZE}/reference/customers.json"</span>)
+
+df_cust.<span class="fn">printSchema</span>()
+<span class="fn">print</span>(<span class="str">f"Customers: {df_cust.count()}"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 5: Enrich transactions with customer data
+# Broadcast join — customers is small (avoids shuffle stage!)
+# ═══════════════════════════════════════════════════════════</span>
+df_enriched = df_good.<span class="fn">join</span>(
+    F.<span class="fn">broadcast</span>(df_cust),
+    on=<span class="str">"cust_id"</span>,
+    how=<span class="str">"left"</span>
+).<span class="fn">select</span>(
+    <span class="str">"txn_id"</span>, <span class="str">"account_id"</span>, <span class="str">"cust_id"</span>, <span class="str">"cust_name"</span>,
+    <span class="str">"amount"</span>, <span class="str">"currency"</span>, <span class="str">"country"</span>, <span class="str">"txn_ts"</span>, <span class="str">"status"</span>,
+    <span class="str">"risk_tier"</span>, <span class="str">"channel"</span>, <span class="str">"source_file"</span>, <span class="str">"ingestion_ts"</span>
+)
+
+df_enriched.<span class="fn">explain</span>()  <span class="cm"># Confirm BroadcastHashJoin in physical plan</span>
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 6: Write to Delta Lake Silver Layer
+# ═══════════════════════════════════════════════════════════</span>
+df_enriched.<span class="fn">write</span> \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">mode</span>(<span class="str">"append"</span>) \
+    .<span class="fn">partitionBy</span>(<span class="str">"country"</span>, F.<span class="fn">year</span>(F.<span class="fn">col</span>(<span class="str">"txn_ts"</span>)).<span class="fn">alias</span>(<span class="str">"year"</span>)) \
+    .<span class="fn">option</span>(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \   <span class="cm"># Allow schema evolution</span>
+    .<span class="fn">save</span>(<span class="str">f"{SILVER}/transactions_enriched/"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# STEP 7: Quick summary for pipeline log
+# ═══════════════════════════════════════════════════════════</span>
+df_enriched.<span class="fn">describe</span>(<span class="str">"amount"</span>).<span class="fn">show</span>()
+<span class="fn">print</span>(<span class="str">f"Written {df_enriched.count()} rows to Silver layer"</span>)
+<span class="fn">print</span>(<span class="str">f"Output partitions: {df_enriched.rdd.getNumPartitions()}"</span>)</code></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ 14 Interview ═══════════════════ -->
+<section class="section s-yellow" id="s14">
+  <div class="section-hdr">
+    <span class="icon">🎤</span>
+    <div>
+      <h2>Interview Insights</h2>
+      <div class="sub">5 real interview questions with model answers and common mistakes</div>
+    </div>
+  </div>
+
+  <div class="int-card">
+    <div class="int-q">What is SparkSession? How is it different from SparkContext?</div>
+    <div class="int-a">
+      "SparkContext was the original entry point in Spark 1.x — it gave you the low-level RDD API and managed the cluster connection. Spark 1.x also had SQLContext for DataFrames and HiveContext for Hive. <strong>Spark 2.0 unified all of these into SparkSession</strong>, which internally creates and manages a SparkContext but exposes everything through one clean object. In production PySpark today, you always use SparkSession — you never create SparkContext directly. In Databricks, SparkSession is pre-created and available as the variable <strong><code>spark</code></strong>."
+    </div>
+  </div>
+
+  <div class="int-card">
+    <div class="int-q">Why should you define schemas explicitly instead of using inferSchema?</div>
+    <div class="int-a">
+      "Three reasons. First, <strong>performance</strong> — inferSchema reads the entire file twice (once to infer types, once to load data), doubling I/O on potentially terabytes of data. Second, <strong>correctness</strong> — inferSchema can guess wrong; a column with 999 integers and one 'NA' becomes StringType, causing downstream failures. Third, <strong>schema drift protection</strong> — if the source file changes column order or adds a column, inferSchema silently adjusts while an explicit schema fails loudly, alerting the team. In my banking pipeline, I always define StructType with DecimalType(18,4) for monetary amounts — inferSchema would use DoubleType which has floating-point precision issues for financial calculations."
+    </div>
+  </div>
+
+  <div class="int-card">
+    <div class="int-q">What's the difference between show() and collect() in Spark?</div>
+    <div class="int-a">
+      "Both are actions that trigger DAG execution, but they differ in where data goes. <strong><code>show(n)</code></strong> displays n rows in the console — Spark computes only enough to show those rows and prints them. The data stays distributed. <strong><code>collect()</code></strong> pulls <em>all partitions from every executor back to the Driver JVM</em>. On a 100GB DataFrame, collect() would crash the driver with OutOfMemoryError. In production I never use collect() on real data — I use <code>show()</code> for previewing, <code>count()</code> for validation, and <code>write()</code> to persist results."
+    </div>
+  </div>
+
+  <div class="int-card">
+    <div class="int-q">You read a CSV file and see all columns are StringType even after setting inferSchema=true. Why?</div>
+    <div class="int-a">
+      "Two common causes. First, <strong>the header option is missing</strong> — without <code>option("header","true")</code>, Spark treats the first row as data, all as strings. Second, <strong>bad data in the sample</strong> — Spark samples a portion of the file for inference; if that portion has non-numeric values in a column (like 'N/A', 'null', or 'TBD'), it infers StringType for the whole column. The fix is to always define an explicit schema with StructType and use <code>option("nullValue","N/A")</code> to map custom null strings. This is exactly why I never rely on inferSchema in production."
+    </div>
+  </div>
+
+  <div class="int-card">
+    <div class="int-q">Explain the difference between a Spark DataFrame and an RDD.</div>
+    <div class="int-a">
+      "An RDD (Resilient Distributed Dataset) is Spark's original low-level distributed data structure — it's an untyped collection of JVM objects with no schema. A DataFrame is a higher-level abstraction: it's essentially an <strong>RDD of Row objects plus a schema (StructType)</strong>. The key advantage of DataFrames is the <strong>Catalyst Optimizer</strong> — Spark analyzes the full query plan and applies predicate pushdown, column pruning, and join reordering before execution. RDDs skip all of this. For structured data (CSV, Parquet, SQL), DataFrames are always faster and easier. I only drop down to RDDs for truly unstructured data, like processing raw binary files or writing custom partitioners."
+    </div>
+  </div>
+
+  <div class="mistake-box">
+    <h4>🚨 Common Mistakes Candidates Make</h4>
+    <ul>
+      <li>Saying <code>spark.read.csv()</code> reads data immediately — it's <strong>lazy</strong>, no data is read until an action.</li>
+      <li>Forgetting <code>header="true"</code> for CSV — all columns default to <code>_c0, _c1, _c2</code> and StringType.</li>
+      <li>Using <code>DoubleType</code> for monetary columns — always use <code>DecimalType(18,4)</code> for financial precision.</li>
+      <li>Calling <code>spark.stop()</code> in a Databricks notebook — kills the cluster session for everyone.</li>
+      <li>Using <code>collect()</code> on large DataFrames — pulls all data to the driver, causing OutOfMemoryError.</li>
+      <li>Confusing <code>show()</code> (console preview) with <code>display()</code> (Databricks-specific rich table).</li>
+      <li>Not knowing that <code>printSchema()</code> does NOT trigger a Spark job — it reads metadata from the plan.</li>
+      <li>Saying "I create a SparkContext in my PySpark code" — you always create a SparkSession; SparkContext is managed internally.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════ 15 Pro Tips ═══════════════════ -->
+<section class="section s-teal" id="s15">
+  <div class="section-hdr">
+    <span class="icon">💡</span>
+    <div>
+      <h2>Pro Tips</h2>
+      <div class="sub">Production best practices from real data engineering pipelines</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="tip-icon">⚡</span>
+    <div class="tip-text">
+      <strong>Cache strategically, not aggressively.</strong> Use <code>df.cache()</code> or <code>df.persist()</code> only when the same DataFrame is used in multiple actions. Caching stores the data in executor memory — if you cache a 100GB DataFrame on a cluster with only 50GB executor memory, Spark spills to disk and you lose the benefit. Always call <code>df.unpersist()</code> when done. In Databricks, use <code>df.cache()</code> for reference tables (customer master, currency codes) that are reused in every join.
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="tip-icon">🔬</span>
+    <div class="tip-text">
+      <strong>Use explain() before running expensive jobs.</strong> Call <code>df.explain(extended=True)</code> on your DataFrame before running a long pipeline. Check that filters appear near the <em>bottom</em> of the physical plan (predicate pushdown working) and joins use <code>BroadcastHashJoin</code> for small tables (not <code>SortMergeJoin</code> which triggers a shuffle). This 30-second check can save you hours of debugging slow jobs.
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="tip-icon">🗂️</span>
+    <div class="tip-text">
+      <strong>Always add ingestion metadata columns.</strong> When reading from CSV or JSON, add <code>F.input_file_name()</code> and <code>F.current_timestamp()</code> immediately after read. This tracks which source file each row came from and when it was ingested — invaluable for debugging data quality issues in production pipelines on ADLS. In Delta Lake, combine this with <code>mergeSchema=true</code> to allow graceful schema evolution as source files add new columns.
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="tip-icon">🔢</span>
+    <div class="tip-text">
+      <strong>Check partition count after every major read or join.</strong> Run <code>df.rdd.getNumPartitions()</code> after reading a file and after shuffles. If partitions are too few (e.g., 4 on a 96-core cluster), most cores sit idle. If too many (e.g., 10,000 tiny partitions), shuffle overhead dominates. Target 2-3 partitions per core as a starting point. Use <code>df.repartition(n)</code> to increase (triggers shuffle) or <code>df.coalesce(n)</code> to decrease (no shuffle — just combines).
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ 16 Quiz ═══════════════════ -->
+<section class="section s-purple" id="s16">
+  <div class="section-hdr">
+    <span class="icon">🧠</span>
+    <div>
+      <h2>Quiz Questions</h2>
+      <div class="sub">Scenario-based questions to test your understanding</div>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">Q1. A Data Engineer reads a CSV file with this code: <code>df = spark.read.csv("/data/transactions.csv")</code> and then runs <code>df.printSchema()</code>. They see columns named <code>_c0, _c1, _c2</code> all of StringType. What are the TWO things they need to fix?</div>
+    <ul class="quiz-opts">
+      <li>A) Add <code>.option("inferSchema","true")</code> and <code>.option("header","true")</code></li>
+      <li>B) Add <code>.schema(mySchema)</code> and <code>.option("header","true")</code></li>
+      <li>C) Use <code>spark.read.format("csv").load()</code> instead of <code>spark.read.csv()</code></li>
+      <li>D) Call <code>df.show()</code> first to trigger schema inference</li>
+    </ul>
+    <div class="quiz-answer">
+      <strong>✅ Correct: B (preferred) or A (acceptable but not production-grade)</strong><br><br>
+      The <code>_c0, _c1</code> names appear because <code>header="true"</code> is missing — Spark doesn't know the first row is headers. Option A adds inferSchema which fixes types but reads the file twice and can still guess wrong. Option B is the <strong>production-correct answer</strong>: define an explicit schema with StructType (correct types, including DecimalType for money) and add <code>header="true"</code>. Option C is wrong — the format difference doesn't affect this issue. Option D is wrong — show() is an action that displays data but doesn't change the schema.
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">Q2. In your Databricks notebook, you write: <code>spark2 = SparkSession.builder.appName("Test").getOrCreate()</code>. After this, you run <code>print(spark2 is spark)</code>. What does it print and why?</div>
+    <ul class="quiz-opts">
+      <li>A) False — a brand-new SparkSession named "Test" is created</li>
+      <li>B) True — getOrCreate() returns the existing session; there can only be one active SparkSession per JVM</li>
+      <li>C) Error — you cannot call SparkSession.builder inside a Databricks notebook</li>
+      <li>D) False — spark2 is a separate session but shares the same SparkContext</li>
+    </ul>
+    <div class="quiz-answer">
+      <strong>✅ Correct: B</strong><br><br>
+      <code>getOrCreate()</code> checks if a SparkSession already exists in the JVM. Since Databricks pre-creates one, <code>getOrCreate()</code> returns that <em>same object</em> — <code>spark2 is spark</code> evaluates to <code>True</code>. There is only ONE active SparkSession (and ONE SparkContext) per JVM process. Option D describes a real pattern (multiple logical sessions sharing one SparkContext) in advanced multi-tenant setups, but even then <code>getOrCreate()</code> returns the primary session, not a new one.
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">Q3. You run <code>df = spark.read.parquet("/adls/transactions/")</code>. This folder has 10 Parquet files, each 500MB. How many Spark partitions will the DataFrame have by default, and what controls this?</div>
+    <ul class="quiz-opts">
+      <li>A) 10 partitions — one per file, always</li>
+      <li>B) ~40 partitions — controlled by spark.sql.files.maxPartitionBytes (default 128MB), 500MB ÷ 128MB ≈ 4 per file × 10 files</li>
+      <li>C) 200 partitions — controlled by spark.sql.shuffle.partitions</li>
+      <li>D) 1 partition — Parquet merges all files into one partition for efficiency</li>
+    </ul>
+    <div class="quiz-answer">
+      <strong>✅ Correct: B</strong><br><br>
+      Spark splits input files based on <code>spark.sql.files.maxPartitionBytes</code> (default 128MB). Each 500MB Parquet file is logically split into approximately ⌈500/128⌉ = 4 partitions. With 10 files: ~40 partitions total. Option A is wrong — files are split by byte size, not kept whole. Option C is wrong — <code>spark.sql.shuffle.partitions</code> only controls the number of partitions <em>after a shuffle</em> (in Stage 2+), not initial read partitions. Option D is completely wrong.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>📚 SparkSession &amp; DataFrame Creation — Interview Guide &nbsp;|&nbsp; Azure + Databricks Focus &nbsp;|&nbsp; Module 2 of Spark Series</p>
+  <p style="margin-top: 6px;">Based on Apache Spark 3.x documentation and production data engineering patterns on Azure ADLS Gen2</p>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>
