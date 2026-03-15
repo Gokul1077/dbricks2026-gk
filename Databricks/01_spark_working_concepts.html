@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Spark Works — Chapter-by-Chapter Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   ROOT & RESET
+═══════════════════════════════════════════ */
+:root {
+  --ink:       #0a0c14;
+  --paper:     #f5f2eb;
+  --cream:     #ece8df;
+  --warm-gray: #9a9080;
+  --rule:      #d4cec3;
+  --chapter-1: #e63946;
+  --chapter-2: #2a6de4;
+  --chapter-3: #f4a259;
+  --chapter-4: #2cb67d;
+  --chapter-5: #9b5de5;
+  --chapter-6: #e91e8c;
+  --highlight: #ffeb3b;
+  --code-bg:   #1a1c26;
+  --code-text: #e8eaf6;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   BOOK COVER / HERO
+═══════════════════════════════════════════ */
+.book-cover {
+  background: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.book-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 40px);
+}
+.book-cover::after {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230,57,70,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cover-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--chapter-1);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+.cover-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 0.95;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+.cover-title .spark { color: var(--chapter-1); }
+.cover-subtitle {
+  font-family: 'Lora', serif;
+  font-size: 1.15rem;
+  color: rgba(255,255,255,0.5);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+}
+.cover-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+}
+.cover-ch {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.5px;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+  animation: scroll-anim 1.6s ease-in-out infinite;
+}
+@keyframes scroll-anim {
+  0%, 100% { transform: scaleY(1); opacity: 0.5; }
+  50% { transform: scaleY(0.5); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   TABLE OF CONTENTS
+═══════════════════════════════════════════ */
+.toc-page {
+  background: var(--cream);
+  padding: 80px 40px;
+  border-bottom: 3px double var(--rule);
+}
+.toc-inner { max-width: 820px; margin: 0 auto; }
+.toc-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.toc-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.toc-entry {
+  display: flex;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+  transition: padding-left 0.2s;
+  gap: 0;
+}
+.toc-entry:hover { padding-left: 8px; }
+.toc-ch-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-right: 16px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.toc-ch-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  flex: 1;
+}
+.toc-ch-sub {
+  font-family: 'Lora', serif;
+  font-size: 0.8rem;
+  color: var(--warm-gray);
+  font-style: italic;
+  margin-top: 2px;
+  flex: 1;
+}
+.toc-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--rule);
+  margin: 0 12px;
+  min-width: 40px;
+}
+
+/* ═══════════════════════════════════════════
+   CHAPTER STRUCTURE
+═══════════════════════════════════════════ */
+.chapter {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 80px 40px;
+  position: relative;
+}
+.chapter + .chapter { border-top: 3px double var(--rule); }
+
+.chapter-opener {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 56px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--rule);
+}
+.ch-number-big {
+  font-family: 'Syne', sans-serif;
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.12;
+  color: var(--ink);
+}
+.ch-header { flex: 1; }
+.ch-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 8px;
+}
+.ch-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.ch-description {
+  font-size: 1rem;
+  color: #444;
+  font-style: italic;
+  line-height: 1.7;
+  max-width: 600px;
+}
+.ch-color-bar {
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION HEADINGS within chapter
+═══════════════════════════════════════════ */
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 48px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title::before {
+  content: attr(data-n);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  background: var(--ink);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.sub-section {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 32px 0 10px;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sub-section::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 3px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+p { margin-bottom: 14px; }
+ul, ol { padding-left: 24px; margin-bottom: 14px; }
+li { margin-bottom: 7px; }
+strong { font-weight: 700; }
+
+/* ═══════════════════════════════════════════
+   TERM DEFINITIONS  (the "word-by-word" boxes)
+═══════════════════════════════════════════ */
+.term-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 24px 0 32px;
+}
+.term-card {
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  padding: 18px 20px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.term-card:hover {
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: translate(-2px, -2px);
+}
+.term-card::before {
+  content: attr(data-term);
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 6px;
+}
+.term-word {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.term-def {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #333;
+  font-family: 'Lora', serif;
+}
+.term-accent {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+
+/* ═══════════════════════════════════════════
+   CALLOUT / ASIDE BOXES
+═══════════════════════════════════════════ */
+.callout {
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin: 20px 0;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  position: relative;
+  border-left: 5px solid;
+}
+.callout-icon {
+  font-size: 1.1rem;
+  margin-right: 8px;
+}
+.callout.analogy   { background: #fffbeb; border-color: #f59e0b; }
+.callout.important { background: #fef2f2; border-color: #ef4444; }
+.callout.tip       { background: #f0fdf4; border-color: #22c55e; }
+.callout.note      { background: #eff6ff; border-color: #3b82f6; }
+.callout.warning   { background: #fff7ed; border-color: #f97316; }
+.callout.databricks { background: #f5f3ff; border-color: #8b5cf6; }
+.callout-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════════
+   DIAGRAMS (SVG-based ASCII art)
+═══════════════════════════════════════════ */
+.diagram-wrap {
+  background: var(--ink);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  overflow-x: auto;
+  position: relative;
+}
+.diagram-wrap .d-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Cluster visual layout */
+.cluster-diag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.diag-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.diag-box {
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 120px;
+  border: 1.5px solid;
+  line-height: 1.4;
+}
+.diag-label { font-size: 10px; opacity: 0.65; margin-top: 3px; display: block; }
+.diag-arrow { color: rgba(255,255,255,0.3); font-size: 1.2rem; }
+.diag-arrow-v { color: rgba(255,255,255,0.3); font-size: 1.4rem; text-align: center; }
+
+/* box color styles */
+.db-red    { background: rgba(230,57,70,0.15);  border-color: rgba(230,57,70,0.6);  color: #fca5a5; }
+.db-blue   { background: rgba(42,109,228,0.15); border-color: rgba(42,109,228,0.6); color: #93c5fd; }
+.db-green  { background: rgba(44,182,125,0.15); border-color: rgba(44,182,125,0.6); color: #6ee7b7; }
+.db-orange { background: rgba(244,162,89,0.15); border-color: rgba(244,162,89,0.6); color: #fdba74; }
+.db-purple { background: rgba(155,93,229,0.15); border-color: rgba(155,93,229,0.6); color: #c4b5fd; }
+.db-teal   { background: rgba(20,184,166,0.15); border-color: rgba(20,184,166,0.6); color: #5eead4; }
+.db-gray   { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.55); }
+.db-white  { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.9); }
+
+.diag-group {
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: center;
+  position: relative;
+}
+.diag-group-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--ink);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  padding: 0 6px;
+}
+
+/* ═══════════════════════════════════════════
+   FLOW STEPS (numbered process)
+═══════════════════════════════════════════ */
+.flow-steps { margin: 24px 0; display: flex; flex-direction: column; gap: 0; }
+.flow-step {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  padding-bottom: 28px;
+}
+.flow-step:last-child { padding-bottom: 0; }
+.flow-step-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.flow-num {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.flow-line {
+  flex: 1;
+  width: 2px;
+  background: var(--rule);
+  margin-top: 4px;
+}
+.flow-body { flex: 1; padding-top: 6px; }
+.flow-body h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.flow-body p { font-size: 0.9rem; color: #444; margin-bottom: 0; }
+
+/* ═══════════════════════════════════════════
+   COMPARISON TABLE
+═══════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; margin: 20px 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  background: #fff;
+  min-width: 480px;
+}
+th {
+  background: var(--ink);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: left;
+  padding: 12px 16px;
+  border: 1px solid var(--ink);
+}
+td {
+  padding: 11px 16px;
+  border: 1px solid var(--rule);
+  vertical-align: top;
+  line-height: 1.5;
+}
+tr:nth-child(even) td { background: var(--cream); }
+td:first-child { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.88rem; }
+
+/* ═══════════════════════════════════════════
+   CODE BLOCKS
+═══════════════════════════════════════════ */
+.code-wrap { margin: 20px 0; }
+.code-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--code-bg);
+  padding: 7px 16px;
+  border-radius: 6px 6px 0 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.5px;
+}
+.code-dot { width: 8px; height: 8px; border-radius: 50%; }
+pre {
+  background: var(--code-bg);
+  border-radius: 0 8px 8px 8px;
+  padding: 22px 24px;
+  overflow-x: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--code-text);
+  margin: 0;
+}
+.kw  { color: #ff79c6; }
+.fn  { color: #8be9fd; }
+.str { color: #50fa7b; }
+.cm  { color: #6272a4; font-style: italic; }
+.num { color: #ffb86c; }
+.cl  { color: #f1fa8c; }
+.op  { color: #ff79c6; }
+
+/* inline code */
+code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85em;
+  background: rgba(0,0,0,0.07);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #c0392b;
+}
+pre code { background: none; padding: 0; color: inherit; font-size: 1em; }
+
+/* ═══════════════════════════════════════════
+   ANALOGY / VISUAL METAPHOR CARDS
+═══════════════════════════════════════════ */
+.metaphor-card {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin: 24px 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.metaphor-emoji { font-size: 3rem; line-height: 1; }
+.metaphor-body h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 8px;
+}
+.metaphor-body p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+  line-height: 1.6;
+}
+.metaphor-body .mapping {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.map-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+.map-real { color: #fbbf24; font-weight: 600; }
+.map-spark { color: #60a5fa; }
+
+/* ═══════════════════════════════════════════
+   PAIN POINT VISUAL
+═══════════════════════════════════════════ */
+.vs-split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  margin: 24px 0;
+  align-items: stretch;
+}
+.vs-col {
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  padding: 22px;
+}
+.vs-col.bad  { border-color: #ef4444; background: #fef2f2; }
+.vs-col.good { border-color: #22c55e; background: #f0fdf4; }
+.vs-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.vs-label.bad  { color: #ef4444; }
+.vs-label.good { color: #22c55e; }
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--warm-gray);
+}
+.vs-col ul { font-size: 0.88rem; line-height: 1.6; }
+.vs-col li { margin-bottom: 6px; }
+
+/* ═══════════════════════════════════════════
+   EXECUTION PIPELINE VISUAL
+═══════════════════════════════════════════ */
+.pipeline-vis {
+  background: var(--ink);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+.pipe-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 600px;
+}
+.pipe-node {
+  flex: 1;
+  border-radius: 8px;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+  min-width: 100px;
+}
+.pipe-node:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 1.2rem;
+  z-index: 1;
+}
+.pipe-node-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pipe-node-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  opacity: 0.6;
+  line-height: 1.4;
+}
+.pipe-gap { width: 28px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════
+   MEMORY / DISK VISUAL
+═══════════════════════════════════════════ */
+.mem-visual {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.mem-col { flex: 1; min-width: 200px; }
+.mem-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-align: center;
+}
+.mem-bar {
+  border-radius: 6px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════════
+   CHAPTER BACKGROUND COLORS
+═══════════════════════════════════════════ */
+.bg-cream  { background: var(--cream); }
+.bg-white  { background: #fff; }
+.bg-ink    { background: var(--ink); color: #fff; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+.book-footer {
+  background: var(--ink);
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  padding: 40px 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+/* ═══════════════════════════════════════════
+   HIGHLIGHT TEXT
+═══════════════════════════════════════════ */
+mark {
+  background: var(--highlight);
+  color: var(--ink);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.big-quote {
+  font-family: 'Lora', serif;
+  font-size: 1.35rem;
+  font-style: italic;
+  color: #555;
+  padding: 20px 0 20px 24px;
+  border-left: 4px solid var(--rule);
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.rule { border: none; border-top: 1px solid var(--rule); margin: 40px 0; }
+hr.chapter-rule { border: none; border-top: 3px double var(--rule); margin: 0; }
+
+@media (max-width: 680px) {
+  .chapter { padding: 48px 20px; }
+  .book-cover { padding: 48px 24px; }
+  .chapter-opener { flex-direction: column; }
+  .ch-number-big { font-size: 3.5rem; }
+  .vs-split { grid-template-columns: 1fr; }
+  .vs-divider { display: none; }
+  .term-grid { grid-template-columns: 1fr; }
+  .pipe-row { flex-direction: column; }
+  .pipe-node:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -16px; transform: translateX(-50%); }
+  .pipe-node { margin-bottom: 16px; }
+  .metaphor-card { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     BOOK COVER
+═══════════════════════════════════════════ -->
+<div class="book-cover">
+  <div class="cover-eyebrow">Complete Study Guide · Module 3</div>
+  <h1 class="cover-title">How <span class="spark">Spark</span><br>Works</h1>
+  <p class="cover-subtitle">A chapter-by-chapter guide to Apache Spark's working, architecture, and every component — explained simply, step by step.</p>
+  <div class="cover-chapters">
+    <span class="cover-ch">Ch 0 · Why Spark Exists</span>
+    <span class="cover-ch">Ch 1 · Spark Applications</span>
+    <span class="cover-ch">Ch 2 · Spark Cluster</span>
+    <span class="cover-ch">Ch 3 · Spark Master &amp; Worker</span>
+    <span class="cover-ch">Ch 4 · Executor &amp; Core</span>
+    <span class="cover-ch">Ch 5 · Cluster Manager</span>
+    <span class="cover-ch">Ch 6 · Driver Program</span>
+    <span class="cover-ch">Ch 7 · How It All Connects</span>
+  </div>
+  <div class="scroll-hint">
+    <span>scroll to read</span>
+    <div class="scroll-line"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TABLE OF CONTENTS
+═══════════════════════════════════════════ -->
+<div class="toc-page">
+  <div class="toc-inner">
+    <div class="toc-heading">Table of Contents</div>
+
+    <a href="#ch0" class="toc-entry">
+      <span class="toc-ch-num" style="background:#888">Ch 0</span>
+      <div>
+        <div class="toc-ch-title">Why Does Spark Exist?</div>
+        <div class="toc-ch-sub">The problem with Hadoop MapReduce · disk I/O · how Spark solves it</div>
+      </div>
+    </a>
+    <a href="#ch1" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-1)">Ch 1</span>
+      <div>
+        <div class="toc-ch-title">Spark Application, Shell &amp; SparkContext</div>
+        <div class="toc-ch-sub">Notebook apps · batch apps · SparkContext · what an "application" really means</div>
+      </div>
+    </a>
+    <a href="#ch2" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-2)">Ch 2</span>
+      <div>
+        <div class="toc-ch-title">Spark Cluster — The Big Picture</div>
+        <div class="toc-ch-sub">What a cluster is · Master · Worker · how they're laid out</div>
+      </div>
+    </a>
+    <a href="#ch3" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-3)">Ch 3</span>
+      <div>
+        <div class="toc-ch-title">Spark Master &amp; Spark Worker</div>
+        <div class="toc-ch-sub">Roles, responsibilities, and the difference between Master Node and Cluster Manager</div>
+      </div>
+    </a>
+    <a href="#ch4" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-4)">Ch 4</span>
+      <div>
+        <div class="toc-ch-title">Spark Executor &amp; Spark Core</div>
+        <div class="toc-ch-sub">JVM containers · logical cores · task slots · parallelism explained</div>
+      </div>
+    </a>
+    <a href="#ch5" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-5)">Ch 5</span>
+      <div>
+        <div class="toc-ch-title">Cluster Manager</div>
+        <div class="toc-ch-sub">YARN · Standalone · Kubernetes · Mesos · what each one does</div>
+      </div>
+    </a>
+    <a href="#ch6" class="toc-entry">
+      <span class="toc-ch-num" style="background:var(--chapter-6)">Ch 6</span>
+      <div>
+        <div class="toc-ch-title">Driver Program &amp; Driver Process</div>
+        <div class="toc-ch-sub">Main program · SparkSession · DAG Scheduler · Task Scheduler · client vs cluster mode</div>
+      </div>
+    </a>
+    <a href="#ch7" class="toc-entry">
+      <span class="toc-ch-num" style="background:#0d9488">Ch 7</span>
+      <div>
+        <div class="toc-ch-title">How Everything Connects — End-to-End Flow</div>
+        <div class="toc-ch-sub">Step-by-step: from "run notebook" to results in your screen</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 0 — WHY SPARK EXISTS
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-white" id="ch0">
+  <div class="chapter-opener">
+    <div class="ch-number-big">0</div>
+    <div class="ch-header">
+      <div class="ch-label">Prologue</div>
+      <div class="ch-color-bar" style="background:#888;width:60px;"></div>
+      <h1 class="ch-title">Why Does Spark Exist?</h1>
+      <p class="ch-description">Before learning Spark, understand the pain it was built to solve. You can't appreciate the solution without understanding the problem.</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§0.1">The World Before Spark — Hadoop MapReduce</div>
+  <p>When companies had terabytes of data to process, they used <strong>Hadoop MapReduce</strong>. It worked, but it had two painful problems that made engineers' lives hard.</p>
+
+  <div class="vs-split">
+    <div class="vs-col bad">
+      <div class="vs-label bad">❌ Pain Point 1 — Disk I/O Hell</div>
+      <ul>
+        <li>MapReduce writes <strong>every intermediate result to disk</strong> (the hard drive)</li>
+        <li>After each Map step → write to disk. After Shuffle → write to disk. After Reduce → write to disk.</li>
+        <li>Disk reads/writes are <strong>100–1000× slower</strong> than memory (RAM)</li>
+        <li>A job that could take minutes runs in hours</li>
+        <li><strong>Real example:</strong> Machine learning needs 100 iterations over the same data. MapReduce reads from disk 100 times.</li>
+      </ul>
+    </div>
+    <div class="vs-divider">VS</div>
+    <div class="vs-col good">
+      <div class="vs-label good">✅ How Spark Fixes It</div>
+      <ul>
+        <li>Spark stores intermediate results in <strong>RAM (worker node memory)</strong></li>
+        <li>Data flows through operations without touching disk (unless data is too large)</li>
+        <li>Same 100-iteration ML job now reads from RAM 100 times — <strong>100× faster</strong></li>
+        <li>Only final output and shuffle data touch disk</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="vs-split" style="margin-top: 20px;">
+    <div class="vs-col bad">
+      <div class="vs-label bad">❌ Pain Point 2 — Rigid One-Shuffle-Per-Job</div>
+      <ul>
+        <li>MapReduce has exactly <strong>one map + one reduce phase per job</strong></li>
+        <li>You can only group by <strong>one key per job</strong></li>
+        <li>Example: Find total amount per country for completed orders only. This needs: filter → join (by customer_id) → aggregate (by country)</li>
+        <li>MapReduce needs <strong>two separate jobs</strong>: Job 1 (join by customer_id) → write to disk → Job 2 (aggregate by country)</li>
+        <li>Every new key = a new job = more disk I/O</li>
+      </ul>
+    </div>
+    <div class="vs-divider">VS</div>
+    <div class="vs-col good">
+      <div class="vs-label good">✅ How Spark Fixes It</div>
+      <ul>
+        <li>Spark uses a <strong>DAG (Directed Acyclic Graph)</strong> model</li>
+        <li>One application can have multiple stages with <strong>different grouping keys</strong></li>
+        <li>Same example in Spark: one application, 2 stages — no disk writes between stages</li>
+        <li>Spark handles the entire pipeline: filter → join → aggregate — all in one run</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout analogy">
+    <div class="callout-title">🏠 Real-World Analogy</div>
+    Think of MapReduce like a restaurant where the waiter has to <strong>write the order on paper, hand it to the chef, wait for it, write the partial result on paper again, walk to another chef, hand it over again</strong>... for every single step. Spark is a restaurant where the chef just <strong>shouts across the kitchen</strong> — the order flows directly from station to station without paper shuffling.
+  </div>
+
+  <div class="big-quote">"Spark is 100× faster than Hadoop MapReduce for iterative computations because it keeps data in memory, and 10× faster for disk-based operations." — Apache Spark documentation</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 1 — SPARK APPLICATION, SHELL, CONTEXT
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-cream" id="ch1">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-1)">1</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter One</div>
+      <div class="ch-color-bar" style="background:var(--chapter-1);width:60px;"></div>
+      <h1 class="ch-title">Spark Application,<br>Shell &amp; SparkContext</h1>
+      <p class="ch-description">What exactly is a "Spark Application"? What types are there? And what is the SparkContext that sits at its heart?</p>
+    </div>
+  </div>
+
+  <!-- TERM GRID -->
+  <div class="section-title" data-n="§1.1">Three Things That Look Similar but Mean Different Things</div>
+  <p>Beginners often confuse these three terms. Let's define each clearly before going further.</p>
+
+  <div class="term-grid">
+    <div class="term-card" data-term="term 1">
+      <div class="term-accent" style="background:var(--chapter-1)"></div>
+      <div class="term-word">Spark Application</div>
+      <div class="term-def">Any program that uses the Spark framework to process data. It is <strong>your code</strong> — a PySpark script, a Databricks notebook, or an Airflow task. One Spark Application = one SparkContext. It starts when you create a SparkSession and ends when you call <code>spark.stop()</code>.</div>
+    </div>
+    <div class="term-card" data-term="term 2">
+      <div class="term-accent" style="background:#f59e0b"></div>
+      <div class="term-word">Spark Shell</div>
+      <div class="term-def">An <strong>interactive REPL</strong> (Read-Eval-Print-Loop) that lets you type Spark code line-by-line and see results immediately. Launch it with <code>pyspark</code> (Python) or <code>spark-shell</code> (Scala). The shell automatically creates a SparkContext called <code>sc</code> and a SparkSession called <code>spark</code> for you.</div>
+    </div>
+    <div class="term-card" data-term="term 3">
+      <div class="term-accent" style="background:var(--chapter-2)"></div>
+      <div class="term-word">SparkContext</div>
+      <div class="term-def">The <strong>original entry point</strong> to Spark (Spark 1.x). It represents the connection between your program and the Spark cluster. Today, you create a <code>SparkSession</code> which internally creates and manages the SparkContext for you. <strong>There can only be ONE SparkContext per JVM.</strong></div>
+    </div>
+  </div>
+
+  <!-- SPARK APPLICATION TYPES -->
+  <div class="section-title" data-n="§1.2">Two Types of Spark Applications</div>
+
+  <div class="sub-section">1a. Spark Notebook Applications</div>
+  <p>These are <strong>interactive, cell-by-cell</strong> Spark applications. You write a few lines, run them, see the result, then write more. Perfect for data exploration, debugging, and experimentation.</p>
+  <ul>
+    <li><strong>Examples:</strong> Databricks Notebooks, Jupyter Notebooks with PySpark kernel, Zeppelin Notebooks</li>
+    <li><strong>How it works:</strong> Each notebook cell runs as part of the <em>same Spark application</em> (same SparkSession and SparkContext) — until you stop the cluster</li>
+    <li><strong>Who uses it:</strong> Data engineers exploring data, data scientists building models, analysts writing ad-hoc queries</li>
+    <li><strong>Key trait:</strong> Results show up in the notebook immediately — <code>display(df)</code> in Databricks shows a rich interactive table</li>
+  </ul>
+
+  <div class="callout databricks">
+    <div class="callout-title">🟣 Databricks Specific</div>
+    In Databricks, when you attach a notebook to a cluster, Databricks <strong>automatically creates the SparkSession</strong> for you. The variable <code>spark</code> is pre-available in every cell. You never write <code>SparkSession.builder.getOrCreate()</code> — Databricks handles it. The cluster = your Spark application's lifetime.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-tab"><span class="code-dot" style="background:#ff5f56"></span><span class="code-dot" style="background:#ffbd2e"></span><span class="code-dot" style="background:#27c93f"></span>&nbsp; databricks_notebook.py — Notebook App</div>
+    <pre><code><span class="cm"># In Databricks, 'spark' is already ready — no setup needed</span>
+<span class="cm"># Cell 1: Read some data</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/mnt/bronze/transactions.csv"</span>, header=<span class="kw">True</span>)
+<span class="fn">display</span>(df)   <span class="cm"># Databricks shows interactive table</span>
+
+<span class="cm"># Cell 2: Explore (same SparkSession, same application)</span>
+df.<span class="fn">printSchema</span>()
+<span class="fn">print</span>(<span class="str">f"Total rows: {df.count()}"</span>)
+
+<span class="cm"># Cell 3: Transform (still same application)</span>
+df_clean = df.<span class="fn">filter</span>(df.status == <span class="str">"COMPLETED"</span>)
+<span class="fn">display</span>(df_clean)</code></pre>
+  </div>
+
+  <div class="sub-section">1b. Spark Batch Applications</div>
+  <p>These are <strong>standalone scripts</strong> submitted to a Spark cluster to run without any human interaction. They run start-to-finish, produce output (files, database writes), then terminate.</p>
+  <ul>
+    <li><strong>Examples:</strong> Daily ETL jobs, nightly fraud detection runs, end-of-month reconciliation jobs</li>
+    <li><strong>How it works:</strong> You submit the script using <code>spark-submit</code> — the cluster receives it, runs it, and exits</li>
+    <li><strong>Who uses it:</strong> Scheduled production pipelines, orchestrated by Azure Data Factory (ADF) or Databricks Workflows</li>
+    <li><strong>Key trait:</strong> Fully automated — no human watching. Results go to files, databases, or Delta Lake</li>
+  </ul>
+
+  <div class="code-wrap">
+    <div class="code-tab"><span class="code-dot" style="background:#ff5f56"></span><span class="code-dot" style="background:#ffbd2e"></span><span class="code-dot" style="background:#27c93f"></span>&nbsp; batch_job.py — Batch Application</div>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+<span class="cm"># Batch apps create their own SparkSession</span>
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"DailyFraudDetection_2024-01-15"</span>) \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># All logic runs without any human interaction</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"abfss://bronze@bankadls.dfs.core.windows.net/txns/"</span>)
+df_fraud = df.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"amount"</span>) > <span class="num">50000</span>)
+df_fraud.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">save</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud/"</span>)
+
+<span class="cm"># Always stop the session in batch jobs to free cluster resources</span>
+spark.<span class="fn">stop</span>()
+
+<span class="cm"># Submit this script with:
+# spark-submit --master yarn --deploy-mode cluster batch_job.py</span></code></pre>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <div class="section-title" data-n="§1.3">Notebook vs Batch — When to Use Which</div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Aspect</th><th>Notebook Application</th><th>Batch Application</th></tr>
+      <tr><td>Interactivity</td><td>✅ Interactive — human in the loop</td><td>❌ Fully automated — no human</td></tr>
+      <tr><td>How to run</td><td>Click "Run" in Databricks / Jupyter</td><td><code>spark-submit</code> or scheduled via ADF / Databricks Workflows</td></tr>
+      <tr><td>SparkSession</td><td>Pre-created by Databricks</td><td>You create it manually with <code>builder.getOrCreate()</code></td></tr>
+      <tr><td>Output</td><td>Rich tables, charts shown in notebook</td><td>Files, databases, Delta Lake — no screen output</td></tr>
+      <tr><td>Lifetime</td><td>Lives as long as cluster is attached</td><td>Starts and terminates per job run</td></tr>
+      <tr><td>Use case</td><td>Exploration, debugging, development</td><td>Production ETL, scheduled jobs, data pipelines</td></tr>
+      <tr><td>spark.stop()?</td><td>❌ Never — would kill the shared cluster</td><td>✅ Yes — always call at end to free resources</td></tr>
+    </table>
+  </div>
+
+  <!-- SPARKCONTEXT DEEP DIVE -->
+  <div class="section-title" data-n="§1.4">SparkContext — What It Actually Does</div>
+
+  <div class="metaphor-card">
+    <div class="metaphor-emoji">📡</div>
+    <div class="metaphor-body">
+      <h4>Analogy: SparkContext = Your Phone's SIM Card</h4>
+      <p>A SIM card connects your phone to the network. Without it, your phone can't make calls. SparkContext is what connects your application to the Spark cluster. Without it, your code can't talk to executors. Just like you can only have one active SIM in a phone, you can only have one active SparkContext per JVM.</p>
+      <div class="mapping">
+        <span class="map-pair"><span class="map-real">SIM Card</span> → <span class="map-spark">SparkContext</span></span>
+        <span class="map-pair"><span class="map-real">Phone</span> → <span class="map-spark">Your Application (JVM)</span></span>
+        <span class="map-pair"><span class="map-real">Mobile Network</span> → <span class="map-spark">Spark Cluster</span></span>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>SparkContext's main responsibilities:</strong></p>
+  <ul>
+    <li><strong>Cluster Connection:</strong> Maintains the connection between your driver program and the Spark cluster</li>
+    <li><strong>Resource Request:</strong> Asks the Cluster Manager to allocate executors for your application</li>
+    <li><strong>Task Distribution:</strong> Sends tasks (code) to executors for execution</li>
+    <li><strong>RDD Creation:</strong> Creates RDDs (low-level Spark data structures) from files, lists, etc.</li>
+    <li><strong>Broadcast &amp; Accumulator:</strong> Sends read-only shared data to all executors (broadcast variables) and collects distributed counters (accumulators)</li>
+  </ul>
+
+  <div class="callout note">
+    <div class="callout-title">📘 Historical Note — SparkSession vs SparkContext</div>
+    In <strong>Spark 1.x</strong>: You created SparkContext directly. Then SQLContext for DataFrames. Then HiveContext for Hive. Three separate objects.<br><br>
+    In <strong>Spark 2.0+</strong>: <strong>SparkSession replaced all of them.</strong> It internally creates a SparkContext but hides it. You use SparkSession for everything. If you need the SparkContext, access it via <code>spark.sparkContext</code>.<br><br>
+    <strong>Rule: In modern PySpark, always create a SparkSession. Never create SparkContext directly.</strong>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-tab"><span class="code-dot" style="background:#ff5f56"></span><span class="code-dot" style="background:#ffbd2e"></span><span class="code-dot" style="background:#27c93f"></span>&nbsp; sparkcontext_access.py</div>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+<span class="cm"># ✅ Modern way — SparkSession manages SparkContext internally</span>
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"MyApp"</span>) \
+    .<span class="fn">master</span>(<span class="str">"local[*]"</span>) \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># Access SparkContext through SparkSession if needed</span>
+sc = spark.sparkContext
+
+<span class="fn">print</span>(sc.appName)          <span class="cm"># "MyApp"</span>
+<span class="fn">print</span>(sc.master)           <span class="cm"># "local[*]"</span>
+<span class="fn">print</span>(sc.defaultParallelism)  <span class="cm"># Number of CPU cores available</span>
+<span class="fn">print</span>(spark.version)       <span class="cm"># Spark version, e.g. "3.5.0"</span>
+
+<span class="cm"># One application = One SparkContext (hard rule)</span>
+<span class="cm"># getOrCreate() returns existing session if already running</span>
+spark2 = SparkSession.<span class="fn">builder</span>.<span class="fn">getOrCreate</span>()
+<span class="fn">print</span>(spark2 <span class="op">is</span> spark)  <span class="cm"># True — same object!</span></code></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 2 — SPARK CLUSTER
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-white" id="ch2">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-2)">2</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Two</div>
+      <div class="ch-color-bar" style="background:var(--chapter-2);width:60px;"></div>
+      <h1 class="ch-title">The Spark Cluster —<br>The Big Picture</h1>
+      <p class="ch-description">What exactly is a cluster? How are machines laid out? Who talks to who? Let's zoom all the way out first before zooming in.</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§2.1">What is a Cluster?</div>
+  <p>A <strong>cluster</strong> is simply a <mark>collection of computers (called nodes) connected by a network</mark>, working together as if they were one powerful machine. These machines can be in:</p>
+  <ul>
+    <li><strong>Public Cloud:</strong> Azure VMs, AWS EC2 instances, Google Compute Engine</li>
+    <li><strong>Private Data Center:</strong> Physical servers in a company's own building</li>
+    <li><strong>Hybrid:</strong> Some on-premise, some in the cloud</li>
+  </ul>
+  <p>A <strong>Spark Cluster</strong> = a cluster where the Spark software is installed on every node, making the machines capable of running Spark jobs.</p>
+
+  <div class="callout analogy">
+    <div class="callout-title">🏢 Analogy — Cluster = Office Building</div>
+    Think of a Spark Cluster like an office building. The building has many rooms (nodes). Each room has workers (executor threads) doing tasks. There's a boss's office (Master node) that manages the building. There's an HR department (Cluster Manager) that assigns how many desks each team gets. Your work order (Driver Program) comes in through the front door and gets distributed to the right rooms.
+  </div>
+
+  <div class="section-title" data-n="§2.2">The Three Types of Nodes in a Spark Cluster</div>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Spark Cluster — Node Layout</div>
+    <div class="cluster-diag">
+      <div class="diag-row">
+        <div class="diag-group" style="width:100%;max-width:700px;">
+          <span class="diag-group-label">Spark Cluster (all machines together)</span>
+          <div class="diag-row" style="margin-bottom: 8px;">
+            <div class="diag-box db-orange" style="min-width:200px;">
+              🖥️ Master Node
+              <span class="diag-label">Runs: Cluster Manager</span>
+              <span class="diag-label">Brain of the cluster</span>
+            </div>
+            <div class="diag-arrow">↔</div>
+            <div class="diag-box db-red" style="min-width:200px;">
+              👤 Driver Process
+              <span class="diag-label">Runs: your application</span>
+              <span class="diag-label">(In cluster mode: inside cluster)</span>
+            </div>
+          </div>
+          <div class="diag-arrow-v">↕ manages resources ↕</div>
+          <div class="diag-row" style="gap:14px; margin-top: 8px;">
+            <div class="diag-group">
+              <span class="diag-group-label">Worker Node 1</span>
+              <div class="diag-box db-green" style="min-width:130px;">
+                ⚙️ Executor
+                <span class="diag-label">Tasks run here</span>
+                <span class="diag-label">Data lives here</span>
+              </div>
+            </div>
+            <div class="diag-group">
+              <span class="diag-group-label">Worker Node 2</span>
+              <div class="diag-box db-green" style="min-width:130px;">
+                ⚙️ Executor
+                <span class="diag-label">Tasks run here</span>
+                <span class="diag-label">Data lives here</span>
+              </div>
+            </div>
+            <div class="diag-group">
+              <span class="diag-group-label">Worker Node N</span>
+              <div class="diag-box db-green" style="min-width:130px;">
+                ⚙️ Executor
+                <span class="diag-label">Tasks run here</span>
+                <span class="diag-label">Data lives here</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="term-grid">
+    <div class="term-card" data-term="node type 1">
+      <div class="term-accent" style="background:var(--chapter-3)"></div>
+      <div class="term-word">Master Node</div>
+      <div class="term-def">The machine that hosts the <strong>Cluster Manager</strong>. It is the control center — it knows about all worker nodes, their available resources, and which application is using what. It does NOT process your data directly.</div>
+    </div>
+    <div class="term-card" data-term="node type 2">
+      <div class="term-accent" style="background:var(--chapter-4)"></div>
+      <div class="term-word">Worker Node</div>
+      <div class="term-def">The machines that do the actual data processing. Each worker node runs a <strong>Spark Worker JVM</strong> which launches Executors. Worker nodes have CPU, memory, and local disk for processing data.</div>
+    </div>
+    <div class="term-card" data-term="node type 3">
+      <div class="term-accent" style="background:var(--chapter-1)"></div>
+      <div class="term-word">Driver Node</div>
+      <div class="term-def">The machine running the <strong>Driver Process</strong> (your application). In <em>client mode</em>: this is your laptop/submission machine (outside the cluster). In <em>cluster mode</em>: this is one of the cluster nodes. <strong>This is NOT the Master Node.</strong></div>
+    </div>
+  </div>
+
+  <div class="callout important">
+    <div class="callout-title">⚠️ Common Confusion — Master Node ≠ Driver Node</div>
+    <strong>Master Node</strong> = the machine running the Cluster Manager (resource allocation software).<br>
+    <strong>Driver Node</strong> = the machine running your application code (SparkSession, DAG Scheduler).<br><br>
+    In Spark <strong>Standalone mode</strong>, they CAN be the same physical machine. But logically, they are always two separate roles. In client mode, the driver runs on your laptop — which has nothing to do with the master node in the cluster. Your notes confirm this: <em>"Driver JVM where it is running — that node is NOT the Master Node."</em>
+  </div>
+
+  <div class="section-title" data-n="§2.3">What Happens on Each Node Type</div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Node Type</th><th>Software Running</th><th>Main Job</th><th>Processes Data?</th></tr>
+      <tr><td>Master Node</td><td>Cluster Manager (YARN ResourceManager / Spark Master)</td><td>Allocate CPU + memory to applications</td><td>❌ No</td></tr>
+      <tr><td>Worker Node</td><td>Worker JVM + Executor JVM</td><td>Run tasks, store partition data in RAM</td><td>✅ Yes</td></tr>
+      <tr><td>Driver Node</td><td>Driver Process (SparkSession, DAG Scheduler, Task Scheduler)</td><td>Orchestrate the job: plan → schedule → collect results</td><td>❌ No (only collects final results)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 3 — SPARK MASTER & WORKER
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-cream" id="ch3">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-3)">3</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Three</div>
+      <div class="ch-color-bar" style="background:var(--chapter-3);width:60px;"></div>
+      <h1 class="ch-title">Spark Master<br>&amp; Spark Worker</h1>
+      <p class="ch-description">Zoom in on the two most important nodes in the cluster. What exactly does each one do — down to the JVM level?</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§3.1">Spark Master — The Resource Gatekeeper</div>
+
+  <div class="metaphor-card">
+    <div class="metaphor-emoji">👔</div>
+    <div class="metaphor-body">
+      <h4>Analogy: Spark Master = HR Department of a Company</h4>
+      <p>When a new project (your Spark job) arrives, the HR department (Spark Master) looks at which employees (worker nodes) have free capacity. It assigns the right workers to the project and tells them how much of their time (CPU + memory) to dedicate. HR doesn't do the actual work — it just manages who does what.</p>
+      <div class="mapping">
+        <span class="map-pair"><span class="map-real">HR Dept</span> → <span class="map-spark">Spark Master / Cluster Manager</span></span>
+        <span class="map-pair"><span class="map-real">Project Brief</span> → <span class="map-spark">Your Spark Application</span></span>
+        <span class="map-pair"><span class="map-real">Employees</span> → <span class="map-spark">Worker Nodes</span></span>
+        <span class="map-pair"><span class="map-real">Work Hours</span> → <span class="map-spark">CPU Cores + Memory</span></span>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>What the Spark Master (in Standalone mode) actually does:</strong></p>
+  <ul>
+    <li><strong>Knows all Worker nodes:</strong> Maintains a registry of every worker in the cluster, their available CPU cores and memory</li>
+    <li><strong>Receives application requests:</strong> When a Driver starts, it contacts the Master: "I need executors with X cores and Y memory"</li>
+    <li><strong>Allocates resources:</strong> Decides which workers will host executors for this application</li>
+    <li><strong>Monitors health:</strong> Tracks if workers are alive and reassigns resources if a worker dies</li>
+    <li><strong>Does NOT understand your DAG:</strong> The Master knows nothing about your Spark logic — it only deals with raw resources (CPU, RAM)</li>
+  </ul>
+
+  <div class="callout note">
+    <div class="callout-title">📘 Spark Standalone vs Other Cluster Managers</div>
+    The "Spark Master" specifically refers to the master in <strong>Spark Standalone mode</strong> — Spark's own built-in cluster manager. When you use YARN or Kubernetes, there is no "Spark Master" — the Cluster Manager role is handled by YARN's ResourceManager or Kubernetes' API server instead. Chapter 5 covers all Cluster Managers.
+  </div>
+
+  <div class="section-title" data-n="§3.2">Spark Worker — The Launcher, Not the Runner</div>
+  <p>This is a subtle but important distinction that many beginners miss:</p>
+
+  <div class="callout important">
+    <div class="callout-title">⚠️ Critical Distinction — Worker's ONLY Job</div>
+    <strong>The Spark Worker JVM's sole responsibility is to LAUNCH EXECUTORS on behalf of the Spark Master.</strong><br><br>
+    The Worker does NOT process data. It does NOT run your tasks. It is a management process that starts and monitors the Executor process on the same machine.
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Inside a Worker Node — What's Actually Running</div>
+    <div class="cluster-diag">
+      <div class="diag-group" style="max-width:480px;width:100%;">
+        <span class="diag-group-label">Worker Node (one physical machine)</span>
+        <br>
+        <div class="diag-box db-orange" style="margin:0 auto 12px;max-width:220px;">
+          🏗️ Spark Worker JVM
+          <span class="diag-label">Management process</span>
+          <span class="diag-label">Talks to Master · Launches Executors</span>
+        </div>
+        <div class="diag-arrow-v">↓ spawns</div>
+        <div class="diag-row" style="margin-top:8px;gap:12px;">
+          <div class="diag-box db-green">
+            ⚙️ Executor JVM
+            <span class="diag-label">Core 1 → Task A</span>
+            <span class="diag-label">Core 2 → Task B</span>
+            <span class="diag-label">Core 3 → Task C</span>
+            <span class="diag-label">Core 4 → Task D</span>
+          </div>
+        </div>
+        <div style="color:rgba(255,255,255,0.3);font-size:10px;margin-top:12px;font-family:'IBM Plex Mono',monospace;">
+          RAM: 8GB executor memory · Local disk: shuffle write buffer
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>The Spark Worker's lifecycle for a single application:</strong></p>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-3)">1</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Receives instruction from Master</h4>
+        <p>The Spark Master tells the Worker: "Application X needs an Executor with 4 cores and 8GB memory — start one on your machine."</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-3)">2</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Starts a new Executor JVM process</h4>
+        <p>The Worker JVM forks a new JVM process on the same machine — this is the Executor. The Worker allocates 4 cores and 8GB RAM to this new process.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-3)">3</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Executor registers with the Driver</h4>
+        <p>The new Executor JVM contacts the Driver directly: "I'm ready. I have 4 core slots available." From now on, the Driver and Executor communicate directly — the Worker steps back.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-3)">4</div>
+      </div>
+      <div class="flow-body">
+        <h4>Worker monitors the Executor</h4>
+        <p>The Worker keeps watching the Executor process. If it crashes, the Worker reports to the Master, which can allocate a replacement on another Worker node.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§3.3">Standalone Mode Special Case — Master Can Also Be a Worker</div>
+  <p>In <strong>Spark Standalone mode</strong>, by default the Master node can also run Worker processes — meaning the machine hosting the cluster manager also does computation. This is common in small development clusters or single-machine setups.</p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠️ Production Recommendation</div>
+    In production deployments (Azure Databricks, YARN on HDInsight), the Master node is <strong>dedicated</strong> — it only runs the Cluster Manager, never Executors. Mixing them on resource-heavy clusters causes the Cluster Manager to starve for CPU/memory when the node is under load.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 4 — EXECUTOR & CORE
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-white" id="ch4">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-4)">4</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Four</div>
+      <div class="ch-color-bar" style="background:var(--chapter-4);width:60px;"></div>
+      <h1 class="ch-title">Spark Executor<br>&amp; Spark Core</h1>
+      <p class="ch-description">This is where your data actually gets processed. Understand the Executor JVM, what a "Core" really means in Spark, and how parallelism works.</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§4.1">Spark Executor — The Worker Bee</div>
+
+  <p>A <strong>Spark Executor</strong> is a <mark>JVM (Java Virtual Machine) process that runs on a Worker node</mark> and is responsible for two things only:</p>
+  <ol>
+    <li><strong>Run tasks</strong> that the Driver sends it (the actual data processing)</li>
+    <li><strong>Store/cache data partitions</strong> in memory for reuse across stages</li>
+  </ol>
+
+  <div class="metaphor-card">
+    <div class="metaphor-emoji">🏭</div>
+    <div class="metaphor-body">
+      <h4>Analogy: Executor = A Factory Floor</h4>
+      <p>An Executor is like a factory floor with multiple workstations (cores). Each workstation (core) works on one item (partition) at a time. The factory manager (Driver) sends batches of items and instructions. The factory floor (Executor) processes them in parallel. The storage warehouse (Executor memory) keeps semi-finished goods for the next stage.</p>
+      <div class="mapping">
+        <span class="map-pair"><span class="map-real">Factory Floor</span> → <span class="map-spark">Executor JVM</span></span>
+        <span class="map-pair"><span class="map-real">Workstation</span> → <span class="map-spark">Core / Thread</span></span>
+        <span class="map-pair"><span class="map-real">Item to process</span> → <span class="map-spark">Data Partition</span></span>
+        <span class="map-pair"><span class="map-real">Work instruction</span> → <span class="map-spark">Task</span></span>
+        <span class="map-pair"><span class="map-real">Warehouse</span> → <span class="map-spark">Executor Memory (cache)</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§4.2">What Is a "Spark Core"? — The Most Misunderstood Term</div>
+
+  <div class="callout important">
+    <div class="callout-title">⚠️ Critical Point — A Spark Core is NOT a Physical CPU Core</div>
+    In Spark, a <strong>"core"</strong> is a <strong>logical execution slot (thread) inside an Executor</strong> that can run <strong>exactly one task at a time</strong>.<br><br>
+    It is a JVM thread. The operating system then maps JVM threads to physical CPU cores — Spark doesn't control that mapping directly.
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Executor Internals — Cores as Task Slots</div>
+    <div class="cluster-diag">
+      <div class="diag-group" style="max-width:560px;width:100%;">
+        <span class="diag-group-label">Executor JVM (8GB RAM, 4 Cores)</span>
+        <br>
+        <div class="diag-row" style="gap:12px;flex-wrap:wrap;margin:8px 0;">
+          <div class="diag-box db-teal" style="min-width:100px;">
+            Core / Thread 1
+            <span class="diag-label">Running Task 1</span>
+            <span class="diag-label">on Partition #1</span>
+          </div>
+          <div class="diag-box db-teal" style="min-width:100px;">
+            Core / Thread 2
+            <span class="diag-label">Running Task 2</span>
+            <span class="diag-label">on Partition #2</span>
+          </div>
+          <div class="diag-box db-teal" style="min-width:100px;">
+            Core / Thread 3
+            <span class="diag-label">Running Task 3</span>
+            <span class="diag-label">on Partition #3</span>
+          </div>
+          <div class="diag-box db-gray" style="min-width:100px;">
+            Core / Thread 4
+            <span class="diag-label">⏳ Waiting</span>
+            <span class="diag-label">No task yet</span>
+          </div>
+        </div>
+        <div style="width:100%;background:rgba(44,182,125,0.12);border:1px solid rgba(44,182,125,0.3);border-radius:6px;padding:10px 14px;text-align:left;margin-top:8px;">
+          <span style="color:#6ee7b7;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            📦 Executor Memory (8GB total)<br>
+            ├── Execution memory: ~4.8GB  (for running tasks)<br>
+            ├── Storage memory:  ~3.2GB  (for caching partitions)<br>
+            └── Cached partitions: Partition #1 results (if cached)
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§4.3">Tasks, Partitions, and Parallelism — The Holy Trinity</div>
+  <p>These three concepts are tightly connected. Understanding the relationship between them is key to understanding Spark performance.</p>
+
+  <div class="term-grid">
+    <div class="term-card" data-term="concept">
+      <div class="term-accent" style="background:#f59e0b"></div>
+      <div class="term-word">Partition</div>
+      <div class="term-def">A logical chunk of your data. When Spark reads a 1TB file, it splits it into thousands of partitions (e.g., 8,000 × 128MB). Each partition is a <strong>unit of data</strong>. Partitions live in Executor memory during processing.</div>
+    </div>
+    <div class="term-card" data-term="concept">
+      <div class="term-accent" style="background:var(--chapter-1)"></div>
+      <div class="term-word">Task</div>
+      <div class="term-def">A unit of work = <strong>one operation on one partition</strong>. If you have 8,000 partitions in a stage, Spark creates 8,000 tasks. Each task runs on exactly one Core (thread) of one Executor.</div>
+    </div>
+    <div class="term-card" data-term="concept">
+      <div class="term-accent" style="background:var(--chapter-4)"></div>
+      <div class="term-word">Parallelism</div>
+      <div class="term-def">How many tasks can run <strong>at the same time</strong>. Determined by: <code>min(number of partitions, total available cores)</code>. More partitions + more cores = more parallelism = faster job.</div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title">✅ Parallelism Formula — Memorize This</div>
+    <strong>Parallelism = min(number of partitions, total available cores)</strong><br><br>
+    Example: 12 worker nodes × 8 cores = <strong>96 total core slots</strong>.<br>
+    If your data has 8,000 partitions → 8,000 tasks created, but only <strong>96 run at the same time</strong>. The other 7,904 wait in the Task Scheduler queue.<br><br>
+    Parallelism is NOT determined by: data size, number of nodes, executor memory, or CPU speed.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-tab"><span class="code-dot" style="background:#ff5f56"></span><span class="code-dot" style="background:#ffbd2e"></span><span class="code-dot" style="background:#27c93f"></span>&nbsp; executor_config.py — Configure Executors</div>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"ProductionJob"</span>) \
+    <span class="cm"># ── Executor Resource Configuration ─────────────────────────</span>
+    .<span class="fn">config</span>(<span class="str">"spark.executor.instances"</span>,  <span class="str">"12"</span>) \    <span class="cm"># 12 executors (1 per worker)</span>
+    .<span class="fn">config</span>(<span class="str">"spark.executor.cores"</span>,     <span class="str">"8"</span>) \     <span class="cm"># 8 cores per executor = 96 total</span>
+    .<span class="fn">config</span>(<span class="str">"spark.executor.memory"</span>,   <span class="str">"16g"</span>) \   <span class="cm"># 16GB RAM per executor</span>
+    .<span class="fn">config</span>(<span class="str">"spark.driver.memory"</span>,     <span class="str">"4g"</span>) \    <span class="cm"># 4GB for the driver</span>
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># Check actual parallelism</span>
+sc = spark.sparkContext
+<span class="fn">print</span>(<span class="str">f"Default parallelism: {sc.defaultParallelism}"</span>)  <span class="cm"># = total cores = 96</span>
+
+<span class="cm"># Check partition count of your DataFrame</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"/mnt/adls/transactions/"</span>)
+<span class="fn">print</span>(<span class="str">f"Partitions: {df.rdd.getNumPartitions()}"</span>)
+
+<span class="cm"># Actual parallelism for this job = min(96, partition_count)
+# If partitions < 96 → some cores idle → performance lost
+# Fix: repartition(96) to use all cores</span>
+df_repartitioned = df.<span class="fn">repartition</span>(<span class="num">96</span>)</code></pre>
+  </div>
+
+  <div class="section-title" data-n="§4.4">Executor Memory — How It's Divided</div>
+  <p>When you set <code>spark.executor.memory = 8g</code>, Spark doesn't give all 8GB to running your tasks. It divides it carefully:</p>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Executor Memory Layout (8GB Example)</div>
+    <div style="max-width:480px;margin:0 auto;font-family:'IBM Plex Mono',monospace;font-size:12px;">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;">
+        <div style="background:rgba(255,255,255,0.06);padding:8px 14px;color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:1px;">8 GB EXECUTOR JVM HEAP</div>
+        <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);border-radius:4px;padding:8px 12px;margin-bottom:4px;">
+            <span style="color:#fca5a5;">Reserved Memory: ~300 MB</span>
+            <span style="color:rgba(255,255,255,0.3);display:block;font-size:10px;">For Spark internal objects, always off-limits</span>
+          </div>
+          <div style="background:rgba(244,162,89,0.2);border:1px solid rgba(244,162,89,0.4);border-radius:4px;padding:8px 12px;margin-bottom:4px;">
+            <span style="color:#fdba74;">User Memory: ~2.4 GB (30% of remaining)</span>
+            <span style="color:rgba(255,255,255,0.3);display:block;font-size:10px;">Your Python UDFs, non-Spark data structures</span>
+          </div>
+          <div style="background:rgba(42,109,228,0.2);border:1px solid rgba(42,109,228,0.4);border-radius:4px;padding:8px 12px;">
+            <span style="color:#93c5fd;">Unified Memory Pool: ~5.3 GB (60% of remaining)</span>
+            <span style="color:rgba(255,255,255,0.3);display:block;font-size:10px;margin-top:4px;">Dynamically shared between:</span>
+            <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+              <div style="flex:1;background:rgba(44,182,125,0.2);border:1px solid rgba(44,182,125,0.3);border-radius:3px;padding:6px;min-width:120px;">
+                <span style="color:#6ee7b7;">Execution Memory</span>
+                <span style="display:block;color:rgba(255,255,255,0.3);font-size:10px;">For running tasks (sorts, joins, aggregations)</span>
+              </div>
+              <div style="flex:1;background:rgba(155,93,229,0.2);border:1px solid rgba(155,93,229,0.3);border-radius:3px;padding:6px;min-width:120px;">
+                <span style="color:#c4b5fd;">Storage Memory</span>
+                <span style="display:block;color:rgba(255,255,255,0.3);font-size:10px;">For cached/persisted DataFrames (df.cache())</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title">✅ Memory Spill — What Happens When Memory Is Full</div>
+    If execution memory fills up (task is processing a huge partition), Spark <strong>spills to disk</strong> — writes temporary files to the Worker's local disk. This is called a "spill" and dramatically slows down your job. Watch for <strong>"Spill (Memory)"</strong> and <strong>"Spill (Disk)"</strong> columns in the Spark UI's Stage view. If you see large spills, increase executor memory or reduce partition size.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 5 — CLUSTER MANAGER
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-cream" id="ch5">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-5)">5</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Five</div>
+      <div class="ch-color-bar" style="background:var(--chapter-5);width:60px;"></div>
+      <h1 class="ch-title">The Cluster Manager</h1>
+      <p class="ch-description">The invisible hand that decides who gets CPU and memory. Four types of cluster managers — when to use which, and what each one does.</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§5.1">What Is a Cluster Manager?</div>
+  <p>A <strong>Cluster Manager</strong> is a software layer that sits between your application and the physical machines. Its <mark>prime job is to allocate resources (CPU cores, memory) across multiple applications</mark> that want to share the same cluster.</p>
+
+  <div class="metaphor-card">
+    <div class="metaphor-emoji">🏨</div>
+    <div class="metaphor-body">
+      <h4>Analogy: Cluster Manager = Hotel Reception</h4>
+      <p>Multiple guests (applications) want rooms (CPU + memory) in the same hotel (cluster). The hotel reception (Cluster Manager) decides: "Application A gets rooms 101–108, Application B gets rooms 201–204." It ensures no two guests share a room (no resource conflicts) and manages check-in/check-out (allocation and deallocation).</p>
+      <div class="mapping">
+        <span class="map-pair"><span class="map-real">Hotel</span> → <span class="map-spark">Spark Cluster</span></span>
+        <span class="map-pair"><span class="map-real">Guest</span> → <span class="map-spark">Spark Application</span></span>
+        <span class="map-pair"><span class="map-real">Room</span> → <span class="map-spark">CPU Core + Memory</span></span>
+        <span class="map-pair"><span class="map-real">Reception</span> → <span class="map-spark">Cluster Manager</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout important">
+    <div class="callout-title">⚠️ What the Cluster Manager Does NOT Do</div>
+    The Cluster Manager <strong>does not understand your Spark DAG</strong>. It doesn't know about your transformations, stages, or tasks. It only speaks in terms of: "This application wants N CPU cores and M GB of memory." It allocates or denies based on availability — nothing more.
+  </div>
+
+  <div class="section-title" data-n="§5.2">The Four Cluster Managers Spark Supports</div>
+
+  <div class="term-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+    <div class="term-card" data-term="cluster manager 1" style="border-top: 3px solid var(--chapter-1);">
+      <div class="term-word">1. Standalone</div>
+      <div class="term-def">
+        <strong>Spark's own built-in cluster manager.</strong> No external software needed — just Spark. Has its own Master daemon and Worker daemons. Easy to set up. Each application gets a fixed allocation of the cluster.
+        <br><br><strong>Best for:</strong> Development, testing, simple single-tenant clusters.
+        <br><strong>Limitation:</strong> No resource sharing with other frameworks (Hive, MapReduce, etc.).
+      </div>
+    </div>
+    <div class="term-card" data-term="cluster manager 2" style="border-top: 3px solid var(--chapter-2);">
+      <div class="term-word">2. Hadoop YARN</div>
+      <div class="term-def">
+        <strong>YARN = Yet Another Resource Negotiator.</strong> The resource manager that comes with Hadoop. Allows Spark, MapReduce, Hive, HBase to all share the same cluster simultaneously.
+        <br><br><strong>Best for:</strong> Enterprises already using Hadoop ecosystem. Supports both client and cluster deploy modes.
+        <br><strong>Used in:</strong> Azure HDInsight, on-premise Hadoop clusters.
+      </div>
+    </div>
+    <div class="term-card" data-term="cluster manager 3" style="border-top: 3px solid var(--chapter-4);">
+      <div class="term-word">3. Kubernetes</div>
+      <div class="term-def">
+        <strong>Container orchestration platform</strong> — runs Spark in Docker containers. Each executor is a separate container (pod). Cloud-native and highly scalable.
+        <br><br><strong>Best for:</strong> Cloud-native architectures, Azure AKS (Azure Kubernetes Service), teams already using K8s.
+        <br><strong>Advantage:</strong> Fine-grained resource isolation, easy scaling.
+      </div>
+    </div>
+    <div class="term-card" data-term="cluster manager 4" style="border-top: 3px solid var(--warm-gray);">
+      <div class="term-word">4. Apache Mesos</div>
+      <div class="term-def">
+        <strong>A general-purpose cluster manager</strong> that predates YARN. Can manage any distributed application, not just Spark.
+        <br><br><strong>Status:</strong> Less common now. YARN and Kubernetes have largely replaced it for most use cases.
+        <br><strong>Note from your notes:</strong> Spark supports Mesos but it's rarely used in new deployments.
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§5.3">Cluster Manager Comparison</div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Manager</th><th>Built-in to Spark?</th><th>Resource Sharing</th><th>Cloud Native?</th><th>When to Use</th></tr>
+      <tr><td>Standalone</td><td>✅ Yes</td><td>❌ Only Spark apps</td><td>❌ No</td><td>Dev/test, simple deployments</td></tr>
+      <tr><td>Hadoop YARN</td><td>❌ Separate install</td><td>✅ Spark + Hadoop ecosystem</td><td>⚠️ Partial (HDInsight)</td><td>Existing Hadoop clusters, enterprise</td></tr>
+      <tr><td>Kubernetes</td><td>❌ Separate</td><td>✅ Any containerized app</td><td>✅ Yes (AKS, EKS)</td><td>Cloud-native, microservices, modern</td></tr>
+      <tr><td>Apache Mesos</td><td>❌ Separate</td><td>✅ Any distributed app</td><td>⚠️ Partial</td><td>Legacy — largely superseded</td></tr>
+    </table>
+  </div>
+
+  <div class="callout databricks">
+    <div class="callout-title">🟣 Databricks on Azure — No Manual Cluster Manager Needed</div>
+    When you use <strong>Azure Databricks</strong>, Databricks handles cluster management entirely automatically. You select the number of workers and VM type — Databricks provisions the VMs, installs Spark, configures the cluster manager, and manages scaling (including auto-scaling). You never interact with YARN, Standalone, or Kubernetes configuration directly. This is one of Databricks' biggest value propositions.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 6 — DRIVER PROGRAM
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-white" id="ch6">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:var(--chapter-6)">6</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Six</div>
+      <div class="ch-color-bar" style="background:var(--chapter-6);width:60px;"></div>
+      <h1 class="ch-title">Driver Program<br>&amp; Driver Process</h1>
+      <p class="ch-description">The brain of your Spark application. Two terms that sound similar but mean different things. Where does it run? What's inside it?</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§6.1">Driver Program vs Driver Process — The Confusion Cleared</div>
+
+  <div class="vs-split">
+    <div class="vs-col" style="border-color:var(--chapter-2);">
+      <div class="vs-label" style="color:var(--chapter-2)">📄 Driver Program (Your Code)</div>
+      <ul>
+        <li>The <strong>code you write</strong> — the Python/Scala script or notebook</li>
+        <li>Contains: <code>SparkSession</code> creation, all transformations and actions</li>
+        <li>Contains the application's <code>main()</code> method (or notebook entry point)</li>
+        <li>One driver program = one SparkContext</li>
+        <li><em>"The recipe you wrote for the chef"</em></li>
+        <li><strong>Example:</strong> <code>fraud_detection.py</code>, your Databricks notebook</li>
+      </ul>
+    </div>
+    <div class="vs-divider">=</div>
+    <div class="vs-col" style="border-color:var(--chapter-6);">
+      <div class="vs-label" style="color:var(--chapter-6)">🖥️ Driver Process (Runtime JVM)</div>
+      <ul>
+        <li>The <strong>JVM process that actually runs that code</strong></li>
+        <li>A running process in memory on some machine</li>
+        <li>Contains: SparkSession, DAG Scheduler, Task Scheduler, and your code in memory</li>
+        <li>Communicates with Cluster Manager (to get executors) and with Executors (to send tasks)</li>
+        <li><em>"The chef actively cooking from your recipe"</em></li>
+        <li><strong>Example:</strong> The PID 12345 JVM process running on the cluster</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout note">
+    <div class="callout-title">📘 Simple Summary</div>
+    <strong>Driver Program = your code (static — a file on disk)</strong><br>
+    <strong>Driver Process = your code running (dynamic — a live JVM process)</strong><br><br>
+    When people say "the driver", they usually mean the Driver Process.
+  </div>
+
+  <div class="section-title" data-n="§6.2">What's Inside the Driver Process?</div>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Driver Process — Internal Components</div>
+    <div class="cluster-diag">
+      <div class="diag-group" style="max-width:620px;width:100%;">
+        <span class="diag-group-label">Driver Process (JVM)</span>
+        <br>
+        <div class="diag-box db-red" style="max-width:300px;margin:0 auto 12px;">
+          ✨ SparkSession
+          <span class="diag-label">Entry point · holds SparkContext</span>
+          <span class="diag-label">Your code creates this first</span>
+        </div>
+        <div class="diag-arrow-v">↓ builds plan</div>
+        <div class="diag-box db-blue" style="max-width:300px;margin:8px auto;">
+          📋 Logical Plan
+          <span class="diag-label">Unresolved → Analyzed → Optimized</span>
+          <span class="diag-label">Built lazily as you add transformations</span>
+        </div>
+        <div class="diag-arrow-v">↓ on action: create DAG</div>
+        <div class="diag-row" style="gap:16px;margin-top:8px;">
+          <div class="diag-box db-purple" style="flex:1;min-width:150px;">
+            🗂️ DAG Scheduler
+            <span class="diag-label">Splits DAG into Stages</span>
+            <span class="diag-label">At shuffle boundaries</span>
+          </div>
+          <div class="diag-box db-orange" style="flex:1;min-width:150px;">
+            📋 Task Scheduler
+            <span class="diag-label">1 task per partition</span>
+            <span class="diag-label">Sends to Executors</span>
+          </div>
+        </div>
+        <div class="diag-arrow-v">↓ results collected</div>
+        <div class="diag-box db-white" style="max-width:300px;margin:8px auto;">
+          📊 Results
+          <span class="diag-label">Final output returned to Driver</span>
+          <span class="diag-label">show() / count() / write() results</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-section">DAG Scheduler — Splits Your Plan into Stages</div>
+  <p>The DAG Scheduler takes the optimized execution plan and splits it into <strong>Stages</strong>. A new stage starts whenever a <strong>shuffle boundary</strong> is encountered (i.e., whenever a wide transformation like <code>groupBy()</code> or <code>join()</code> requires data to move across the network).</p>
+  <ul>
+    <li>Determines task dependencies — Stage N+1 cannot start until Stage N's shuffle write is complete</li>
+    <li>Within a stage: all tasks are independent and run in parallel</li>
+    <li>Submits completed stages to the Task Scheduler</li>
+  </ul>
+
+  <div class="sub-section">Task Scheduler — The Delivery Service</div>
+  <p>The Task Scheduler takes each stage from the DAG Scheduler and creates tasks (one per partition). It then assigns tasks to available executor cores based on:</p>
+  <ul>
+    <li><strong>Data locality:</strong> Prefers to run a task on the executor that already has the data in memory</li>
+    <li><strong>Executor availability:</strong> Only assigns tasks to cores that are currently free</li>
+    <li><strong>Resource constraints:</strong> Respects memory and core limits per executor</li>
+  </ul>
+
+  <div class="section-title" data-n="§6.3">Where Does the Driver Run? — Client vs Cluster Mode</div>
+  <p>This is one of the most common interview questions about Spark. The Driver Process can run in two different locations:</p>
+
+  <div class="diagram-wrap">
+    <div class="d-title">Deploy Modes — Where the Driver Lives</div>
+    <div class="diag-row" style="gap:24px;align-items:flex-start;flex-wrap:wrap;">
+
+      <div class="diag-group" style="flex:1;min-width:220px;">
+        <span class="diag-group-label">Client Mode</span>
+        <br>
+        <div class="diag-box db-orange" style="margin:0 auto 10px;">
+          💻 Your Laptop
+          <span class="diag-label">↓ Driver Process runs HERE</span>
+          <span class="diag-label">SparkSession · DAG Scheduler</span>
+        </div>
+        <div class="diag-arrow-v">↕ network</div>
+        <div style="border:1px dashed rgba(255,255,255,0.15);border-radius:8px;padding:10px;margin-top:8px;">
+          <div class="diag-box db-gray" style="margin-bottom:8px;">Cluster Manager</div>
+          <div class="diag-row" style="gap:8px;">
+            <div class="diag-box db-green" style="flex:1;min-width:70px;font-size:11px;">Exec 1</div>
+            <div class="diag-box db-green" style="flex:1;min-width:70px;font-size:11px;">Exec 2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diag-group" style="flex:1;min-width:220px;">
+        <span class="diag-group-label">Cluster Mode</span>
+        <br>
+        <div class="diag-box db-gray" style="margin:0 auto 10px;font-size:11px;">
+          💻 Your Laptop
+          <span class="diag-label">Just submits the job → then disconnects</span>
+        </div>
+        <div class="diag-arrow-v">↓ submit</div>
+        <div style="border:1px dashed rgba(255,255,255,0.15);border-radius:8px;padding:10px;margin-top:4px;">
+          <div class="diag-box db-gray" style="margin-bottom:8px;">Cluster Manager</div>
+          <div class="diag-box db-orange" style="margin:0 auto 8px;max-width:160px;font-size:11px;">
+            Driver Process
+            <span class="diag-label">Runs on a cluster node</span>
+          </div>
+          <div class="diag-row" style="gap:8px;margin-top:8px;">
+            <div class="diag-box db-green" style="flex:1;min-width:70px;font-size:11px;">Exec 1</div>
+            <div class="diag-box db-green" style="flex:1;min-width:70px;font-size:11px;">Exec 2</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:20px;">
+    <table>
+      <tr><th>Aspect</th><th>Client Mode</th><th>Cluster Mode</th></tr>
+      <tr><td>Driver runs on</td><td>Machine that submits the job (your laptop / ADF node)</td><td>Inside the Spark cluster (on a worker or dedicated node)</td></tr>
+      <tr><td>Log visibility</td><td>✅ Logs shown directly in your terminal</td><td>❌ Logs only viewable via Spark UI or cluster logs</td></tr>
+      <tr><td>If submitter disconnects</td><td>💀 Driver dies → Job killed</td><td>✅ Job continues running in the cluster</td></tr>
+      <tr><td>Network latency</td><td>⚠️ Driver ↔ Executors across network (can be slow)</td><td>✅ Driver and Executors both inside cluster (fast)</td></tr>
+      <tr><td>Best for</td><td>Interactive debugging, Databricks notebooks, development</td><td>Production batch jobs, overnight runs</td></tr>
+      <tr><td>Databricks</td><td colspan="2">✅ Databricks handles this transparently — notebooks use client mode internally; Workflows use cluster mode</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title" data-n="§6.4">Two Things the Driver Always Does</div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-6)">1</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Schedule tasks and instruct executors what to execute</h4>
+        <p>The Driver builds the execution plan, splits it into tasks, and sends each task (serialized code) to the appropriate Executor core. The Driver tells the Executor: "Run this function on Partition #42."</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:var(--chapter-6)">2</div>
+      </div>
+      <div class="flow-body">
+        <h4>Collect and consolidate results from executors</h4>
+        <p>When tasks complete, Executors send results back to the Driver. For actions like <code>count()</code>, <code>show()</code>, or <code>collect()</code>, the Driver receives the results, aggregates them, and returns them to your code (or prints them in the notebook).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout important">
+    <div class="callout-title">⚠️ The Driver Does NOT Process Data</div>
+    The Driver is the <strong>orchestrator, not the processor</strong>. It plans, schedules, and collects — but it never touches the actual data partitions. All real data processing happens in Executor cores on Worker nodes. If you call <code>collect()</code>, data is sent TO the driver — but only after being processed by Executors.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 7 — HOW IT ALL CONNECTS
+═══════════════════════════════════════════ -->
+<hr class="chapter-rule">
+<div class="chapter bg-cream" id="ch7">
+  <div class="chapter-opener">
+    <div class="ch-number-big" style="color:#0d9488">7</div>
+    <div class="ch-header">
+      <div class="ch-label">Chapter Seven — The Big Finale</div>
+      <div class="ch-color-bar" style="background:#0d9488;width:60px;"></div>
+      <h1 class="ch-title">How Everything<br>Connects</h1>
+      <p class="ch-description">You've met every component. Now watch them work together — a complete, step-by-step walkthrough from "click Run" to final results.</p>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§7.1">The Complete End-to-End Flow</div>
+  <p>Let's trace exactly what happens when a data engineer clicks "Run" on this Databricks notebook cell:</p>
+
+  <div class="code-wrap">
+    <div class="code-tab"><span class="code-dot" style="background:#ff5f56"></span><span class="code-dot" style="background:#ffbd2e"></span><span class="code-dot" style="background:#27c93f"></span>&nbsp; The code we're tracing</div>
+    <pre><code><span class="cm"># Engineer clicks Run on this cell in Databricks</span>
+df = spark.read.<span class="fn">csv</span>(<span class="str">"/mnt/bronze/transactions.csv"</span>, header=<span class="kw">True</span>)
+df_filtered = df.<span class="fn">filter</span>(df.amount > <span class="num">10000</span>)
+df_grouped  = df_filtered.<span class="fn">groupBy</span>(<span class="str">"country"</span>).<span class="fn">agg</span>({<span class="str">"amount"</span>: <span class="str">"sum"</span>})
+df_grouped.<span class="fn">show</span>()   <span class="cm"># ← This is the action that triggers everything</span></code></pre>
+  </div>
+
+  <div class="flow-steps" style="margin-top: 28px;">
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">1</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Driver Program executes in the Driver Process</h4>
+        <p>The notebook cell is your Driver Program. Databricks runs it in the Driver Process (a JVM on the cluster). A SparkSession already exists — this is the entry point to everything Spark.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">2</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Lazy evaluation — Driver builds an Unresolved Logical Plan</h4>
+        <p>Lines 1–3 (<code>read</code>, <code>filter</code>, <code>groupBy</code>) run instantly — but <strong>no data is read</strong>. Each line adds a node to the Logical Plan tree in the Driver's memory. It's just a blueprint.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">3</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Action called → Catalyst Optimizer kicks in</h4>
+        <p><code>show()</code> is the action. Now Spark finalizes the plan. The <strong>Catalyst Optimizer</strong> analyzes the full plan: pushes the <code>filter</code> down to the CSV reader (read less data), prunes unused columns. Output: Optimized Logical Plan → Physical Plan → Java bytecode (Tungsten).</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">4</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>DAG Scheduler splits the plan into Stages</h4>
+        <p>The <code>groupBy</code> is a wide transformation (shuffle boundary). The DAG Scheduler creates: <strong>Stage 1</strong> (read CSV + filter) and <strong>Stage 2</strong> (aggregate by country). Stage 2 must wait for Stage 1 to finish its shuffle write.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">5</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Driver contacts Cluster Manager for Executors</h4>
+        <p>If executors aren't already running (first job), the Driver contacts the Cluster Manager: "Give me 12 executors with 8 cores each." The Cluster Manager tells 12 Worker nodes to launch Executors. Workers fork new Executor JVM processes. Executors register with the Driver.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">6</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Task Scheduler dispatches Stage 1 tasks</h4>
+        <p>Say the CSV has 8,000 partitions → 8,000 Stage 1 tasks. Task Scheduler assigns first 96 tasks (one per core). Each executor core streams its partition from ADLS, applies filter, writes shuffle data to local disk. As cores free up, next batch assigned — until all 8,000 Stage 1 tasks complete.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">7</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Shuffle — data redistributed across the network</h4>
+        <p>Stage 2 tasks start. Each Stage 2 task pulls relevant shuffle data from Stage 1 worker local disks. All rows with <code>country = "IN"</code> go to one executor, all <code>"US"</code> rows to another, etc. This is the shuffle — the most expensive operation.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">8</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-body">
+        <h4>Stage 2 tasks — aggregation</h4>
+        <p>200 Stage 2 tasks (default <code>spark.sql.shuffle.partitions=200</code>) each aggregate their country chunk — summing the amounts. Results are small row-level outputs.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-left">
+        <div class="flow-num" style="background:#0d9488">9</div>
+      </div>
+      <div class="flow-body">
+        <h4>Results collected by Driver → show() displays them</h4>
+        <p>Executors send their Stage 2 results back to the Driver. The Driver collects all 200 small partition results, merges them, and displays the final table in the notebook. Done.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline visual -->
+  <div class="section-title" data-n="§7.2">The Full Flow in One Pipeline View</div>
+  <div class="pipeline-vis">
+    <div class="pipe-row">
+      <div class="pipe-node" style="background:rgba(230,57,70,0.15);border:1px solid rgba(230,57,70,0.4);">
+        <div class="pipe-node-name" style="color:#fca5a5;">Your Code</div>
+        <div class="pipe-node-sub">PySpark script<br>Databricks notebook</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(244,162,89,0.15);border:1px solid rgba(244,162,89,0.4);">
+        <div class="pipe-node-name" style="color:#fdba74;">SparkSession</div>
+        <div class="pipe-node-sub">Entry point<br>Driver Process</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(155,93,229,0.15);border:1px solid rgba(155,93,229,0.4);">
+        <div class="pipe-node-name" style="color:#c4b5fd;">Logical Plan</div>
+        <div class="pipe-node-sub">Catalyst<br>Optimizer</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(42,109,228,0.15);border:1px solid rgba(42,109,228,0.4);">
+        <div class="pipe-node-name" style="color:#93c5fd;">DAG Scheduler</div>
+        <div class="pipe-node-sub">Stage 1<br>Stage 2</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(20,184,166,0.15);border:1px solid rgba(20,184,166,0.4);">
+        <div class="pipe-node-name" style="color:#5eead4;">Task Scheduler</div>
+        <div class="pipe-node-sub">8000 tasks<br>Queue</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(44,182,125,0.15);border:1px solid rgba(44,182,125,0.4);">
+        <div class="pipe-node-name" style="color:#6ee7b7;">Executors</div>
+        <div class="pipe-node-sub">96 cores<br>running in parallel</div>
+      </div>
+      <div class="pipe-gap"></div>
+      <div class="pipe-node" style="background:rgba(230,57,70,0.15);border:1px solid rgba(230,57,70,0.4);">
+        <div class="pipe-node-name" style="color:#fca5a5;">Results</div>
+        <div class="pipe-node-sub">Back to Driver<br>show() / write()</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" data-n="§7.3">Master Cheat Sheet — Every Term in One Place</div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Term</th><th>What It Is</th><th>Where It Lives</th><th>Processes Data?</th></tr>
+      <tr><td>Spark Application</td><td>Your entire program — from SparkSession creation to spark.stop()</td><td>Defined by you; runs across cluster</td><td>❌ Application itself doesn't — its components do</td></tr>
+      <tr><td>SparkContext</td><td>Low-level cluster connection object (Spark 1.x era)</td><td>Inside Driver Process JVM</td><td>❌</td></tr>
+      <tr><td>SparkSession</td><td>Unified entry point to all Spark APIs (Spark 2.0+)</td><td>Inside Driver Process JVM — Driver only, never Executors</td><td>❌</td></tr>
+      <tr><td>Spark Cluster</td><td>Collection of machines with Spark installed, working together</td><td>Cloud (Azure) or on-premise data center</td><td>✅ Through Executors</td></tr>
+      <tr><td>Master Node</td><td>Machine that hosts the Cluster Manager</td><td>One per cluster (or 3 for HA)</td><td>❌</td></tr>
+      <tr><td>Cluster Manager</td><td>Software that allocates CPU/RAM to applications (YARN / Standalone / K8s)</td><td>Runs on Master Node</td><td>❌ — only manages resources</td></tr>
+      <tr><td>Worker Node</td><td>Machine that hosts Executor(s)</td><td>Multiple per cluster</td><td>✅ Through Executors</td></tr>
+      <tr><td>Spark Worker</td><td>JVM management process that launches/monitors Executors</td><td>On Worker Node</td><td>❌ Only launches Executors</td></tr>
+      <tr><td>Executor</td><td>JVM container that runs tasks and caches data</td><td>On Worker Node — launched by Spark Worker</td><td>✅ Yes — this is where data processing happens</td></tr>
+      <tr><td>Spark Core (in Executor)</td><td>Logical thread (task slot) — can run exactly 1 task at a time</td><td>Inside Executor JVM</td><td>✅ Yes — each core runs one task</td></tr>
+      <tr><td>Driver Program</td><td>The code you write (PySpark script / notebook)</td><td>File on disk / cells in notebook</td><td>❌</td></tr>
+      <tr><td>Driver Process</td><td>The JVM that runs your Driver Program + DAG/Task Schedulers</td><td>Client machine (client mode) or cluster node (cluster mode)</td><td>❌ — orchestrates only; collects final results</td></tr>
+      <tr><td>DAG Scheduler</td><td>Splits execution plan into Stages at shuffle boundaries</td><td>Inside Driver Process</td><td>❌</td></tr>
+      <tr><td>Task Scheduler</td><td>Creates tasks (1 per partition per stage) and assigns to Executor cores</td><td>Inside Driver Process</td><td>❌</td></tr>
+      <tr><td>Task</td><td>One operation on one data partition — the atomic unit of Spark work</td><td>Runs in one Executor Core</td><td>✅ Yes</td></tr>
+      <tr><td>Partition</td><td>A logical chunk of the DataFrame / data — unit of parallelism</td><td>In Executor memory during processing</td><td>✅ Each partition is processed by one task</td></tr>
+    </table>
+  </div>
+
+  <div class="big-quote">"In Spark, the Driver orchestrates, the Cluster Manager allocates, the Worker launches, and the Executor processes. These four roles are always distinct — even when they happen to run on the same machine."</div>
+</div>
+
+<!-- FOOTER -->
+<div class="book-footer">
+  <div style="margin-bottom:12px;font-size:16px;">⚡</div>
+  <div>How Spark Works — Complete Chapter Guide</div>
+  <div style="margin-top:6px;opacity:0.5;">Apache Spark 3.x · Azure Databricks · Interview-Ready · Module 3</div>
+</div>
+
+</body>
+</html>
