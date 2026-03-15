@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Architecture — Interview-Ready Deep Dive</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3248;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --blue: #60a5fa;
+    --blue-dim: #1e3a5f;
+    --green: #34d399;
+    --green-dim: #0d3325;
+    --yellow: #fbbf24;
+    --yellow-dim: #3b2a00;
+    --red: #f87171;
+    --red-dim: #3b0f0f;
+    --purple: #a78bfa;
+    --purple-dim: #2d1f5e;
+    --orange: #fb923c;
+    --orange-dim: #3b1a00;
+    --teal: #2dd4bf;
+    --teal-dim: #0d2e2a;
+    --pink: #f472b6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1d27 40%, #0d2344 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 40px 40px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--blue-dim);
+    color: var(--blue);
+    border: 1px solid var(--blue);
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .hero h1 span { color: var(--blue); }
+  .hero p {
+    color: var(--muted);
+    max-width: 640px;
+    margin: 0 auto;
+    font-size: 1rem;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  .toc h3 { color: var(--blue); font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .toc ol { padding-left: 20px; column-count: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  .toc a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .toc a:hover { color: var(--blue); }
+
+  /* ── SECTION CARDS ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .section.blue::before   { background: var(--blue); }
+  .section.green::before  { background: var(--green); }
+  .section.yellow::before { background: var(--yellow); }
+  .section.purple::before { background: var(--purple); }
+  .section.orange::before { background: var(--orange); }
+  .section.teal::before   { background: var(--teal); }
+  .section.red::before    { background: var(--red); }
+  .section.pink::before   { background: var(--pink); }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .section-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  .section h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .section h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    border-left: 3px solid var(--blue);
+    color: var(--blue);
+  }
+  .section h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--yellow);
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p { margin-bottom: 10px; color: var(--text); }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  strong { color: #fff; }
+
+  /* ── HIGHLIGHT BOXES ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.9rem;
+    border-left: 4px solid;
+  }
+  .callout.blue   { background: var(--blue-dim);   border-color: var(--blue);   color: #bfdbfe; }
+  .callout.green  { background: var(--green-dim);  border-color: var(--green);  color: #a7f3d0; }
+  .callout.yellow { background: var(--yellow-dim); border-color: var(--yellow); color: #fde68a; }
+  .callout.red    { background: var(--red-dim);    border-color: var(--red);    color: #fecaca; }
+  .callout.purple { background: var(--purple-dim); border-color: var(--purple); color: #ddd6fe; }
+  .callout.orange { background: var(--orange-dim); border-color: var(--orange); color: #fed7aa; }
+
+  /* ── CODE ── */
+  pre {
+    background: #090b10;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    color: #e2e8f0;
+  }
+  .kw  { color: #c084fc; }
+  .fn  { color: #60a5fa; }
+  .str { color: #34d399; }
+  .cm  { color: #64748b; font-style: italic; }
+  .num { color: #fb923c; }
+  .cl  { color: #fbbf24; }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--blue);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  td:first-child { color: var(--yellow); font-weight: 600; }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-diagram {
+    background: #090b10;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 20px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .arch-row {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .arch-box {
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+    border: 1px solid;
+  }
+  .ab-blue   { background: var(--blue-dim);   border-color: var(--blue);   color: var(--blue); }
+  .ab-green  { background: var(--green-dim);  border-color: var(--green);  color: var(--green); }
+  .ab-yellow { background: var(--yellow-dim); border-color: var(--yellow); color: var(--yellow); }
+  .ab-purple { background: var(--purple-dim); border-color: var(--purple); color: var(--purple); }
+  .ab-orange { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); }
+  .ab-teal   { background: var(--teal-dim);   border-color: var(--teal);   color: var(--teal); }
+  .ab-red    { background: var(--red-dim);    border-color: var(--red);    color: var(--red); }
+  .arch-arrow { color: var(--muted); font-size: 1.2rem; display: flex; align-items: center; }
+  .arch-label { color: var(--muted); font-size: 0.72rem; margin-top: 4px; font-weight: 400; }
+
+  /* ── PIPELINE STEPS ── */
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 20px 0;
+    align-items: stretch;
+  }
+  .pipe-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    position: relative;
+    font-size: 0.82rem;
+  }
+  .pipe-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    z-index: 1;
+    font-size: 1.1rem;
+  }
+  .pipe-step:first-child { border-radius: 8px 0 0 8px; }
+  .pipe-step:last-child  { border-radius: 0 8px 8px 0; }
+  .pipe-step strong { display: block; font-size: 0.78rem; margin-bottom: 4px; }
+
+  /* ── INTERVIEW CARDS ── */
+  .interview-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .interview-q {
+    color: var(--yellow);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+  .interview-q::before { content: '🎙️  Q: '; }
+  .interview-a {
+    color: var(--text);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .interview-a strong { color: var(--green); }
+
+  /* ── MISTAKE BOX ── */
+  .mistake-box {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 12px;
+  }
+  .mistake-box h4 { color: var(--red); margin-bottom: 8px; }
+
+  /* ── PRO TIPS ── */
+  .pro-tip {
+    display: flex;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .pro-tip-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .pro-tip-text { font-size: 0.88rem; line-height: 1.5; }
+
+  /* ── QUIZ ── */
+  .quiz-question {
+    background: var(--surface2);
+    border: 1px solid var(--purple);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .quiz-q { color: var(--purple); font-weight: 600; margin-bottom: 14px; }
+  .quiz-options { list-style: none; padding: 0; }
+  .quiz-options li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .quiz-options li:hover { border-color: var(--purple); }
+  .quiz-answer {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: #a7f3d0;
+  }
+  .quiz-answer strong { color: var(--green); }
+
+  /* ── BADGE PILL ── */
+  .pill {
+    display: inline-block;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .pill-blue   { background: var(--blue-dim);   color: var(--blue); }
+  .pill-green  { background: var(--green-dim);  color: var(--green); }
+  .pill-yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .pill-red    { background: var(--red-dim);    color: var(--red); }
+  .pill-purple { background: var(--purple-dim); color: var(--purple); }
+
+  /* ── FLOW DIAGRAM CSS ── */
+  .dag-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 20px auto;
+    max-width: 560px;
+  }
+  .dag-node {
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 220px;
+    text-align: center;
+    border: 1px solid;
+  }
+  .dag-arrow {
+    color: var(--muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    margin: 2px 0;
+  }
+
+  .exec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .exec-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .exec-card h4 { color: var(--teal); margin: 0 0 8px; font-size: 0.85rem; }
+  .exec-card ul { font-size: 0.82rem; padding-left: 16px; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.6rem; }
+    .section { padding: 20px; }
+    .toc ol { column-count: 1; }
+    .pipeline { flex-direction: column; }
+    .pipe-step:not(:last-child)::after { content: '↓'; right: auto; top: auto; bottom: -16px; left: 50%; transform: translateX(-50%); }
+    .pipe-step { border-radius: 8px !important; margin-bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🚀 Interview-Ready Deep Dive</div>
+  <h1>Apache <span>Spark Architecture</span></h1>
+  <p>Driver vs Executor · DAG Execution · Lazy Evaluation · Transformations vs Actions — explained for engineers preparing for data engineering interviews</p>
+</div>
+
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>📋 Table of Contents</h3>
+    <ol>
+      <li><a href="#concept">🔷 Concept Snapshot</a></li>
+      <li><a href="#architecture">🏗️ Spark Architecture Overview</a></li>
+      <li><a href="#components">⚙️ Core Components Deep Dive</a></li>
+      <li><a href="#driver-executor">🆚 Driver vs Executor</a></li>
+      <li><a href="#lazy">⏳ Lazy Evaluation</a></li>
+      <li><a href="#trans-actions">🔀 Transformations vs Actions</a></li>
+      <li><a href="#dag">🌐 DAG & Execution Flow</a></li>
+      <li><a href="#execution-flow">🔄 Full Job Execution Flow</a></li>
+      <li><a href="#banking">🏦 Real-World Banking Example</a></li>
+      <li><a href="#interview">🎤 Interview Insights</a></li>
+      <li><a href="#tips">💡 Pro Tips</a></li>
+      <li><a href="#quiz">🧠 Quiz</a></li>
+    </ol>
+  </div>
+
+  <!-- ─── 1. CONCEPT SNAPSHOT ─── -->
+  <section class="section blue" id="concept">
+    <div class="section-header">
+      <span class="section-icon">🔷</span>
+      <h2>Concept Snapshot</h2>
+    </div>
+    <p><strong>Apache Spark</strong> is a <strong>distributed data processing framework</strong> that splits large datasets into chunks, distributes them across a cluster of machines, and processes them in parallel — all in-memory (RAM), which makes it dramatically faster than older tools like Hadoop MapReduce.</p>
+
+    <div class="callout blue">
+      <strong>🍕 Analogy:</strong> Think of Spark like a pizza chain with multiple branches. The <strong>Driver</strong> is the head office that takes your order and decides which branch makes which part. The <strong>Executors</strong> are the branch kitchens that actually bake the pizzas in parallel. The <strong>Cluster Manager</strong> decides how many ovens (resources) each branch gets.
+    </div>
+
+    <h3>Why Does Spark Exist? (The Problem It Solves)</h3>
+    <p>Before Spark, <strong>Hadoop MapReduce</strong> had two major pain points:</p>
+    <ul>
+      <li><strong>Disk I/O Pain:</strong> Every intermediate result (after map, shuffle, reduce) was written to disk. Disk reads/writes are extremely slow — making iterative algorithms like ML training painfully slow.</li>
+      <li><strong>Rigid 1-job-per-shuffle model:</strong> MapReduce had exactly one map + one reduce phase per job. Complex pipelines (e.g., filter → join on key A → aggregate on key B) required multiple separate jobs, each reading/writing disk.</li>
+    </ul>
+    <div class="callout green">
+      <strong>✅ Spark's Fix:</strong> (1) Intermediate results stay in <strong>RAM of worker nodes</strong>, not disk. (2) Spark's <strong>DAG model</strong> handles multiple stages with different grouping keys in a single application — no separate jobs needed.
+    </div>
+  </section>
+
+  <!-- ─── 2. ARCHITECTURE OVERVIEW ─── -->
+  <section class="section teal" id="architecture">
+    <div class="section-header">
+      <span class="section-icon">🏗️</span>
+      <h2>Spark Architecture Overview</h2>
+    </div>
+    <p>Spark follows a <strong>Master-Worker architecture</strong>. Here's the full picture:</p>
+
+    <div class="arch-diagram">
+      <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Spark Cluster Architecture</div>
+
+      <div class="arch-row">
+        <div class="arch-box ab-blue">
+          <div>🖥️ Client Machine</div>
+          <div class="arch-label">Your laptop / notebook</div>
+        </div>
+      </div>
+      <div class="arch-row"><div class="arch-arrow">↓ submits application</div></div>
+
+      <div class="arch-row">
+        <div class="arch-box ab-yellow">
+          <div>🧠 Driver Process</div>
+          <div class="arch-label">SparkSession · DAG Scheduler · Task Scheduler</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box ab-orange">
+          <div>📋 Cluster Manager</div>
+          <div class="arch-label">YARN / Standalone / K8s / Mesos</div>
+        </div>
+      </div>
+      <div class="arch-row"><div class="arch-arrow">↓ requests executors</div></div>
+
+      <div class="arch-row">
+        <div class="arch-box ab-green">
+          <div>👷 Worker Node 1</div>
+          <div class="arch-label">Executor JVM · Cores · Memory</div>
+        </div>
+        <div class="arch-box ab-green">
+          <div>👷 Worker Node 2</div>
+          <div class="arch-label">Executor JVM · Cores · Memory</div>
+        </div>
+        <div class="arch-box ab-green">
+          <div>👷 Worker Node N</div>
+          <div class="arch-label">Executor JVM · Cores · Memory</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout yellow">
+      <strong>🔑 Key Rule:</strong> The <strong>Cluster Manager</strong> (e.g., YARN ResourceManager) is software, and the <strong>Master Node</strong> is the machine hosting it. They're related but not the same thing. The Driver controls <em>execution logic</em>; the Cluster Manager controls <em>resource allocation</em>.
+    </div>
+  </section>
+
+  <!-- ─── 3. CORE COMPONENTS ─── -->
+  <section class="section purple" id="components">
+    <div class="section-header">
+      <span class="section-icon">⚙️</span>
+      <h2>Core Components Deep Dive</h2>
+    </div>
+
+    <h3>1. Spark Cluster</h3>
+    <p>A <strong>collection of machines (nodes)</strong> — either in a public cloud (Azure) or on-premise data center — with Spark installed. Every cluster has at least one Driver and one or more Workers.</p>
+
+    <h3>2. Cluster Manager</h3>
+    <p>A software tool that <strong>allocates CPU, memory, and other resources</strong> across applications. Think of it as the HR department assigning desks to employees.</p>
+    <table>
+      <tr><th>Cluster Manager</th><th>Best For</th><th>Notes</th></tr>
+      <tr><td>Standalone</td><td>Dev/testing, simple setups</td><td>Built into Spark, Master can also be a Worker</td></tr>
+      <tr><td>Hadoop YARN</td><td>Existing Hadoop ecosystems</td><td>Shares cluster with MapReduce, Hive, etc.</td></tr>
+      <tr><td>Kubernetes</td><td>Containerized, cloud-native workloads</td><td>Best for Azure AKS-based Spark</td></tr>
+      <tr><td>Apache Mesos</td><td>Legacy enterprise clusters</td><td>Less common now</td></tr>
+    </table>
+    <div class="callout blue"><strong>📌 Databricks Note:</strong> In Databricks on Azure, cluster management is handled automatically. You never configure YARN or Standalone directly — Databricks manages it for you.</div>
+
+    <h3>3. Master Node</h3>
+    <p>The machine that hosts the Cluster Manager. In Standalone mode, it also acts as a Worker. It orchestrates which worker nodes run which executors.</p>
+    <div class="callout yellow"><strong>⚠️ Clarification from your notes:</strong> The node where the <strong>Driver JVM runs is NOT necessarily the Master Node</strong>. In client mode, the driver runs on your local machine. In cluster mode, it runs on one of the cluster nodes (but it's still separate from the cluster manager master).</div>
+
+    <h3>4. Spark Worker</h3>
+    <p>A node in the cluster that receives instructions from the Master and <strong>launches Executors</strong> on behalf of the Driver.</p>
+    <div class="callout orange"><strong>Key Role:</strong> The Worker's <em>only job</em> is to launch Executors. It doesn't process data itself — Executors do that.</div>
+
+    <h3>5. Spark Executor</h3>
+    <p>A <strong>JVM container</strong> launched on a Worker node with an allocated amount of cores (threads) and memory. This is where actual data processing happens.</p>
+    <ul>
+      <li>Executes Spark tasks assigned by the Driver</li>
+      <li>Stores and caches data partitions in memory (for reuse across stages)</li>
+      <li>Writes intermediate shuffle results to local disk of the worker node</li>
+      <li>Reports results back to the Driver</li>
+    </ul>
+    <div class="callout green">
+      <strong>Executor Core = Logical Thread, NOT a physical CPU core.</strong> An executor with 4 cores can run 4 tasks simultaneously. The OS then maps these JVM threads to physical cores.
+    </div>
+
+    <h3>6. Spark Driver Program vs Driver Process</h3>
+    <div class="exec-grid">
+      <div class="exec-card">
+        <h4>📄 Driver Program</h4>
+        <ul>
+          <li>The <em>code you write</em></li>
+          <li>Contains <code>main()</code> or notebook cells</li>
+          <li>Contains SparkSession creation</li>
+          <li>All transformation + action logic</li>
+          <li>Example: your PySpark script</li>
+        </ul>
+      </div>
+      <div class="exec-card">
+        <h4>🖥️ Driver Process</h4>
+        <ul>
+          <li>The <em>runtime JVM process</em> running that code</li>
+          <li>Contains DAG Scheduler</li>
+          <li>Contains Task Scheduler</li>
+          <li>Communicates with Cluster Manager</li>
+          <li>Collects results from executors</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout blue"><strong>Simple way to remember:</strong> Driver Program = your code. Driver Process = the JVM that runs your code. One is the recipe; the other is the chef following the recipe.</div>
+
+    <h3>7. SparkSession</h3>
+    <p>The <strong>single entry point</strong> to all Spark functionality. It lives <em>only on the Driver</em>. Executors never have a SparkSession.</p>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+<span class="cm"># Created ONCE in the driver process</span>
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"BankingFraudDetection"</span>) \
+    .<span class="fn">config</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"200"</span>) \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># SparkSession gives you access to:</span>
+spark.sql(...)          <span class="cm"># SQL engine</span>
+spark.read.parquet(...) <span class="cm"># DataFrame API</span>
+spark.catalog.listTables() <span class="cm"># Catalog</span>
+spark.sparkContext      <span class="cm"># Underlying SparkContext</span></code></pre>
+
+    <h3>8. Deployment Modes</h3>
+    <table>
+      <tr><th>Mode</th><th>Where Driver Runs</th><th>Use Case</th></tr>
+      <tr><td>Local Mode</td><td>Single machine (your laptop)</td><td>Development and unit testing only</td></tr>
+      <tr><td>Client Mode</td><td>On the machine submitting the job (outside the cluster)</td><td>Interactive notebooks, debugging; driver logs visible locally</td></tr>
+      <tr><td>Cluster Mode</td><td>Inside the cluster (on a worker node)</td><td>Production batch jobs; driver survives client disconnects</td></tr>
+      <tr><td>Standalone</td><td>Master node (Spark's own cluster manager)</td><td>Self-managed clusters without Hadoop</td></tr>
+    </table>
+  </section>
+
+  <!-- ─── 4. DRIVER vs EXECUTOR ─── -->
+  <section class="section orange" id="driver-executor">
+    <div class="section-header">
+      <span class="section-icon">🆚</span>
+      <h2>Driver vs Executor — Side-by-Side</h2>
+    </div>
+    <table>
+      <tr><th>Aspect</th><th>Driver</th><th>Executor</th></tr>
+      <tr><td>What it is</td><td>JVM process that runs your application code</td><td>JVM container that runs tasks assigned by driver</td></tr>
+      <tr><td>Count per app</td><td>Exactly ONE per application</td><td>Multiple (one per worker node, configurable)</td></tr>
+      <tr><td>SparkSession</td><td>✅ Lives here</td><td>❌ Never has SparkSession</td></tr>
+      <tr><td>DAG Scheduler</td><td>✅ Runs here</td><td>❌ Unaware of DAG</td></tr>
+      <tr><td>Data processing</td><td>❌ Does NOT process partitions</td><td>✅ Processes data partitions</td></tr>
+      <tr><td>Caching</td><td>❌ No data caching</td><td>✅ Caches partitions in memory</td></tr>
+      <tr><td>Failure impact</td><td>💀 App dies if driver crashes</td><td>⚠️ Spark retries tasks on other executors</td></tr>
+      <tr><td>Communication</td><td>Sends tasks TO executors</td><td>Returns results TO driver</td></tr>
+      <tr><td>Location</td><td>Client machine (client mode) or cluster node (cluster mode)</td><td>Always on Worker nodes</td></tr>
+    </table>
+
+    <div class="callout red">
+      <strong>🚨 Common Interview Trap:</strong> Candidates say "the driver processes data." Wrong — the driver only <em>orchestrates</em> (plans, schedules, collects results). Data processing is always done by Executors.
+    </div>
+  </section>
+
+  <!-- ─── 5. LAZY EVALUATION ─── -->
+  <section class="section yellow" id="lazy">
+    <div class="section-header">
+      <span class="section-icon">⏳</span>
+      <h2>Lazy Evaluation</h2>
+    </div>
+    <p>Spark does <strong>not execute any code immediately</strong> when you write a transformation. It builds up a plan (the logical plan / DAG) and waits. Execution only happens when an <strong>action</strong> is called.</p>
+
+    <div class="callout yellow">
+      <strong>📚 Analogy:</strong> You're telling a chef your entire meal order — "first make soup, then salad, then pasta." The chef listens, optimizes the sequence (maybe prep common ingredients once), and only <em>starts cooking</em> when you say "serve it!" That "serve it" is your action.
+    </div>
+
+    <h3>How Lazy Evaluation Works Step by Step</h3>
+    <pre><code><span class="cm"># Each line below DOES NOT execute immediately</span>
+df = spark.read.<span class="fn">parquet</span>(<span class="str">"/mnt/adls/transactions/"</span>)  <span class="cm"># ← builds logical plan node</span>
+df_filtered = df.<span class="fn">filter</span>(df.amount > <span class="num">10000</span>)             <span class="cm"># ← adds Filter node to plan</span>
+df_grouped  = df_filtered.<span class="fn">groupBy</span>(<span class="str">"country"</span>)            <span class="cm"># ← adds GroupBy node (shuffle!)</span>
+result      = df_grouped.<span class="fn">agg</span>({<span class="str">"amount"</span>: <span class="str">"sum"</span>})         <span class="cm"># ← adds Aggregate node</span>
+
+<span class="cm"># 🔴 Nothing has run yet! Spark is just collecting the recipe.</span>
+
+<span class="cm"># ✅ THIS triggers actual execution:</span>
+result.<span class="fn">show</span>()   <span class="cm"># ← ACTION → Spark now optimizes + executes the full plan</span></code></pre>
+
+    <h3>Benefits of Lazy Evaluation</h3>
+    <ul>
+      <li><strong>Whole-plan optimization:</strong> Catalyst Optimizer sees the full plan before running — it can apply predicate pushdown, column pruning, and join reordering across all steps at once.</li>
+      <li><strong>Avoids unnecessary computation:</strong> If you filter before groupBy, Spark processes fewer rows in the shuffle.</li>
+      <li><strong>Pipeline fusion:</strong> Multiple narrow transformations can be collapsed into a single stage — no intermediate materialization.</li>
+    </ul>
+
+    <div class="callout green">
+      <strong>Predicate Pushdown:</strong> If you write <code>df.filter(status == "COMPLETED").join(customers)</code>, Catalyst moves the filter as close to the data source as possible — even pushing it into the Parquet file reader so that only matching rows are loaded from ADLS. This saves massive I/O.
+    </div>
+    <div class="callout blue">
+      <strong>Projection Pruning (Column Pruning):</strong> If your final result only uses 3 columns out of 50, Catalyst removes the unused 47 columns early — reducing memory and shuffle costs.
+    </div>
+  </section>
+
+  <!-- ─── 6. TRANSFORMATIONS vs ACTIONS ─── -->
+  <section class="section green" id="trans-actions">
+    <div class="section-header">
+      <span class="section-icon">🔀</span>
+      <h2>Transformations vs Actions</h2>
+    </div>
+    <p>Every Spark operation is either a <strong>Transformation</strong> (lazy — builds the plan) or an <strong>Action</strong> (eager — triggers execution).</p>
+
+    <table>
+      <tr><th>Aspect</th><th>Transformation</th><th>Action</th></tr>
+      <tr><td>Execution</td><td>Lazy — does NOT run immediately</td><td>Eager — triggers full DAG execution</td></tr>
+      <tr><td>Returns</td><td>A new DataFrame / RDD</td><td>A result (value, file write, display)</td></tr>
+      <tr><td>Effect on plan</td><td>Adds a node to the logical plan</td><td>Finalizes plan → optimizes → runs</td></tr>
+      <tr><td>Creates a Job?</td><td>No</td><td>Yes — one action = one Job</td></tr>
+    </table>
+
+    <h3>Narrow vs Wide Transformations (Critical for Stages)</h3>
+    <table>
+      <tr><th>Type</th><th>Definition</th><th>Shuffle Needed?</th><th>Stage Impact</th><th>Examples</th></tr>
+      <tr><td>Narrow</td><td>Each input partition maps to exactly one output partition — no data moves across the network</td><td>❌ No</td><td>Same stage</td><td><code>filter()</code>, <code>map()</code>, <code>select()</code>, <code>withColumn()</code>, <code>union()</code></td></tr>
+      <tr><td>Wide</td><td>Input partitions must be redistributed across the network — multiple input partitions contribute to one output partition</td><td>✅ Yes</td><td>New stage boundary</td><td><code>groupBy()</code>, <code>join()</code>, <code>reduceByKey()</code>, <code>distinct()</code>, <code>repartition()</code></td></tr>
+    </table>
+
+    <div class="callout red">
+      <strong>Why Wide Transformations Create New Stages:</strong> When data needs to be <em>reshuffled</em> across the network (e.g., all rows with the same country key must go to the same executor for groupBy), Spark cannot do this within a single stage. It must write intermediate results to the worker's local disk, then have the next stage pull the relevant data. This boundary = a <strong>shuffle boundary = a new stage</strong>.
+    </div>
+
+    <h3>Common Operations Reference</h3>
+    <table>
+      <tr><th>Operation</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><code>filter() / where()</code></td><td><span class="pill pill-green">Narrow Transformation</span></td><td>Best applied early — reduces data size</td></tr>
+      <tr><td><code>select() / drop()</code></td><td><span class="pill pill-green">Narrow Transformation</span></td><td>Column pruning — reduces width</td></tr>
+      <tr><td><code>withColumn()</code></td><td><span class="pill pill-green">Narrow Transformation</span></td><td>Adds/replaces a column</td></tr>
+      <tr><td><code>map() / flatMap()</code></td><td><span class="pill pill-green">Narrow Transformation</span></td><td>RDD operations</td></tr>
+      <tr><td><code>groupBy().agg()</code></td><td><span class="pill pill-yellow">Wide Transformation</span></td><td>Triggers shuffle — new stage</td></tr>
+      <tr><td><code>join()</code></td><td><span class="pill pill-yellow">Wide Transformation</span></td><td>Unless broadcast join — then narrow</td></tr>
+      <tr><td><code>repartition()</code></td><td><span class="pill pill-yellow">Wide Transformation</span></td><td>Full shuffle — use carefully</td></tr>
+      <tr><td><code>distinct()</code></td><td><span class="pill pill-yellow">Wide Transformation</span></td><td>Requires global deduplication</td></tr>
+      <tr><td><code>show() / collect()</code></td><td><span class="pill pill-red">Action</span></td><td>Triggers execution; <code>collect()</code> pulls all data to driver — dangerous on large datasets!</td></tr>
+      <tr><td><code>count()</code></td><td><span class="pill pill-red">Action</span></td><td>Triggers full scan</td></tr>
+      <tr><td><code>write.save()</code></td><td><span class="pill pill-red">Action</span></td><td>Triggers execution + writes output</td></tr>
+      <tr><td><code>take(n)</code></td><td><span class="pill pill-red">Action</span></td><td>Returns first n rows to driver</td></tr>
+    </table>
+  </section>
+
+  <!-- ─── 7. DAG ─── -->
+  <section class="section red" id="dag">
+    <div class="section-header">
+      <span class="section-icon">🌐</span>
+      <h2>DAG — Directed Acyclic Graph</h2>
+    </div>
+    <p>A DAG is Spark's execution blueprint. <strong>Nodes = RDDs/DataFrames, Edges = transformations, Shuffle boundaries = Stage breaks.</strong></p>
+
+    <h3>How a DAG Gets Built (Deep Dive)</h3>
+    <div class="dag-flow">
+      <div class="dag-node ab-blue">User writes PySpark code</div>
+      <div class="dag-arrow">↓</div>
+      <div class="dag-node ab-yellow">Unresolved Logical Plan<br><small style="color:var(--muted)">Syntax checked · column names unresolved</small></div>
+      <div class="dag-arrow">↓ Analyzer uses Catalog</div>
+      <div class="dag-node ab-yellow">Resolved Logical Plan<br><small style="color:var(--muted)">Columns/tables validated against metadata</small></div>
+      <div class="dag-arrow">↓ Catalyst Optimizer</div>
+      <div class="dag-node ab-orange">Optimized Logical Plan<br><small style="color:var(--muted)">Predicate pushdown · Column pruning · Join reorder</small></div>
+      <div class="dag-arrow">↓ Physical Planner + Cost Optimizer</div>
+      <div class="dag-node ab-orange">Physical Plan<br><small style="color:var(--muted)">HashAggregateExec · SortMergeJoinExec · BroadcastHashJoinExec</small></div>
+      <div class="dag-arrow">↓ Tungsten Code Generation</div>
+      <div class="dag-node ab-purple">Optimized Java Bytecode<br><small style="color:var(--muted)">Whole-stage codegen · Off-heap memory · Cache-friendly structures</small></div>
+      <div class="dag-arrow">↓ DAG Materialized</div>
+      <div class="dag-node ab-green">RDD Lineage DAG<br><small style="color:var(--muted)">Nodes=RDDs, Edges=transforms, Shuffle=stage boundaries</small></div>
+    </div>
+
+    <h3>Catalyst Optimizer — Key Optimizations</h3>
+    <table>
+      <tr><th>Optimization</th><th>What It Does</th><th>Performance Gain</th></tr>
+      <tr><td>Predicate Pushdown</td><td>Moves filters as close to the data source as possible — even into the file reader</td><td>Reads less data from storage → huge I/O savings</td></tr>
+      <tr><td>Column Pruning</td><td>Removes unused columns from the execution plan</td><td>Less memory, less shuffle data</td></tr>
+      <tr><td>Constant Folding</td><td>Pre-computes constant expressions at plan time</td><td>Avoids repeated runtime computation</td></tr>
+      <tr><td>Join Reordering</td><td>Puts smaller tables first in join order</td><td>Reduces intermediate dataset sizes</td></tr>
+    </table>
+
+    <h3>Tungsten Engine</h3>
+    <p>After Catalyst produces the optimized logical plan, <strong>Tungsten</strong> handles the physical execution engine improvements:</p>
+    <ul>
+      <li><strong>Whole-Stage Code Generation (WSCG):</strong> Fuses multiple operators into a single compiled Java function — eliminates virtual function calls between operators.</li>
+      <li><strong>Off-heap memory management:</strong> Manages memory outside the JVM heap to avoid garbage collection pauses.</li>
+      <li><strong>Cache-friendly data structures:</strong> Stores data in columnar, binary format for CPU cache efficiency.</li>
+    </ul>
+
+    <h3>DAG Scheduler → Task Scheduler → Executors</h3>
+    <table>
+      <tr><th>Component</th><th>Responsibility</th></tr>
+      <tr><td>DAG Scheduler</td><td>Splits the DAG into Stages at shuffle boundaries. Determines task dependencies across stages. Submits stages to Task Scheduler in order (stage N+1 waits for stage N's shuffle output).</td></tr>
+      <tr><td>Task Scheduler</td><td>Takes each stage and creates Tasks (1 task per partition). Schedules tasks on executors based on data locality, executor availability, and resource constraints.</td></tr>
+      <tr><td>Executors</td><td>Run the tasks in parallel. Each core (thread) runs one task at a time. Return results to Driver.</td></tr>
+    </table>
+
+    <div class="callout blue">
+      <strong>Task Dependency Rule:</strong> Within a stage, all tasks are <em>independent</em> and run in parallel. Across stages, tasks in stage 2 must wait for <em>all</em> stage 1 tasks to complete their shuffle write before stage 2 can start.
+    </div>
+  </section>
+
+  <!-- ─── 8. FULL EXECUTION FLOW ─── -->
+  <section class="section pink" id="execution-flow">
+    <div class="section-header">
+      <span class="section-icon">🔄</span>
+      <h2>Full Job Execution Flow — Step by Step</h2>
+    </div>
+    <p>Let's trace exactly what happens when you run a Spark job with a 1TB file, 12 worker nodes, and 8 cores each:</p>
+
+    <h3>Phase 1: Planning (Driver, No Data Moves)</h3>
+    <ol>
+      <li>Driver JVM reads the PySpark script and creates a SparkSession.</li>
+      <li>Driver incrementally builds an <strong>Unresolved Logical Plan</strong> as each transformation is encountered. No data is read yet — pure lazy evaluation.</li>
+      <li>When an <strong>Action</strong> is called, Spark finalizes the plan.</li>
+      <li>Catalyst Optimizer converts: Unresolved → Resolved → Optimized Logical Plan.</li>
+      <li>Physical Planner creates multiple candidate physical plans; Cost Optimizer picks the best one.</li>
+      <li>Tungsten generates optimized Java bytecode.</li>
+      <li>DAG Scheduler materializes the final RDD lineage DAG and splits it into Stages at shuffle boundaries.</li>
+    </ol>
+
+    <h3>Phase 2: Stage 1 Execution</h3>
+    <ol>
+      <li>With 12 workers × 8 cores = <strong>96 parallel task slots</strong>.</li>
+      <li>1TB file → 8,000 input partitions (assuming ~128MB blocks) → 8,000 tasks created and queued in Task Scheduler.</li>
+      <li>First 96 tasks dispatched to 96 executor cores simultaneously.</li>
+      <li>Each task streams only its required byte range from ADLS (Azure Data Lake Storage) — Spark does <strong>not</strong> copy the full 1TB into worker memory upfront.</li>
+      <li>Each task processes its partition (filter, map, etc.), stores intermediate results on the <strong>local disk of the worker node</strong> (shuffle write).</li>
+      <li>As cores free up, the next batch of tasks from the queue is dispatched — until all 8,000 Stage 1 tasks complete.</li>
+    </ol>
+
+    <h3>Phase 3: Shuffle (Between Stages)</h3>
+    <p>Shuffle is the most expensive operation in Spark — data must move across the network from Stage 1 worker disks to Stage 2 executors.</p>
+    <div class="callout orange">
+      <strong>shuffle.partitions setting:</strong> Stage 2's number of tasks is determined by <code>spark.sql.shuffle.partitions</code>, default = 200. This is independent of the input file count. So Stage 2 creates 200 tasks regardless of how many Stage 1 tasks ran. Tune this setting for your cluster size!
+    </div>
+
+    <h3>Phase 4: Stage 2 Execution</h3>
+    <ol>
+      <li>200 new tasks created for Stage 2 (e.g., groupBy + aggregation).</li>
+      <li>Each Stage 2 task <strong>pulls relevant shuffle data</strong> from the worker node disks (Stage 1 output).</li>
+      <li>Performs final aggregation (groupBy + sum).</li>
+      <li>Writes final results as 200 Parquet files to the output directory on ADLS.</li>
+    </ol>
+
+    <div class="pipeline">
+      <div class="pipe-step"><strong style="color:var(--blue)">User Code</strong>PySpark script</div>
+      <div class="pipe-step"><strong style="color:var(--yellow)">SparkSession</strong>Entry point created</div>
+      <div class="pipe-step"><strong style="color:var(--orange)">Logical Plan</strong>Catalyst optimizes</div>
+      <div class="pipe-step"><strong style="color:var(--purple)">Physical Plan</strong>Tungsten codegen</div>
+      <div class="pipe-step"><strong style="color:var(--teal)">DAG Scheduler</strong>Splits into stages</div>
+      <div class="pipe-step"><strong style="color:var(--green)">Task Scheduler</strong>1 task/partition</div>
+      <div class="pipe-step"><strong style="color:var(--green)">Executors</strong>Parallel execution</div>
+    </div>
+
+    <h3>Block vs Partition — They Are NOT the Same</h3>
+    <table>
+      <tr><th>Aspect</th><th>Block (HDFS/ADLS)</th><th>Partition (Spark)</th></tr>
+      <tr><td>Nature</td><td>Physical storage unit</td><td>Logical processing unit</td></tr>
+      <tr><td>When it exists</td><td>Before Spark runs — on disk</td><td>Created when Spark reads data or during transformations</td></tr>
+      <tr><td>Purpose</td><td>How data is <em>stored</em></td><td>How data is <em>processed</em></td></tr>
+      <tr><td>Size</td><td>Fixed (e.g., 128 MB in HDFS)</td><td>Logical — configurable</td></tr>
+      <tr><td>Managed by</td><td>HDFS / ADLS / storage layer</td><td>Spark engine</td></tr>
+    </table>
+    <div class="callout blue">
+      <strong>Relationship:</strong> By default, Spark creates approximately one partition per HDFS block when reading. But you can control this with <code>spark.sql.files.maxPartitionBytes</code> (default 128 MB) or by calling <code>repartition()</code> / <code>coalesce()</code>. Check partition count with <code>df.rdd.getNumPartitions()</code>.
+    </div>
+
+    <h3>Parallelism Formula</h3>
+    <div class="callout purple">
+      <strong>Spark Parallelism = min(number of partitions, number of available cores)</strong><br><br>
+      Parallelism is NOT determined by: data size, node count, executor memory, or CPU speed.<br>
+      More partitions → more tasks. More cores → more concurrent task execution.
+    </div>
+  </section>
+
+  <!-- ─── 9. BANKING EXAMPLE ─── -->
+  <section class="section green" id="banking">
+    <div class="section-header">
+      <span class="section-icon">🏦</span>
+      <h2>Real-World Banking Production Example</h2>
+    </div>
+    <p><strong>Scenario:</strong> Daily fraud detection pipeline — process 5 billion transaction records from Azure Data Lake, join with customer data, filter suspicious transactions, aggregate fraud patterns by country, and write results to Azure Synapse Analytics.</p>
+
+    <h3>Architecture</h3>
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-box ab-blue">ADLS Gen2<br><small>5B transactions (Parquet)</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box ab-yellow">Databricks<br><small>Spark Driver + Executors</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box ab-green">Azure Synapse<br><small>Aggregated fraud report</small></div>
+      </div>
+      <div style="margin-top: 16px; color: var(--muted); font-size: 0.78rem;">
+        ADF Pipeline trigger → Databricks Workflow → Delta Lake intermediate → Synapse SQL Pool
+      </div>
+    </div>
+
+    <h3>Pipeline Implementation</h3>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+<span class="cm"># ─── DRIVER: SparkSession created (runs on Driver JVM only) ───</span>
+spark = SparkSession.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"FraudDetectionPipeline"</span>) \
+    .<span class="fn">config</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"400"</span>)  <span class="cm"># tuned for cluster size</span> \
+    .<span class="fn">config</span>(<span class="str">"spark.sql.files.maxPartitionBytes"</span>, <span class="str">"134217728"</span>)  <span class="cm"># 128MB</span> \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cm"># ─── LAZY: Builds logical plan. No data read yet. ───</span>
+
+<span class="cm"># Narrow Transformation 1: Read from ADLS Gen2</span>
+transactions = spark.read.<span class="fn">parquet</span>(
+    <span class="str">"abfss://raw@bankadls.dfs.core.windows.net/transactions/2024/"</span>
+)
+
+<span class="cm"># Narrow Transformation 2: Filter (Catalyst will pushdown into Parquet reader)</span>
+suspicious = transactions.<span class="fn">filter</span>(
+    (F.<span class="fn">col</span>(<span class="str">"amount"</span>) > <span class="num">50000</span>) &
+    (F.<span class="fn">col</span>(<span class="str">"status"</span>) == <span class="str">"FLAGGED"</span>)
+)
+
+<span class="cm"># Narrow Transformation 3: Column pruning</span>
+suspicious = suspicious.<span class="fn">select</span>(<span class="str">"txn_id"</span>, <span class="str">"customer_id"</span>, <span class="str">"country"</span>, <span class="str">"amount"</span>)
+
+<span class="cm"># Read customer reference data (smaller dataset → broadcast join candidate)</span>
+customers = spark.read.<span class="fn">parquet</span>(
+    <span class="str">"abfss://ref@bankadls.dfs.core.windows.net/customers/"</span>
+)
+
+<span class="cm"># Wide Transformation: JOIN → triggers shuffle → new Stage boundary</span>
+<span class="cm"># Spark Catalyst will automatically use BroadcastHashJoin if customers is small</span>
+enriched = suspicious.<span class="fn">join</span>(
+    F.<span class="fn">broadcast</span>(customers),  <span class="cm"># forces broadcast — avoids shuffle for join!</span>
+    on=<span class="str">"customer_id"</span>,
+    how=<span class="str">"left"</span>
+)
+
+<span class="cm"># Wide Transformation: groupBy → triggers shuffle → new Stage boundary</span>
+fraud_summary = enriched.<span class="fn">groupBy</span>(<span class="str">"country"</span>, <span class="str">"risk_tier"</span>) \
+    .<span class="fn">agg</span>(
+        F.<span class="fn">count</span>(<span class="str">"txn_id"</span>).<span class="fn">alias</span>(<span class="str">"fraud_count"</span>),
+        F.<span class="fn">sum</span>(<span class="str">"amount"</span>).<span class="fn">alias</span>(<span class="str">"total_fraud_amount"</span>),
+        F.<span class="fn">avg</span>(<span class="str">"amount"</span>).<span class="fn">alias</span>(<span class="str">"avg_fraud_amount"</span>)
+    )
+
+<span class="cm"># ─── ACTION: THIS triggers full DAG execution ───
+# Spark now: Optimizes plan → creates DAG → splits stages →
+# creates tasks → dispatches to 96 executor cores → collects results</span>
+fraud_summary.<span class="fn">write</span> \
+    .<span class="fn">mode</span>(<span class="str">"overwrite"</span>) \
+    .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+    .<span class="fn">save</span>(<span class="str">"abfss://gold@bankadls.dfs.core.windows.net/fraud_summary/"</span>)
+
+<span class="cm"># ─── DAG breakdown for this job: ───
+# Stage 1: Read parquet + filter (Narrow) — 40,000 tasks (5B rows / 128MB)
+# Stage 2: groupBy + agg (Wide) — 400 tasks (spark.sql.shuffle.partitions=400)
+# Broadcast join does NOT create a new stage — data is sent to each executor</span></code></pre>
+
+    <h3>What Happens Internally</h3>
+    <ol>
+      <li><strong>Stage 1 (40,000 tasks):</strong> Each executor core streams its 128MB partition from ADLS, applies filter + select (narrow — same stage), writes shuffle data to local disk.</li>
+      <li><strong>Shuffle:</strong> Stage 2 tasks pull relevant country-grouped data from all Stage 1 worker disks across the network.</li>
+      <li><strong>Stage 2 (400 tasks):</strong> Each task aggregates its country partition, writes 400 Parquet files to ADLS Gold zone as Delta Lake format.</li>
+      <li><strong>Result:</strong> Azure Data Factory then triggers a pipeline to load from Delta Lake into Azure Synapse Analytics SQL Pool for reporting.</li>
+    </ol>
+  </section>
+
+  <!-- ─── 10. INTERVIEW INSIGHTS ─── -->
+  <section class="section yellow" id="interview">
+    <div class="section-header">
+      <span class="section-icon">🎤</span>
+      <h2>Interview Insights</h2>
+    </div>
+
+    <div class="interview-card">
+      <div class="interview-q">Explain Spark architecture. What are the main components?</div>
+      <div class="interview-a">
+        "Spark follows a master-worker architecture. The <strong>Driver</strong> is the JVM process that runs your application code — it contains the SparkSession, DAG Scheduler, and Task Scheduler. It doesn't process data itself; it orchestrates execution. The <strong>Cluster Manager</strong> (YARN, Kubernetes, or Standalone) allocates CPU and memory resources. <strong>Worker Nodes</strong> host <strong>Executors</strong> — JVM containers that actually process data partitions in parallel. In my banking pipeline on Databricks with Azure, we had 12 worker nodes × 8 cores each = 96 parallel task slots, processing 1TB of transaction data across 8,000 tasks."
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="interview-q">What is lazy evaluation in Spark and why does it matter?</div>
+      <div class="interview-a">
+        "Spark doesn't execute transformations immediately — it builds an unresolved logical plan as you add transformations. Only when an action like <code>show()</code> or <code>write()</code> is called does Spark finalize the plan, pass it through the Catalyst Optimizer, and execute it. This matters because <strong>Catalyst can see the full plan at once</strong> — it can push filters down to the data source to read less data, remove unused columns early, and reorder joins. In production this reduced our ADLS read costs by over 60% through predicate pushdown on Parquet files."
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="interview-q">What's the difference between a narrow and wide transformation?</div>
+      <div class="interview-a">
+        "A narrow transformation keeps each input partition's data on the same executor — no data crosses the network. Examples: filter, select, withColumn. A wide transformation requires data redistribution (shuffle) across the network because rows with the same key must end up on the same executor. Examples: groupBy, join, distinct. Wide transformations create <strong>new stage boundaries</strong> in the DAG — Stage N must fully complete its shuffle write before Stage N+1 can begin. In practice, minimizing shuffles by filtering early and using broadcast joins for small tables dramatically improves performance."
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="interview-q">A job runs fine locally but is very slow on a cluster. What would you check?</div>
+      <div class="interview-a">
+        "First, I'd check <strong>partition count</strong> — too few partitions means most executor cores are idle. Run <code>df.rdd.getNumPartitions()</code>. Second, I'd check for <strong>data skew</strong> in shuffle stages — one task taking 10x longer than others. Third, I'd look at <code>spark.sql.shuffle.partitions</code> — the default 200 may be too high (small cluster) or too low (large data). Fourth, I'd check if large table joins could use <strong>broadcast joins</strong> to avoid shuffles entirely. Finally, I'd check executor memory for spill-to-disk warnings in the Spark UI."
+      </div>
+    </div>
+
+    <div class="interview-card">
+      <div class="interview-q">What happens when you call collect() on a large DataFrame?</div>
+      <div class="interview-a">
+        "Calling <code>collect()</code> triggers the full DAG execution and then pulls <strong>all data from every executor back to the Driver JVM</strong>. If the DataFrame has millions of rows, this will likely cause an <strong>OutOfMemoryError on the driver</strong>. In production, you should never use <code>collect()</code> on large datasets. Use <code>write()</code> to save results to ADLS, or use <code>take(n)</code>/<code>show(n)</code> for sampling. I once caught a colleague's code that was collecting 10GB to the driver — we replaced it with a write to Delta Lake."
+      </div>
+    </div>
+
+    <div class="mistake-box">
+      <h4>🚨 Common Mistakes Candidates Make</h4>
+      <ul>
+        <li>Saying "the Driver processes data" — the Driver only orchestrates; Executors process data.</li>
+        <li>Confusing "Cluster Manager" (software) with "Master Node" (machine). They're related but distinct.</li>
+        <li>Saying transformations run immediately — they're always lazy until an action is called.</li>
+        <li>Not knowing that <code>spark.sql.shuffle.partitions</code> controls Stage 2+ task count, not input partitions.</li>
+        <li>Saying a join always creates a new stage — broadcast joins are narrow and don't shuffle.</li>
+        <li>Confusing HDFS Blocks (physical storage) with Spark Partitions (logical processing units).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ─── 11. PRO TIPS ─── -->
+  <section class="section teal" id="tips">
+    <div class="section-header">
+      <span class="section-icon">💡</span>
+      <h2>Pro Tips</h2>
+    </div>
+    <div class="pro-tip">
+      <div class="pro-tip-icon">⚡</div>
+      <div class="pro-tip-text"><strong>Tune shuffle.partitions for your cluster:</strong> The default <code>spark.sql.shuffle.partitions=200</code> is rarely optimal. For a 12-node × 8-core cluster (96 slots), use 96–192 shuffle partitions. Too many = small files + overhead. Too few = underutilized cores during Stage 2. In Databricks, enable <strong>Adaptive Query Execution (AQE)</strong> — it auto-tunes shuffle partition count at runtime based on actual data statistics.</div>
+    </div>
+    <div class="pro-tip">
+      <div class="pro-tip-icon">🔍</div>
+      <div class="pro-tip-text"><strong>Always use the Spark UI to diagnose slow jobs:</strong> In Databricks, the Spark UI shows the DAG visualization, stage timelines, and task-level metrics. Look for: (1) skewed tasks (one task 10× longer than others = data skew), (2) large shuffle read/write sizes (reduce with repartitioning before groupBy), (3) GC time > 10% of task time (executor memory too low). Most production performance issues are visible in the Spark UI within 5 minutes.</div>
+    </div>
+    <div class="pro-tip">
+      <div class="pro-tip-icon">📦</div>
+      <div class="pro-tip-text"><strong>Broadcast joins can eliminate an entire stage:</strong> If one side of a join is less than <code>spark.sql.autoBroadcastJoinThreshold</code> (default 10MB), Spark automatically broadcasts it. You can force it with <code>F.broadcast(df)</code>. This converts a wide transformation (which causes a shuffle and a new stage) into a narrow transformation — no data moves across the network. In banking workloads where we join large transaction tables with small reference tables (currency codes, country mappings), broadcast joins are always the right choice.</div>
+    </div>
+  </section>
+
+  <!-- ─── 12. QUIZ ─── -->
+  <section class="section purple" id="quiz">
+    <div class="section-header">
+      <span class="section-icon">🧠</span>
+      <h2>Quiz Question</h2>
+    </div>
+    <div class="quiz-question">
+      <div class="quiz-q">
+        Scenario: A Databricks job processes a 2TB transaction file on a cluster of 10 worker nodes, each with 8 executor cores. The PySpark code has this plan: <code>read() → filter() → withColumn() → groupBy("country").agg(sum()) → write()</code>. The default <code>spark.sql.shuffle.partitions=200</code> is unchanged. How many Stages will the DAG have, and what determines the number of tasks in Stage 2?
+      </div>
+      <ul class="quiz-options">
+        <li>A) 1 Stage total; Stage 2 doesn't exist because filter() removes most data</li>
+        <li>B) 2 Stages; Stage 2 has 80 tasks (10 nodes × 8 cores)</li>
+        <li>C) 2 Stages; Stage 2 has 200 tasks (spark.sql.shuffle.partitions default)</li>
+        <li>D) 3 Stages; groupBy and agg are separate wide transformations creating 2 boundaries</li>
+      </ul>
+      <div class="quiz-answer">
+        <strong>✅ Correct Answer: C</strong><br><br>
+        The DAG has <strong>2 Stages</strong>. Stage 1 covers all narrow transformations: <code>read → filter → withColumn</code> — these all operate on the same partitions with no data movement. The <code>groupBy()</code> is a wide transformation that triggers a shuffle, creating a <strong>stage boundary between Stage 1 and Stage 2</strong>. Stage 2 task count is <strong>not</strong> based on input partitions or core count — it is determined by <code>spark.sql.shuffle.partitions</code>, which defaults to 200. So Stage 2 creates exactly <strong>200 tasks</strong>, each pulling shuffled data from Stage 1 worker disks. Option B is a common mistake — core count controls parallelism (how many tasks run at once), not how many tasks are created.
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div style="text-align:center; color: var(--muted); font-size: 0.8rem; padding: 32px 0 16px; border-top: 1px solid var(--border); margin-top: 16px;">
+    <p>📚 Apache Spark Architecture — Interview Guide &nbsp;|&nbsp; Azure + Databricks Focus &nbsp;|&nbsp; Built for Data Engineers</p>
+    <p style="margin-top: 6px;">Content based on official Spark documentation and production engineering patterns</p>
+  </div>
+
+</div>
+</body>
+</html>
