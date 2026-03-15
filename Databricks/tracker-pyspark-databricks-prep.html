@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PySpark + Databricks — Interview Mastery</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #10b981;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding: 50px 30px 40px;
+    background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(124,58,237,0.08));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(0,212,255,0.12), transparent 70%);
+    pointer-events: none;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12), transparent 70%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+
+  .header h1 {
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header p {
+    color: var(--text-dim);
+    font-size: 15px;
+    max-width: 520px;
+    margin: 0 auto 24px;
+    line-height: 1.7;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--surface2);
+    border-radius: 8px;
+    height: 8px;
+    margin: 0 auto;
+    max-width: 400px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 8px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* Schedule bar */
+  .schedule-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .schedule-bar .time {
+    font-family: var(--mono);
+    color: var(--accent2);
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  /* Month section */
+  .month-section {
+    margin-bottom: 40px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .month-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .month-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .month-number.m2 { background: var(--accent2); }
+  .month-number.m3 { background: var(--green); }
+
+  .month-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    flex: 1;
+  }
+
+  .month-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .chevron {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .month-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  /* Week block */
+  .week-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .week-block:hover { border-color: rgba(0,212,255,0.2); }
+
+  .week-title {
+    padding: 12px 18px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,212,255,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .week-title.w-orange { color: var(--accent2); background: rgba(255,107,53,0.04); }
+  .week-title.w-green { color: var(--green); background: rgba(16,185,129,0.04); }
+  .week-title.w-purple { color: #a78bfa; background: rgba(124,58,237,0.04); }
+
+  .week-mini-progress {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* Checklist items */
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(255,255,255,0.02); }
+
+  .check-item.done { opacity: 0.45; }
+  .check-item.done .item-title { text-decoration: line-through; color: var(--text-muted); }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+  }
+
+  .check-item.done .checkbox {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .checkmark {
+    display: none;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .check-item.done .checkmark { display: block; }
+
+  .item-body { flex: 1; }
+
+  .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .item-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .item-desc code {
+    font-family: var(--mono);
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .item-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .tag-interview { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .tag-code { background: rgba(0,212,255,0.08); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+  .tag-concept { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+  .tag-project { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-num.orange { color: var(--accent2); }
+  .stat-num.green { color: var(--green); }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Section content collapsible */
+  .section-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  /* Sticky reset button */
+  .reset-btn {
+    display: block;
+    margin: 0 auto 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .reset-btn:hover {
+    border-color: rgba(255,107,53,0.4);
+    color: var(--accent2);
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .header h1 { font-size: 22px; }
+    .check-item { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">⚡ 3-Month Roadmap</div>
+    <h1>PySpark + Databricks<br>Interview Mastery</h1>
+    <p>Working professional track · 6:30 PM – 10:00 PM daily · Career switch to Data Engineering</p>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="globalBar"></div>
+    </div>
+    <div class="progress-label" id="globalLabel">0 / 0 topics completed</div>
+  </div>
+
+  <!-- Schedule bar -->
+  <div class="schedule-bar">
+    <span class="time">6:30–10 PM</span>
+    <span>Mon–Tue–Thu: Learn + Code (45 min each) &nbsp;·&nbsp; Wed: Light review &nbsp;·&nbsp; Fri: Review &nbsp;·&nbsp; Sat: Build project (2 hrs) &nbsp;·&nbsp; Sun: Plan next week</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-num" id="statDone">0</span>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num orange" id="statLeft">0</span>
+      <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num green" id="statPct">0%</span>
+      <div class="stat-label">Progress</div>
+    </div>
+  </div>
+
+  <!-- MONTH 1 -->
+  <div class="month-section" style="animation-delay:0.1s">
+    <div class="month-header" onclick="toggleMonth(this)">
+      <span class="month-number">MONTH 1</span>
+      <span class="month-title">Foundation — PySpark Core + Databricks Setup</span>
+      <span class="month-count" id="m1count"></span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-content">
+
+      <!-- Week 1 -->
+      <div class="week-block">
+        <div class="week-title">WEEK 1 · PySpark Fundamentals — DataFrames & Basic Ops</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Understand Spark Architecture</div>
+            <div class="item-desc">Driver vs Executor, DAG execution, lazy evaluation, transformations vs actions. Interview Q: <em>"How does Spark execute a query?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">SparkSession & DataFrame Creation</div>
+            <div class="item-desc">Create DataFrames from CSV, JSON, lists. Understand <code>spark.read</code>, schemas, <code>printSchema()</code>, <code>show()</code>.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Core Transformations</div>
+            <div class="item-desc"><code>select()</code>, <code>filter()</code> / <code>where()</code>, <code>withColumn()</code>, <code>drop()</code>, <code>alias()</code>, <code>cast()</code>. Write 10 transformations on a sample dataset.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Aggregations & GroupBy</div>
+            <div class="item-desc"><code>groupBy()</code>, <code>agg()</code>, <code>count()</code>, <code>sum()</code>, <code>avg()</code>, <code>max()</code>, <code>min()</code>. Interview Q: <em>"Difference between groupBy and partitionBy?"</em></div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Joins in PySpark</div>
+            <div class="item-desc">inner, left, right, full outer, cross, semi, anti joins. Know when to use each. Interview Q: <em>"What is a broadcast join and when do you use it?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 2 -->
+      <div class="week-block">
+        <div class="week-title">WEEK 2 · Data I/O + Databricks Community Edition Setup</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Read & Write Formats</div>
+            <div class="item-desc">CSV, JSON, Parquet, ORC. Understand <code>mode</code> options: <code>overwrite</code>, <code>append</code>, <code>ignore</code>. Why Parquet is preferred in production.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Set Up Databricks Community Edition</div>
+            <div class="item-desc">Create account, spin up cluster, upload data to DBFS, run first PySpark notebook. Get comfortable with the UI — you'll be asked about it.</div>
+            <div class="item-tags"><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Databricks Notebooks & Magic Commands</div>
+            <div class="item-desc"><code>%python</code>, <code>%sql</code>, <code>%md</code>, <code>%fs</code>. Run SQL directly on DataFrames. <code>display()</code> vs <code>show()</code>.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Spark SQL Basics</div>
+            <div class="item-desc">Create temp views with <code>createOrReplaceTempView()</code>, run SQL queries, understand when to use SQL vs DataFrame API. Interview Q: <em>"Are SQL and DataFrame API equivalent in Spark?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 3 -->
+      <div class="week-block">
+        <div class="week-title">WEEK 3 · Intermediate PySpark — Functions & UDFs</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">PySpark Built-in Functions</div>
+            <div class="item-desc"><code>pyspark.sql.functions</code>: <code>col()</code>, <code>lit()</code>, <code>when()</code>, <code>coalesce()</code>, <code>isNull()</code>, <code>explode()</code>, <code>array()</code>, <code>struct()</code>. String, date, and math functions.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">User-Defined Functions (UDFs)</div>
+            <div class="item-desc">Write a UDF, register it, use it. Understand performance penalty vs built-in functions. Interview Q: <em>"Why should you avoid UDFs in PySpark?"</em> Know Pandas UDFs (vectorized UDFs) as an alternative.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Handling Null Values</div>
+            <div class="item-desc"><code>dropna()</code>, <code>fillna()</code>, <code>replace()</code>. Null-safe equality (<code>eqNullSafe</code>). Interview Q: <em>"How do you handle nulls in a join?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Window Functions</div>
+            <div class="item-desc"><code>Window.partitionBy()</code>, <code>orderBy()</code>. Functions: <code>rank()</code>, <code>dense_rank()</code>, <code>row_number()</code>, <code>lag()</code>, <code>lead()</code>, <code>sum() OVER</code>. Most common interview coding round topic.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 4 -->
+      <div class="week-block">
+        <div class="week-title">WEEK 4 · Schema, Data Quality & Mini Project #1</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Schema Enforcement & Evolution</div>
+            <div class="item-desc">Define schema using <code>StructType</code> / <code>StructField</code>. Schema inference vs explicit schema. Interview Q: <em>"Why define schema explicitly?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Data Cleaning Pipeline</div>
+            <div class="item-desc">Build a pipeline: load CSV → clean nulls → cast types → filter bad rows → write as Parquet. This pattern appears in every DE interview.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-project">project</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">🔨 Mini Project #1 — Sales Analytics Pipeline</div>
+            <div class="item-desc">Download NYC Taxi or e-commerce dataset. Load into Databricks, clean, aggregate (top 10 revenue by category, monthly trend), write to Parquet. Save notebook to GitHub.</div>
+            <div class="item-tags"><span class="tag tag-project">project</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MONTH 2 -->
+  <div class="month-section" style="animation-delay:0.2s">
+    <div class="month-header" onclick="toggleMonth(this)">
+      <span class="month-number m2">MONTH 2</span>
+      <span class="month-title">Intermediate — Delta Lake, Optimization & Databricks Features</span>
+      <span class="month-count" id="m2count"></span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-content">
+
+      <!-- Week 5 -->
+      <div class="week-block">
+        <div class="week-title w-orange">WEEK 5 · Delta Lake Core Concepts</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">What is Delta Lake?</div>
+            <div class="item-desc">ACID transactions on data lake, transaction log (<code>_delta_log</code>), how Delta differs from plain Parquet. Interview Q: <em>"What problem does Delta Lake solve?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Create & Write Delta Tables</div>
+            <div class="item-desc">Write DataFrame as Delta: <code>df.write.format("delta").save(path)</code>. Managed vs external tables. <code>DeltaTable.forPath()</code>.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">MERGE (Upsert) Operation</div>
+            <div class="item-desc">The most important Delta operation. <code>DeltaTable.merge()</code> with <code>whenMatchedUpdate</code>, <code>whenNotMatchedInsert</code>. Interview Q: <em>"How do you implement SCD Type 1 using Delta?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Time Travel & History</div>
+            <div class="item-desc"><code>DESCRIBE HISTORY</code>, query by version: <code>@v2</code>, query by timestamp. <code>RESTORE</code> a table. Interview Q: <em>"How do you recover accidentally deleted data in Delta?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">VACUUM & OPTIMIZE</div>
+            <div class="item-desc"><code>VACUUM</code> to remove old files, <code>OPTIMIZE</code> with Z-ORDER for faster queries. Interview Q: <em>"What happens if you VACUUM too aggressively?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 6 -->
+      <div class="week-block">
+        <div class="week-title w-orange">WEEK 6 · Spark Performance & Optimization</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Partitioning Strategy</div>
+            <div class="item-desc"><code>repartition()</code> vs <code>coalesce()</code>. Partition by date columns for large tables. Interview Q: <em>"What is partition pruning?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Caching & Persistence</div>
+            <div class="item-desc"><code>cache()</code> vs <code>persist()</code>, storage levels. When to cache and when NOT to. Interview Q: <em>"Does caching always improve performance?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Broadcast Joins & Skew Handling</div>
+            <div class="item-desc"><code>broadcast()</code> hint for small tables. Data skew — salting technique. Interview Q: <em>"How do you handle data skew in Spark joins?"</em> — Very common senior question.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Reading the Spark UI</div>
+            <div class="item-desc">Stages, tasks, shuffle read/write, executor memory. How to identify slow stages. Interview Q: <em>"Walk me through how you debug a slow Spark job."</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Adaptive Query Execution (AQE)</div>
+            <div class="item-desc">What AQE does automatically (skew join optimization, coalescing partitions). How to enable it. Available in Spark 3.x and Databricks Runtime.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 7 -->
+      <div class="week-block">
+        <div class="week-title w-orange">WEEK 7 · Databricks Platform Features</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Databricks Workflows & Jobs</div>
+            <div class="item-desc">Create a multi-task job, set dependencies, schedule it. Understand job clusters vs all-purpose clusters (cost difference). Interview Q: <em>"How do you productionize a Databricks notebook?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Unity Catalog Basics</div>
+            <div class="item-desc">3-level namespace: catalog.schema.table. Data governance, fine-grained access control. Interview Q: <em>"What is Unity Catalog and why is it important?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Mount Storage / External Storage</div>
+            <div class="item-desc">Mount ADLS Gen2 or S3 to DBFS. Service principal authentication. Read/write to mounted storage from notebooks. Common in enterprise setups.</div>
+            <div class="item-tags"><span class="tag tag-code">code</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Databricks SQL & Dashboards</div>
+            <div class="item-desc">Run SQL queries on Delta tables, create a basic dashboard, set up alerts. Shows you understand the full platform, not just notebooks.</div>
+            <div class="item-tags"><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 8 -->
+      <div class="week-block">
+        <div class="week-title w-orange">WEEK 8 · Medallion Architecture & Mini Project #2</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Medallion Architecture (Bronze → Silver → Gold)</div>
+            <div class="item-desc">Understand the layered data lakehouse pattern. Bronze: raw ingestion. Silver: cleaned/conformed. Gold: aggregated/business-ready. Interview Q: <em>"Explain your data pipeline architecture."</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Slowly Changing Dimensions (SCD)</div>
+            <div class="item-desc">SCD Type 1 (overwrite) and Type 2 (history) using Delta MERGE. Interview Q: <em>"How do you implement SCD Type 2 in a data lakehouse?"</em> — Almost always asked.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">🔨 Mini Project #2 — Medallion Pipeline</div>
+            <div class="item-desc">Build Bronze → Silver → Gold pipeline on Databricks. Use Delta tables, MERGE for upserts, schedule as a Job. Document architecture in README. Push to GitHub.</div>
+            <div class="item-tags"><span class="tag tag-project">project</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MONTH 3 -->
+  <div class="month-section" style="animation-delay:0.3s">
+    <div class="month-header" onclick="toggleMonth(this)">
+      <span class="month-number m3">MONTH 3</span>
+      <span class="month-title">Apply — Interview Prep, Projects & Job Switch</span>
+      <span class="month-count" id="m3count"></span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-content">
+
+      <!-- Week 9 -->
+      <div class="week-block">
+        <div class="week-title w-green">WEEK 9 · Streaming & Advanced Topics</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Structured Streaming Basics</div>
+            <div class="item-desc"><code>readStream</code>, <code>writeStream</code>, output modes: append, complete, update. Trigger types. Interview Q: <em>"What is the difference between micro-batch and continuous streaming in Spark?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Delta Live Tables (DLT) — Intro</div>
+            <div class="item-desc">Declarative pipelines, <code>@dlt.table</code> decorator, expectations for data quality. Interview Q: <em>"What are Delta Live Tables and how do they differ from regular Databricks jobs?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Auto Loader</div>
+            <div class="item-desc">Incrementally load files from cloud storage using <code>cloudFiles</code>. Schema inference, schema evolution. Interview Q: <em>"How do you handle incremental ingestion at scale?"</em></div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-concept">concept</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 10 -->
+      <div class="week-block">
+        <div class="week-title w-green">WEEK 10 · Top Interview Questions — Drilling</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">PySpark Coding Round Practice</div>
+            <div class="item-desc">Practice: find 2nd highest salary per dept (window), find customers who bought in 3 consecutive months, deduplicate records keeping latest. Solve each in &lt;20 min.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span><span class="tag tag-code">code</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Performance Tuning Scenario Questions</div>
+            <div class="item-desc">Be able to answer: "Your Spark job takes 4 hours, how do you optimize?" Walk through: check skew → check partitioning → check shuffles → check joins → check caching.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">System Design: Data Pipeline Round</div>
+            <div class="item-desc">Practice designing: "Build a pipeline to process 10M events/day from Kafka into a dashboard." Cover: ingestion → Bronze → Silver → Gold → serving layer. Draw it and explain it aloud.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Databricks Certifications Overview</div>
+            <div class="item-desc">Understand scope of: Databricks Certified Associate Developer for Apache Spark, and Databricks Data Engineer Associate. Even without taking the exam, studying the prep material is gold.</div>
+            <div class="item-tags"><span class="tag tag-concept">concept</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week 11-12 -->
+      <div class="week-block">
+        <div class="week-title w-green">WEEK 11–12 · Final Project + Job Switch Execution</div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">🔨 Capstone Project — End-to-End Data Lakehouse</div>
+            <div class="item-desc">Pick a public dataset (NYC Taxi, Spotify, or e-commerce). Build: Auto Loader ingestion → Bronze Delta → Silver (clean + merge) → Gold (aggregations) → Databricks SQL dashboard. Document everything.</div>
+            <div class="item-tags"><span class="tag tag-project">project</span><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">GitHub Portfolio Setup</div>
+            <div class="item-desc">3 repos: Project 1 (Sales Analytics), Project 2 (Medallion Pipeline), Capstone. Each with clear README, architecture diagram, and what you learned. Recruiters look at this.</div>
+            <div class="item-tags"><span class="tag tag-project">project</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Update Resume & LinkedIn</div>
+            <div class="item-desc">Add: PySpark, Delta Lake, Databricks, Apache Spark, Data Engineering, ETL/ELT. Link your GitHub. Write a headline: "Data Engineer | PySpark · Databricks · Delta Lake".</div>
+            <div class="item-tags"><span class="tag tag-project">project</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Target 5 Job Applications per Week</div>
+            <div class="item-desc">Roles: Data Engineer, Analytics Engineer, Spark Developer. Use LinkedIn, Naukri, Instahyre. DM engineers at target companies. Referrals convert 5x better than cold apply.</div>
+            <div class="item-tags"><span class="tag tag-project">project</span></div>
+          </div>
+        </div>
+        <div class="check-item" onclick="toggle(this)">
+          <div class="checkbox"><span class="checkmark">✓</span></div>
+          <div class="item-body">
+            <div class="item-title">Mock Interview — Do at least 2</div>
+            <div class="item-desc">Use Pramp, Interviewing.io, or ask a peer. Cover: 1 coding round (PySpark), 1 system design. Record yourself and watch it back. Painful but works.</div>
+            <div class="item-tags"><span class="tag tag-interview">interview</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ RESET ALL PROGRESS</button>
+
+  <div class="footer">
+    Built for the grind · 6:30 PM – 10:00 PM · You got this 🔥
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'pyspark_checklist_v1';
+
+  function saveState() {
+    const items = document.querySelectorAll('.check-item');
+    const state = {};
+    items.forEach((item, i) => {
+      state[i] = item.classList.contains('done');
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    const items = document.querySelectorAll('.check-item');
+    items.forEach((item, i) => {
+      if (state[i]) item.classList.add('done');
+    });
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    updateStats();
+    saveState();
+  }
+
+  function updateStats() {
+    const all = document.querySelectorAll('.check-item');
+    const done = document.querySelectorAll('.check-item.done');
+    const total = all.length;
+    const completed = done.length;
+    const pct = total ? Math.round((completed / total) * 100) : 0;
+
+    document.getElementById('globalBar').style.width = pct + '%';
+    document.getElementById('globalLabel').textContent = `${completed} / ${total} topics completed`;
+    document.getElementById('statDone').textContent = completed;
+    document.getElementById('statLeft').textContent = total - completed;
+    document.getElementById('statPct').textContent = pct + '%';
+
+    // Per month counts
+    ['m1','m2','m3'].forEach((id, idx) => {
+      const section = document.querySelectorAll('.month-section')[idx];
+      if (!section) return;
+      const sAll = section.querySelectorAll('.check-item').length;
+      const sDone = section.querySelectorAll('.check-item.done').length;
+      const countEl = document.getElementById(id + 'count');
+      if (countEl) countEl.textContent = `${sDone}/${sAll}`;
+    });
+  }
+
+  function toggleMonth(header) {
+    const content = header.nextElementSibling;
+    const isOpen = content.style.maxHeight !== '0px' && content.style.maxHeight !== '';
+    if (isOpen) {
+      content.style.maxHeight = '0px';
+      header.classList.add('collapsed');
+    } else {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      header.classList.remove('collapsed');
+    }
+  }
+
+  function resetAll() {
+    if (!confirm('Reset all progress?')) return;
+    document.querySelectorAll('.check-item').forEach(i => i.classList.remove('done'));
+    localStorage.removeItem(STORAGE_KEY);
+    updateStats();
+  }
+
+  // Init
+  // Open all sections
+  document.querySelectorAll('.section-content').forEach(c => {
+    c.style.maxHeight = c.scrollHeight + 'px';
+  });
+
+  loadState();
+  updateStats();
+</script>
+</body>
+</html>
