@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Engineering — Complete Interview Guide</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --text: #e2e8f0;
+    --muted: #8892b0;
+    --blue: #64b5f6;
+    --blue-dark: #1e3a5f;
+    --green: #69f0ae;
+    --green-dark: #0d3b2e;
+    --yellow: #ffd54f;
+    --yellow-dark: #3d2e00;
+    --pink: #f48fb1;
+    --pink-dark: #3b1020;
+    --purple: #ce93d8;
+    --purple-dark: #2d1a3d;
+    --orange: #ffb74d;
+    --orange-dark: #3d2000;
+    --cyan: #80deea;
+    --cyan-dark: #003d47;
+    --red: #ef9a9a;
+    --red-dark: #3d0000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; }
+
+  /* NAV */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  nav span { color: var(--blue); font-weight: 700; font-size: 14px; margin-right: 12px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); transition: all .2s; white-space: nowrap; }
+  nav a:hover { background: var(--blue-dark); color: var(--blue); border-color: var(--blue); }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #0d1b35 0%, #1a0d35 50%, #0d2a20 100%); border: 1px solid var(--border); border-radius: 16px; padding: 48px 40px; margin-bottom: 40px; text-align: center; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(90deg, var(--blue), var(--purple), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero p { color: var(--muted); margin-top: 12px; font-size: 1.05rem; }
+  .hero .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--cyan); }
+
+  /* CHAPTER HEADER */
+  .chapter { margin-bottom: 60px; }
+  .chapter-header { display: flex; align-items: center; gap: 16px; padding: 20px 28px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid; }
+  .ch-blue { background: var(--blue-dark); border-color: var(--blue); }
+  .ch-green { background: var(--green-dark); border-color: var(--green); }
+  .ch-yellow { background: var(--yellow-dark); border-color: var(--yellow); }
+  .ch-purple { background: var(--purple-dark); border-color: var(--purple); }
+  .ch-pink { background: var(--pink-dark); border-color: var(--pink); }
+  .ch-orange { background: var(--orange-dark); border-color: var(--orange); }
+  .ch-cyan { background: var(--cyan-dark); border-color: var(--cyan); }
+  .ch-red { background: var(--red-dark); border-color: var(--red); }
+  .chapter-num { font-size: 2rem; font-weight: 900; opacity: 0.5; }
+  .chapter-title { font-size: 1.6rem; font-weight: 700; }
+  .chapter-sub { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .card h3 { font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { color: var(--muted); line-height: 1.8; }
+  .card ul, .card ol { padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+  strong { color: var(--text); }
+
+  /* SECTION LABELS */
+  .label { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 4px; margin-bottom: 8px; }
+  .label-blue { background: var(--blue-dark); color: var(--blue); }
+  .label-green { background: var(--green-dark); color: var(--green); }
+  .label-yellow { background: var(--yellow-dark); color: var(--yellow); }
+  .label-pink { background: var(--pink-dark); color: var(--pink); }
+  .label-purple { background: var(--purple-dark); color: var(--purple); }
+  .label-orange { background: var(--orange-dark); color: var(--orange); }
+  .label-cyan { background: var(--cyan-dark); color: var(--cyan); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media(max-width:700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: var(--surface2); color: var(--blue); text-align: left; padding: 10px 14px; border: 1px solid var(--border); font-weight: 600; }
+  td { padding: 9px 14px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  td strong { color: var(--text); }
+
+  /* CODE */
+  pre { background: #0a0d14; border: 1px solid var(--border); border-radius: 8px; padding: 20px; overflow-x: auto; margin: 12px 0; }
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.82rem; line-height: 1.7; }
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; }
+  .num { color: #f78c6c; }
+  .builtin { color: #89ddff; }
+  .var { color: #ffcb6b; }
+
+  /* FLOW DIAGRAM */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 16px; background: var(--surface2); border-radius: 10px; margin: 12px 0; }
+  .flow-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; text-align: center; min-width: 90px; }
+  .flow-box.blue { border-color: var(--blue); color: var(--blue); }
+  .flow-box.green { border-color: var(--green); color: var(--green); }
+  .flow-box.yellow { border-color: var(--yellow); color: var(--yellow); }
+  .flow-box.purple { border-color: var(--purple); color: var(--purple); }
+  .flow-box.orange { border-color: var(--orange); color: var(--orange); }
+  .flow-box.pink { border-color: var(--pink); color: var(--pink); }
+  .flow-box.cyan { border-color: var(--cyan); color: var(--cyan); }
+  .arrow { color: var(--muted); font-size: 18px; }
+
+  /* INTERVIEW BOX */
+  .interview-box { background: var(--yellow-dark); border: 1px solid var(--yellow); border-radius: 10px; padding: 18px 20px; margin-top: 16px; }
+  .interview-box h4 { color: var(--yellow); margin-bottom: 10px; font-size: 14px; }
+  .interview-box p { color: #e0c070; font-size: 0.88rem; margin-bottom: 8px; }
+  .q-item { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; }
+  .q-item .q { color: var(--yellow); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .q-item .a { color: #ccc; font-size: 12px; line-height: 1.6; }
+  .q-item .mistake { color: var(--red); font-size: 11px; margin-top: 4px; }
+
+  /* QUIZ */
+  .quiz { background: var(--purple-dark); border: 1px solid var(--purple); border-radius: 10px; padding: 20px; margin-top: 16px; }
+  .quiz h4 { color: var(--purple); margin-bottom: 12px; }
+  .quiz p { color: #d0aadf; font-size: 0.9rem; }
+  .quiz .options { list-style: none; padding: 0; margin: 10px 0; }
+  .quiz .options li { padding: 6px 12px; margin-bottom: 6px; border-radius: 6px; background: rgba(0,0,0,0.3); color: #ccc; font-size: 13px; cursor: default; }
+  .quiz .options li.correct { background: var(--green-dark); color: var(--green); border: 1px solid var(--green); }
+
+  /* ANALOGY */
+  .analogy { background: var(--cyan-dark); border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 12px 0; font-size: 0.9rem; color: #b0eef5; }
+  .analogy strong { color: var(--cyan); }
+
+  /* PRO TIP */
+  .pro-tip { background: var(--green-dark); border: 1px solid var(--green); border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
+  .pro-tip p { color: #9fe8c6; font-size: 0.88rem; }
+  .pro-tip strong { color: var(--green); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* MEDALLION LAYERS */
+  .medallion { display: flex; gap: 0; border-radius: 10px; overflow: hidden; margin: 12px 0; }
+  .med-layer { flex: 1; padding: 18px 14px; text-align: center; }
+  .med-bronze { background: #3d1f00; border-right: 2px solid var(--bg); }
+  .med-silver { background: #1e2a2e; border-right: 2px solid var(--bg); }
+  .med-gold { background: #2e2500; }
+  .med-layer h4 { font-size: 1.1rem; margin-bottom: 6px; }
+  .med-layer p { font-size: 12px; color: var(--muted); }
+  .med-bronze h4 { color: #cd7f32; }
+  .med-silver h4 { color: #c0c0c0; }
+  .med-gold h4 { color: #ffd700; }
+
+  /* HIGHLIGHT */
+  .highlight { background: rgba(100,181,246,0.1); border-left: 3px solid var(--blue); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; color: #b0d4f5; font-size: 0.9rem; }
+
+  /* TOC */
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 40px; }
+  .toc h3 { color: var(--blue); margin-bottom: 16px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .toc-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; text-decoration: none; color: var(--muted); font-size: 13px; transition: all .2s; display: flex; align-items: center; gap: 8px; }
+  .toc-item:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-dark); }
+  .toc-num { background: var(--border); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span>📊 DE Guide</span>
+  <a href="#ch0">Prerequisites</a>
+  <a href="#ch1">Data</a>
+  <a href="#ch2">SQL</a>
+  <a href="#ch3">Database</a>
+  <a href="#ch4">OLTP vs OLAP</a>
+  <a href="#ch5">Data Warehouse</a>
+  <a href="#ch6">Data Mart</a>
+  <a href="#ch7">Data Lake</a>
+  <a href="#ch8">Data Swamp</a>
+  <a href="#ch9">Lakehouse</a>
+  <a href="#ch10">Delta Lake</a>
+  <a href="#ch11">Data Catalog</a>
+  <a href="#ch12">Governance</a>
+  <a href="#ch13">Modelling</a>
+  <a href="#ch14">ETL/ELT</a>
+  <a href="#ch15">Big Data</a>
+  <a href="#ch16">Object Storage</a>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>📊 Data Engineering — Complete Interview Guide</h1>
+    <p>From raw data to Data Lakehouse — every concept explained simply, from scratch, with real banking examples.</p>
+    <div class="badges">
+      <span class="badge">Azure + Databricks</span>
+      <span class="badge">Interview-Ready</span>
+      <span class="badge">Chapter-Based</span>
+      <span class="badge">Code Included</span>
+      <span class="badge">Beginner → Intermediate</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>📋 Table of Contents</h3>
+    <div class="toc-grid">
+      <a href="#ch0" class="toc-item"><span class="toc-num">0</span>Prerequisites</a>
+      <a href="#ch1" class="toc-item"><span class="toc-num">1</span>What is Data?</a>
+      <a href="#ch2" class="toc-item"><span class="toc-num">2</span>SQL</a>
+      <a href="#ch3" class="toc-item"><span class="toc-num">3</span>Database</a>
+      <a href="#ch4" class="toc-item"><span class="toc-num">4</span>OLTP vs OLAP</a>
+      <a href="#ch5" class="toc-item"><span class="toc-num">5</span>Data Warehouse</a>
+      <a href="#ch6" class="toc-item"><span class="toc-num">6</span>Data Mart</a>
+      <a href="#ch7" class="toc-item"><span class="toc-num">7</span>Data Lake</a>
+      <a href="#ch8" class="toc-item"><span class="toc-num">8</span>Data Swamp</a>
+      <a href="#ch9" class="toc-item"><span class="toc-num">9</span>Data Lakehouse</a>
+      <a href="#ch10" class="toc-item"><span class="toc-num">10</span>Delta Lake</a>
+      <a href="#ch11" class="toc-item"><span class="toc-num">11</span>Data Catalog</a>
+      <a href="#ch12" class="toc-item"><span class="toc-num">12</span>Governance</a>
+      <a href="#ch13" class="toc-item"><span class="toc-num">13</span>Data Modelling</a>
+      <a href="#ch14" class="toc-item"><span class="toc-num">14</span>ETL / ELT</a>
+      <a href="#ch15" class="toc-item"><span class="toc-num">15</span>Big Data</a>
+      <a href="#ch16" class="toc-item"><span class="toc-num">16</span>Object Storage</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 0 — PREREQUISITES ═══════════════════════════════ -->
+  <div class="chapter" id="ch0">
+    <div class="chapter-header ch-cyan">
+      <div class="chapter-num">00</div>
+      <div>
+        <div class="chapter-title" style="color:var(--cyan)">🔧 Prerequisites — Foundation Concepts</div>
+        <div class="chapter-sub">File Systems · Distributed Systems · Storage basics · What is a schema?</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <span class="label label-cyan">File System (FS)</span>
+        <h3 style="color:var(--cyan)">📁 What is a File System?</h3>
+        <p>A <strong>File System</strong> is the way an Operating System organizes and stores files on a disk. Think of it like a library — it tracks <em>where</em> each book (file) is placed on the shelves (disk).</p>
+        <ul style="margin-top:10px">
+          <li><strong>Examples:</strong> NTFS (Windows), ext4 (Linux), FAT32</li>
+          <li><strong>Limitation:</strong> Stored on ONE machine — if that machine dies, data is lost.</li>
+          <li><strong>Use case:</strong> Laptop files, local databases</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="label label-blue">Distributed File System (DFS)</span>
+        <h3 style="color:var(--blue)">🌐 What is a Distributed File System?</h3>
+        <p>A <strong>DFS</strong> stores files <em>across multiple machines</em> as if they were one giant hard drive. Data is automatically split (chunked) and replicated for fault tolerance.</p>
+        <ul style="margin-top:10px">
+          <li><strong>Examples:</strong> HDFS (Hadoop), ADLS Gen2 (Azure), S3</li>
+          <li><strong>Key benefit:</strong> If one machine fails, data survives on others</li>
+          <li><strong>Use case:</strong> Big Data processing with Spark</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Schema</span>
+      <h3 style="color:var(--yellow)">📐 What is a Schema?</h3>
+      <p>A <strong>schema</strong> is the <em>blueprint/structure</em> of your data — it defines column names, data types, and how the data is organized.</p>
+      <div class="grid-2" style="margin-top:12px">
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <strong style="color:var(--green)">Schema-on-Write</strong><br>
+          <small style="color:var(--muted)">Used in Data Warehouses. Data MUST match the schema before being stored. Like a form you must fill correctly before submitting.</small>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <strong style="color:var(--orange)">Schema-on-Read</strong><br>
+          <small style="color:var(--muted)">Used in Data Lakes. Store raw data first, apply schema only when reading. Like a messy inbox — organize when needed.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-purple">HDFS</span>
+      <h3 style="color:var(--purple)">🐘 Hadoop Distributed File System (HDFS)</h3>
+      <p>HDFS is the distributed storage layer of Hadoop. It splits large files into <strong>blocks (128MB each)</strong> and stores multiple copies across nodes.</p>
+      <div class="flow" style="margin-top:10px">
+        <div class="flow-box blue">NameNode<br><small>Tracks metadata</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">DataNode 1<br><small>Block A, C</small></div>
+        <div class="flow-box green">DataNode 2<br><small>Block B, A (replica)</small></div>
+        <div class="flow-box green">DataNode 3<br><small>Block C, B (replica)</small></div>
+      </div>
+      <p style="margin-top:10px;font-size:13px;color:var(--muted)">⚠️ <strong>HDFS vs Block vs Partition:</strong> HDFS stores blocks (128MB physical chunks). Spark creates <em>partitions</em> (logical units for parallel processing) — they are NOT the same thing.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 1 — DATA ═══════════════════════════════ -->
+  <div class="chapter" id="ch1">
+    <div class="chapter-header ch-blue">
+      <div class="chapter-num">01</div>
+      <div>
+        <div class="chapter-title" style="color:var(--blue)">💾 What is Data?</div>
+        <div class="chapter-sub">Structured · Semi-structured · Unstructured · Data Types</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Concept Snapshot</span>
+      <h3 style="color:var(--blue)">🔷 Data — One-liner</h3>
+      <p><strong>Data</strong> is raw facts and figures without context. When processed and organized, data becomes <strong>information</strong>. When information is used for decisions, it becomes <strong>knowledge</strong>.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> A bank transaction record — "1000, 2024-01-01, ACC123" is raw data. When labeled as "₹1000 withdrawal on Jan 1 from Account 123," it becomes useful information.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Types of Data</span>
+      <h3 style="color:var(--blue)">📂 3 Types of Data</h3>
+      <div class="grid-3">
+        <div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:14px">
+          <strong style="color:var(--green)">✅ Structured</strong>
+          <p style="font-size:12px;margin-top:6px">Organized in rows & columns. Has a fixed schema. Easily queryable with SQL.</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Examples: Bank transactions, Customer table, Excel sheets</p>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--yellow);border-radius:8px;padding:14px">
+          <strong style="color:var(--yellow)">⚠️ Semi-Structured</strong>
+          <p style="font-size:12px;margin-top:6px">Has some organization but not fixed rows/columns. Self-describing.</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Examples: JSON, XML, CSV, Parquet, Avro</p>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--red);border-radius:8px;padding:14px">
+          <strong style="color:var(--red)">❌ Unstructured</strong>
+          <p style="font-size:12px;margin-top:6px">No fixed format. Cannot be queried directly with SQL.</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Examples: PDFs, Images, Videos, Audio, Emails, Logs</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Data Formats</span>
+      <h3 style="color:var(--cyan)">📄 Common Data Formats</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Format</th><th>Type</th><th>Best For</th><th>Compression</th></tr>
+          <tr><td><strong>CSV</strong></td><td>Structured</td><td>Simple tabular data, Excel export</td><td>None (plain text)</td></tr>
+          <tr><td><strong>JSON</strong></td><td>Semi-structured</td><td>API responses, nested data</td><td>Moderate</td></tr>
+          <tr><td><strong>Parquet</strong></td><td>Columnar</td><td>Analytics, Spark, ADLS — ⭐ Preferred</td><td>Excellent (columnar)</td></tr>
+          <tr><td><strong>Avro</strong></td><td>Row-based binary</td><td>Streaming (Kafka), schema evolution</td><td>Good</td></tr>
+          <tr><td><strong>Delta</strong></td><td>Parquet + log</td><td>Lakehouse, ACID transactions</td><td>Excellent + ACID</td></tr>
+        </table>
+      </div>
+      <div class="highlight" style="margin-top:12px">
+        💡 <strong>Why Parquet over CSV?</strong> Parquet stores data column-by-column. When you query only 2 columns out of 100, Parquet reads only those 2 columns from disk — CSV reads everything. This is called <strong>columnar storage</strong> and is critical for performance in analytics.
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Data</h4>
+      <div class="q-item">
+        <div class="q">Q: What's the difference between structured, semi-structured, and unstructured data?</div>
+        <div class="a">Structured data has a fixed schema (rows & columns) like a SQL table. Semi-structured like JSON has flexible keys but some organization. Unstructured like images or PDFs has no predefined format. In banking, customer account info is structured, API logs are semi-structured, and scanned cheque images are unstructured.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Why would you choose Parquet over CSV for a data pipeline?</div>
+        <div class="a">Parquet uses columnar storage, which means for analytical queries touching only a few columns, it reads far less data from disk. It also supports efficient compression (Snappy, Gzip). In a fraud detection pipeline with 100+ columns, Parquet can reduce I/O by 90% compared to CSV.</div>
+        <div class="mistake">🚨 Mistake: Saying "Parquet is just a compressed CSV" — it's fundamentally different in storage layout.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 2 — SQL ═══════════════════════════════ -->
+  <div class="chapter" id="ch2">
+    <div class="chapter-header ch-green">
+      <div class="chapter-num">02</div>
+      <div>
+        <div class="chapter-title" style="color:var(--green)">🔤 SQL — Structured Query Language</div>
+        <div class="chapter-sub">DDL · DML · DQL · Joins · Aggregations · Window Functions</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Concept</span>
+      <h3 style="color:var(--green)">🔷 What is SQL?</h3>
+      <p><strong>SQL (Structured Query Language)</strong> is the standard language used to communicate with relational databases. It lets you <em>create, read, update, and delete</em> data (CRUD).</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> SQL is like giving instructions to a bank teller — "Show me all transactions above ₹50,000 for customer ID 123 in the last 30 days."
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">SQL Categories</span>
+      <h3>📚 SQL Command Types</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Category</th><th>Full Form</th><th>Commands</th><th>Purpose</th></tr>
+          <tr><td><strong style="color:var(--blue)">DDL</strong></td><td>Data Definition Language</td><td>CREATE, ALTER, DROP, TRUNCATE</td><td>Define/modify table structure</td></tr>
+          <tr><td><strong style="color:var(--green)">DML</strong></td><td>Data Manipulation Language</td><td>INSERT, UPDATE, DELETE, MERGE</td><td>Modify data in tables</td></tr>
+          <tr><td><strong style="color:var(--yellow)">DQL</strong></td><td>Data Query Language</td><td>SELECT</td><td>Retrieve/read data</td></tr>
+          <tr><td><strong style="color:var(--purple)">DCL</strong></td><td>Data Control Language</td><td>GRANT, REVOKE</td><td>Control access permissions</td></tr>
+          <tr><td><strong style="color:var(--orange)">TCL</strong></td><td>Transaction Control Language</td><td>COMMIT, ROLLBACK, SAVEPOINT</td><td>Manage transactions</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Key Concepts</span>
+      <h3>🔑 SQL Concepts Every DE Must Know</h3>
+      <pre><code><span class="cm">-- 1. Basic SELECT with Filter</span>
+<span class="kw">SELECT</span> customer_id, account_no, amount
+<span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span> status = <span class="str">'COMPLETED'</span>
+  <span class="kw">AND</span> amount &gt; <span class="num">50000</span>
+  <span class="kw">AND</span> txn_date &gt;= <span class="str">'2024-01-01'</span>;
+
+<span class="cm">-- 2. GROUP BY with HAVING (Aggregation)</span>
+<span class="kw">SELECT</span> customer_id, <span class="fn">SUM</span>(amount) <span class="kw">AS</span> total_spent
+<span class="kw">FROM</span> transactions
+<span class="kw">WHERE</span> status = <span class="str">'COMPLETED'</span>
+<span class="kw">GROUP BY</span> customer_id
+<span class="kw">HAVING</span> <span class="fn">SUM</span>(amount) &gt; <span class="num">100000</span>;
+
+<span class="cm">-- 3. JOIN (combining two tables)</span>
+<span class="kw">SELECT</span> c.customer_name, t.amount, t.txn_date
+<span class="kw">FROM</span> transactions t
+<span class="kw">INNER JOIN</span> customers c <span class="kw">ON</span> t.customer_id = c.customer_id
+<span class="kw">WHERE</span> t.status = <span class="str">'FRAUD'</span>;
+
+<span class="cm">-- 4. Window Function (rank customers by spend)</span>
+<span class="kw">SELECT</span> customer_id, amount,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> region <span class="kw">ORDER BY</span> amount <span class="kw">DESC</span>) <span class="kw">AS</span> spend_rank
+<span class="kw">FROM</span> transactions;</code></pre>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">SQL vs NoSQL</span>
+      <h3>⚖️ SQL vs NoSQL</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>SQL (Relational)</th><th>NoSQL (Non-Relational)</th></tr>
+          <tr><td>Schema</td><td>Fixed, predefined</td><td>Flexible, dynamic</td></tr>
+          <tr><td>Data Type</td><td>Structured only</td><td>Any type</td></tr>
+          <tr><td>Scaling</td><td>Vertical (bigger machine)</td><td>Horizontal (more machines)</td></tr>
+          <tr><td>ACID</td><td>✅ Full ACID</td><td>Partial (BASE model)</td></tr>
+          <tr><td>Examples</td><td>SQL Server, PostgreSQL, MySQL</td><td>MongoDB, Cassandra, Redis</td></tr>
+          <tr><td>Best For</td><td>Transactions, Banking, ERP</td><td>IoT, Social media, Caching</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — SQL</h4>
+      <div class="q-item">
+        <div class="q">Q: What is the difference between WHERE and HAVING?</div>
+        <div class="a">WHERE filters rows BEFORE grouping. HAVING filters groups AFTER GROUP BY. Example: WHERE amount > 1000 filters individual transactions; HAVING SUM(amount) > 100000 filters customer groups whose total exceeds ₹1 lakh.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Explain a Window Function with an example.</div>
+        <div class="a">Window functions perform calculations across a set of rows related to the current row without collapsing them like GROUP BY does. RANK() OVER (PARTITION BY region ORDER BY sales DESC) ranks customers within each region by sales — each customer row is preserved.</div>
+        <div class="mistake">🚨 Mistake: Confusing window functions with GROUP BY — GROUP BY reduces rows; window functions don't.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 3 — DATABASE ═══════════════════════════════ -->
+  <div class="chapter" id="ch3">
+    <div class="chapter-header ch-purple">
+      <div class="chapter-num">03</div>
+      <div>
+        <div class="chapter-title" style="color:var(--purple)">🗄️ Database</div>
+        <div class="chapter-sub">RDBMS · ACID Properties · Normalization · Indexes</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Concept</span>
+      <h3>🔷 What is a Database?</h3>
+      <p>A <strong>Database</strong> is an organized collection of structured data stored electronically, managed by a <strong>DBMS (Database Management System)</strong>. A <strong>Relational Database (RDBMS)</strong> organizes data in tables with relationships between them.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> A bank's core system stores customer accounts in a relational database — each customer row links to transaction rows via customer_id, just like a foreign key relationship.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-purple">ACID Properties</span>
+      <h3 style="color:var(--purple)">⚗️ ACID — The Pillars of Database Reliability</h3>
+      <p style="margin-bottom:12px">ACID properties ensure that database transactions are processed reliably. Critical in banking where partial transfers (e.g., money debited but not credited) must never happen.</p>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border-left:3px solid var(--blue);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--blue)">A — Atomicity</strong>
+          <p style="font-size:13px;margin-top:4px">ALL steps of a transaction succeed, or NONE do. If a fund transfer fails midway, the entire transaction is rolled back.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--green);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--green)">C — Consistency</strong>
+          <p style="font-size:13px;margin-top:4px">The database moves from one valid state to another. Total balance before = total balance after a transfer.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--yellow);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--yellow)">I — Isolation</strong>
+          <p style="font-size:13px;margin-top:4px">Concurrent transactions don't interfere. Two people transferring money simultaneously won't corrupt each other's data.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--pink);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--pink)">D — Durability</strong>
+          <p style="font-size:13px;margin-top:4px">Once committed, data is permanently saved — even if the server crashes immediately after. Data is written to disk/log.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Normalization</span>
+      <h3>📐 Normalization — Reducing Redundancy</h3>
+      <p>Normalization is the process of organizing a database to reduce redundancy and improve integrity. Key normal forms:</p>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <tr><th>Form</th><th>Rule</th><th>Banking Example</th></tr>
+          <tr><td><strong>1NF</strong></td><td>No repeating groups; each cell has one value</td><td>No column "phone1, phone2" — use a separate phones table</td></tr>
+          <tr><td><strong>2NF</strong></td><td>1NF + No partial dependencies</td><td>Customer name should not be in transactions table (depends only on customer_id)</td></tr>
+          <tr><td><strong>3NF</strong></td><td>2NF + No transitive dependencies</td><td>Branch city should not be in accounts table — put it in branches table</td></tr>
+        </table>
+      </div>
+      <div class="highlight" style="margin-top:12px">
+        ⚠️ <strong>Normalization vs Denormalization:</strong> OLTP databases are normalized (less redundancy, fast writes). OLAP/Data Warehouses are often <em>denormalized</em> (Star Schema) for fast read/analytical queries — we'll cover this in the Data Modelling chapter.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Indexes</span>
+      <h3 style="color:var(--cyan)">⚡ Database Index</h3>
+      <p>An <strong>index</strong> is a data structure that speeds up queries by creating a lookup pointer — like a book's index that tells you which page a topic is on, so you don't read every page.</p>
+      <pre><code><span class="cm">-- Create an index on customer_id for faster transaction lookups</span>
+<span class="kw">CREATE INDEX</span> idx_customer_txn 
+  <span class="kw">ON</span> transactions (customer_id);
+
+<span class="cm">-- Without index: Full table scan (slow for millions of rows)</span>
+<span class="cm">-- With index: Direct lookup (O(log n) — much faster)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> transactions <span class="kw">WHERE</span> customer_id = <span class="str">'C12345'</span>;</code></pre>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px">⚠️ Trade-off: Indexes speed up reads but slow down writes (INSERT/UPDATE must update the index too). Use selectively on high-cardinality, frequently queried columns.</p>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Database</h4>
+      <div class="q-item">
+        <div class="q">Q: Explain ACID properties with a banking example.</div>
+        <div class="a">In a fund transfer: Atomicity ensures both debit and credit happen or neither does. Consistency ensures the total balance doesn't change. Isolation ensures another concurrent transfer doesn't see an intermediate state. Durability ensures the committed transfer survives a server restart.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Why would you NOT normalize a data warehouse?</div>
+        <div class="a">Data warehouses use denormalized Star Schemas because analytical queries join many tables. Normalization reduces redundancy but increases JOINs — in OLAP, fewer JOINs mean faster query performance. We denormalize intentionally to optimize for reads, not writes.</div>
+        <div class="mistake">🚨 Mistake: Saying "normalization is always good" — it's optimal for OLTP but harmful for OLAP performance.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 4 — OLTP VS OLAP ═══════════════════════════════ -->
+  <div class="chapter" id="ch4">
+    <div class="chapter-header ch-orange">
+      <div class="chapter-num">04</div>
+      <div>
+        <div class="chapter-title" style="color:var(--orange)">⚡ OLTP vs OLAP</div>
+        <div class="chapter-sub">Online Transaction Processing · Online Analytical Processing</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-orange">Core Difference</span>
+      <h3>⚖️ OLTP vs OLAP — Side by Side</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>OLTP</th><th>OLAP</th></tr>
+          <tr><td><strong>Full Form</strong></td><td>Online Transaction Processing</td><td>Online Analytical Processing</td></tr>
+          <tr><td><strong>Purpose</strong></td><td>Day-to-day business operations</td><td>Business intelligence & reporting</td></tr>
+          <tr><td><strong>Operations</strong></td><td>INSERT, UPDATE, DELETE (write-heavy)</td><td>SELECT, aggregations (read-heavy)</td></tr>
+          <tr><td><strong>Data Size</strong></td><td>Current data (GBs)</td><td>Historical data (TBs–PBs)</td></tr>
+          <tr><td><strong>Query Type</strong></td><td>Simple, fast (ms)</td><td>Complex, slow (seconds–minutes)</td></tr>
+          <tr><td><strong>Schema</strong></td><td>Normalized (3NF)</td><td>Denormalized (Star/Snowflake)</td></tr>
+          <tr><td><strong>Users</strong></td><td>Thousands of concurrent users</td><td>Few analysts/BI tools</td></tr>
+          <tr><td><strong>Example</strong></td><td>Bank's core banking system (Finacle)</td><td>Bank's fraud analytics dashboard</td></tr>
+          <tr><td><strong>Azure Tool</strong></td><td>Azure SQL Database</td><td>Azure Synapse Analytics, Databricks</td></tr>
+        </table>
+      </div>
+      <div class="analogy" style="margin-top:12px">
+        <strong>🏦 Analogy:</strong> OLTP is the bank teller processing your deposit right now. OLAP is the bank analyst studying last year's transaction patterns to detect fraud trends.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Architecture</span>
+      <h3>🏗️ How They Fit Together</h3>
+      <div class="flow">
+        <div class="flow-box blue">OLTP System<br><small>Azure SQL DB<br>Core Banking</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box yellow">ETL / ADF<br><small>Extract &<br>Transform</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box purple">OLAP / DWH<br><small>Azure Synapse<br>Databricks</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">BI Reports<br><small>Power BI<br>Dashboard</small></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">OLTP systems feed data into OLAP systems via ETL pipelines. You should NEVER run heavy analytics directly on OLTP — it degrades performance for live users.</p>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — OLTP vs OLAP</h4>
+      <div class="q-item">
+        <div class="q">Q: If your manager says "run the monthly fraud report directly on the production banking database," what would you say?</div>
+        <div class="a">That would be risky. The production DB is OLTP — optimized for fast concurrent writes. Running a complex aggregation query on it locks tables, slows down live transactions, and could impact customers. The correct approach is to copy data to an OLAP system (Synapse/Databricks) and run analytics there.</div>
+        <div class="mistake">🚨 Mistake: Agreeing to run heavy queries on OLTP — this is a real red flag in senior engineering interviews.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 5 — DATA WAREHOUSE ═══════════════════════════════ -->
+  <div class="chapter" id="ch5">
+    <div class="chapter-header ch-blue">
+      <div class="chapter-num">05</div>
+      <div>
+        <div class="chapter-title" style="color:var(--blue)">🏛️ Data Warehouse</div>
+        <div class="chapter-sub">Centralized, structured, SQL-optimized historical data store</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Concept</span>
+      <h3>🔷 What is a Data Warehouse?</h3>
+      <p>A <strong>Data Warehouse (DWH)</strong> is a <em>centralized repository</em> that stores structured, cleaned, historical data from multiple sources — specifically designed for analytical queries and business intelligence.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> If OLTP is the bank's daily ledger, the Data Warehouse is the bank's annual report room — everything is organized, audited, and ready for deep analysis.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Architecture Layers</span>
+      <h3>🏗️ Data Warehouse Architecture — 3 Layers</h3>
+      <div class="grid-3">
+        <div style="background:#0d1a2d;border:1px solid var(--blue);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem">📥</div>
+          <strong style="color:var(--blue)">Staging Layer</strong><br>
+          <small style="color:var(--muted)">Raw data landing zone. No transformation. Temporary or persistent copy of source data.</small>
+        </div>
+        <div style="background:#0d1a2d;border:1px solid var(--yellow);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem">⚙️</div>
+          <strong style="color:var(--yellow)">Integration Layer</strong><br>
+          <small style="color:var(--muted)">Data is cleaned, transformed, standardized, and loaded into fact/dimension tables.</small>
+        </div>
+        <div style="background:#0d1a2d;border:1px solid var(--green);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem">📊</div>
+          <strong style="color:var(--green)">Access Layer</strong><br>
+          <small style="color:var(--muted)">Data Marts, Views, OLAP cubes — exposed to BI tools like Power BI, Tableau.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Limitations</span>
+      <h3>⚠️ Why Data Warehouses Have Limitations</h3>
+      <ul>
+        <li><strong>❌ Only structured data:</strong> Can't store images, logs, JSON natively</li>
+        <li><strong>❌ Expensive to scale:</strong> Compute and storage are tightly coupled — you pay for both together even if you only need one</li>
+        <li><strong>❌ ETL complexity:</strong> Data must be cleaned BEFORE loading (Schema-on-Write) — slow to onboard new data sources</li>
+        <li><strong>❌ No ML support:</strong> Not designed for ML workloads or unstructured training data</li>
+      </ul>
+      <div class="highlight" style="margin-top:12px">
+        💡 These limitations led to the invention of <strong>Data Lakes</strong> (flexible, cheap storage) and eventually <strong>Data Lakehouses</strong> (best of both worlds).
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Banking Example</span>
+      <h3 style="color:var(--cyan)">🏦 Real-World Example — Banking DWH</h3>
+      <p><strong>Scenario:</strong> A bank wants a monthly report on total transaction value per branch, per account type, filtered for completed transactions only.</p>
+      <pre><code><span class="cm">-- Star Schema query in Azure Synapse Analytics</span>
+<span class="kw">SELECT</span>
+    d.branch_name,
+    d.account_type,
+    <span class="fn">SUM</span>(f.amount) <span class="kw">AS</span> total_amount,
+    <span class="fn">COUNT</span>(f.txn_id) <span class="kw">AS</span> txn_count
+<span class="kw">FROM</span> fact_transactions f
+<span class="kw">JOIN</span> dim_branch d <span class="kw">ON</span> f.branch_id = d.branch_id
+<span class="kw">JOIN</span> dim_date dt <span class="kw">ON</span> f.date_id = dt.date_id
+<span class="kw">WHERE</span> f.status = <span class="str">'COMPLETED'</span>
+  <span class="kw">AND</span> dt.month = <span class="num">1</span>
+  <span class="kw">AND</span> dt.year = <span class="num">2024</span>
+<span class="kw">GROUP BY</span> d.branch_name, d.account_type
+<span class="kw">ORDER BY</span> total_amount <span class="kw">DESC</span>;</code></pre>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Data Warehouse</h4>
+      <div class="q-item">
+        <div class="q">Q: What is the difference between a Database and a Data Warehouse?</div>
+        <div class="a">A database (OLTP) is optimized for fast transactional reads/writes with current data. A data warehouse (OLAP) stores historical, aggregated data from multiple sources, optimized for analytical queries. A bank's core system is a database; the reporting system that shows last year's trends is a warehouse.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: What are the key layers in a Data Warehouse?</div>
+        <div class="a">Staging layer (raw data landing), Integration/Core layer (cleaned, normalized data with Fact + Dimension tables), and Access/Presentation layer (Data Marts, OLAP cubes, views exposed to BI tools). Each layer improves data quality progressively.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 6 — DATA MART ═══════════════════════════════ -->
+  <div class="chapter" id="ch6">
+    <div class="chapter-header ch-purple">
+      <div class="chapter-num">06</div>
+      <div>
+        <div class="chapter-title" style="color:var(--purple)">📦 Data Mart</div>
+        <div class="chapter-sub">Department-specific subset of a Data Warehouse</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-purple">Concept</span>
+      <h3>🔷 What is a Data Mart?</h3>
+      <p>A <strong>Data Mart</strong> is a <em>subject-specific, smaller subset</em> of a Data Warehouse tailored for a particular department or business unit. It contains only the data relevant to that team.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> The full Data Warehouse is the bank's central archive. The Risk Department's Data Mart contains only fraud-related data. The Finance Department's Data Mart contains only P&L data. Each team gets their own "mini-warehouse."
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Architecture</span>
+      <h3>🏗️ DWH → Data Mart Flow</h3>
+      <div class="flow">
+        <div class="flow-box blue">Enterprise DWH<br><small>All departments</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">Risk Mart<br><small>Fraud, NPA</small></div>
+        <div class="flow-box yellow">Finance Mart<br><small>P&L, Budget</small></div>
+        <div class="flow-box purple">Retail Mart<br><small>Loans, Deposits</small></div>
+        <div class="flow-box pink">HR Mart<br><small>Employee data</small></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Data Marts use <strong>Dimensional Modeling (Star Schema)</strong> for fast query performance in Power BI or SSAS cubes.</p>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Comparison</span>
+      <h3>⚖️ Data Warehouse vs Data Mart</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>Data Warehouse</th><th>Data Mart</th></tr>
+          <tr><td>Scope</td><td>Enterprise-wide</td><td>Department-specific</td></tr>
+          <tr><td>Size</td><td>TBs to PBs</td><td>GBs to TBs</td></tr>
+          <tr><td>Users</td><td>All analysts</td><td>Specific team</td></tr>
+          <tr><td>Creation</td><td>Complex, long project</td><td>Faster, simpler</td></tr>
+          <tr><td>Query Speed</td><td>Moderate (more data)</td><td>Fast (focused data)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 7 — DATA LAKE ═══════════════════════════════ -->
+  <div class="chapter" id="ch7">
+    <div class="chapter-header ch-green">
+      <div class="chapter-num">07</div>
+      <div>
+        <div class="chapter-title" style="color:var(--green)">🌊 Data Lake</div>
+        <div class="chapter-sub">Store everything raw — structured, semi-structured, unstructured</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Concept</span>
+      <h3>🔷 What is a Data Lake?</h3>
+      <p>A <strong>Data Lake</strong> is a <em>centralized repository</em> that stores data in its <em>native/raw format</em> — any volume, any velocity, any variety — without imposing a schema upfront. It uses <strong>Schema-on-Read</strong>.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> If a Data Warehouse is an organized filing cabinet, a Data Lake is a large warehouse where you throw in everything — documents, photos, audio tapes — and organize them only when you need to find something.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Layered Architecture</span>
+      <h3>🏗️ Data Lake Layered Architecture (Medallion)</h3>
+      <div class="medallion">
+        <div class="med-layer med-bronze">
+          <h4>🥉 Bronze Layer</h4>
+          <p>Raw ingestion zone</p>
+          <p>No transformation</p>
+          <p>Exact copy of source</p>
+          <p style="margin-top:6px;font-size:11px">CSV, JSON, Parquet as-is</p>
+        </div>
+        <div class="med-layer med-silver">
+          <h4>🥈 Silver Layer</h4>
+          <p>Cleaned & refined</p>
+          <p>Deduplication done</p>
+          <p>Type casting applied</p>
+          <p style="margin-top:6px;font-size:11px">Delta format, validated</p>
+        </div>
+        <div class="med-layer med-gold">
+          <h4>🥇 Gold Layer</h4>
+          <p>Aggregated, curated</p>
+          <p>Business-ready</p>
+          <p>Used by BI / ML</p>
+          <p style="margin-top:6px;font-size:11px">Star Schema, KPIs</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">DWH vs Data Lake</span>
+      <h3>⚖️ Data Warehouse vs Data Lake</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>Data Warehouse</th><th>Data Lake</th></tr>
+          <tr><td>Data Type</td><td>Structured only</td><td>All types (structured, semi, unstructured)</td></tr>
+          <tr><td>Schema</td><td>Schema-on-Write (before storing)</td><td>Schema-on-Read (when querying)</td></tr>
+          <tr><td>Ingestion</td><td>ETL (clean then load)</td><td>ELT (load then transform)</td></tr>
+          <tr><td>Cost</td><td>High (compute+storage coupled)</td><td>Low (cheap object storage)</td></tr>
+          <tr><td>Workloads</td><td>SQL BI, Reporting</td><td>ML, Streaming, Data Science, BI</td></tr>
+          <tr><td>ACID</td><td>✅ Full</td><td>❌ Not natively (fixed by Delta Lake)</td></tr>
+          <tr><td>Azure Tool</td><td>Azure Synapse Analytics</td><td>ADLS Gen2 + Databricks</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-pink">Limitations</span>
+      <h3>⚠️ Common Data Lake Problems</h3>
+      <ul>
+        <li><strong>❌ No ACID transactions:</strong> Concurrent writes can corrupt data</li>
+        <li><strong>❌ No Schema Enforcement:</strong> Anyone can write garbage data</li>
+        <li><strong>❌ No Data Catalog:</strong> Hard to discover what data exists</li>
+        <li><strong>❌ Ineffective Partitioning:</strong> Poor query performance without partitioning strategy</li>
+        <li><strong>❌ Too Many Small Files:</strong> Thousands of tiny Parquet files kill performance (the "small files problem")</li>
+        <li><strong>❌ Leads to Data Swamp</strong> when ungoverned</li>
+      </ul>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Data Lake</h4>
+      <div class="q-item">
+        <div class="q">Q: What is Schema-on-Read vs Schema-on-Write?</div>
+        <div class="a">Schema-on-Write (used in Data Warehouses) enforces the schema when data is written — data must conform before being stored. Schema-on-Read (used in Data Lakes) stores raw data without validation; schema is applied only when querying. Lakes are more flexible but risk data quality issues.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: What are the limitations of a Data Lake?</div>
+        <div class="a">No ACID transactions (concurrent writes corrupt data), no schema enforcement (garbage in, garbage out), no built-in data catalog (poor discoverability), and the small files problem (too many tiny files degrade Spark performance). These are the exact problems Delta Lake was built to solve.</div>
+        <div class="mistake">🚨 Mistake: Saying "Data Lakes replace Data Warehouses" — they are complementary. Lakehouses combine both.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 8 — DATA SWAMP ═══════════════════════════════ -->
+  <div class="chapter" id="ch8">
+    <div class="chapter-header ch-red">
+      <div class="chapter-num">08</div>
+      <div>
+        <div class="chapter-title" style="color:var(--red)">🦟 Data Swamp</div>
+        <div class="chapter-sub">A Data Lake gone wrong — ungoverned, unusable mess</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-pink">Concept</span>
+      <h3>🔷 What is a Data Swamp?</h3>
+      <p>A <strong>Data Swamp</strong> is a Data Lake that has become <em>ungoverned, undiscoverable, and unreliable</em> — full of data no one understands or trusts. It's what happens when data is dumped without proper governance.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> Imagine a bank archive room where every document, scrap, and post-it is thrown in a pile with no labels or filing system. Even if the data you need is there, you can't find it or trust it.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-pink">Why It Happens</span>
+      <h3>⚠️ How a Data Lake Becomes a Data Swamp</h3>
+      <div class="grid-2">
+        <div>
+          <strong style="color:var(--red)">🚨 Warning Signs:</strong>
+          <ul style="margin-top:8px;font-size:13px">
+            <li>No data catalog (no one knows what exists)</li>
+            <li>No schema enforcement (mixed formats, broken files)</li>
+            <li>No data lineage (unknown data origin)</li>
+            <li>No access control (everyone writes anything)</li>
+            <li>No data quality checks (nulls, duplicates everywhere)</li>
+            <li>No retention policy (terabytes of stale data)</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color:var(--green)">✅ Prevention:</strong>
+          <ul style="margin-top:8px;font-size:13px">
+            <li>Azure Purview / Unity Catalog for data catalog</li>
+            <li>Delta Lake for schema enforcement + ACID</li>
+            <li>Data Governance policies and ownership</li>
+            <li>RBAC (Role-Based Access Control)</li>
+            <li>Data quality frameworks (Great Expectations, dbt tests)</li>
+            <li>Medallion Architecture (Bronze→Silver→Gold)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 9 — LAKEHOUSE ═══════════════════════════════ -->
+  <div class="chapter" id="ch9">
+    <div class="chapter-header ch-yellow">
+      <div class="chapter-num">09</div>
+      <div>
+        <div class="chapter-title" style="color:var(--yellow)">🏠 Data Lakehouse</div>
+        <div class="chapter-sub">Data Lake + Data Warehouse = Best of Both Worlds</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Concept</span>
+      <h3>🔷 What is a Data Lakehouse?</h3>
+      <p>A <strong>Data Lakehouse</strong> is a hybrid architecture that combines the <em>low-cost, flexible storage of a Data Lake</em> with the <em>ACID transactions, schema enforcement, and query performance of a Data Warehouse</em>.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> A Lakehouse is like a modern smart bank vault — it stores everything (structured + unstructured) like a lake, but has the organization, security, and auditability of a warehouse.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Architecture</span>
+      <h3>🏗️ Lakehouse Architecture on Azure</h3>
+      <div class="flow">
+        <div class="flow-box blue">Sources<br><small>APIs, DBs, Streams</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box orange">ADF / Event Hubs<br><small>Ingest</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box cyan">ADLS Gen2<br><small>Storage Layer</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">Delta Lake<br><small>Table Format</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box purple">Databricks<br><small>Compute Layer</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box yellow">Power BI<br><small>BI / ML</small></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px"><strong>Key Insight:</strong> ADLS (storage) + Delta Lake (table format) + Databricks SQL Warehouse (compute) = a complete Lakehouse. Storage and compute are <em>separated</em>, unlike traditional warehouses where you pay for both together.</p>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Comparison</span>
+      <h3>⚖️ DWH vs Data Lake vs Lakehouse</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Feature</th><th>Data Warehouse</th><th>Data Lake</th><th>Data Lakehouse</th></tr>
+          <tr><td>Data Types</td><td>Structured only</td><td>All types</td><td>✅ All types</td></tr>
+          <tr><td>ACID</td><td>✅ Yes</td><td>❌ No</td><td>✅ Yes (Delta)</td></tr>
+          <tr><td>Schema</td><td>Write-time</td><td>Read-time</td><td>✅ Both</td></tr>
+          <tr><td>Cost</td><td>High</td><td>Low</td><td>✅ Low</td></tr>
+          <tr><td>ML Support</td><td>Limited</td><td>Good</td><td>✅ Excellent</td></tr>
+          <tr><td>Streaming</td><td>Limited</td><td>Good</td><td>✅ Excellent</td></tr>
+          <tr><td>Separate Compute/Storage</td><td>❌ Coupled</td><td>✅ Separate</td><td>✅ Separate</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Why Cost Saving?</span>
+      <h3>💰 Why is Lakehouse Cheaper than Synapse?</h3>
+      <p>In a traditional Data Warehouse (like Azure Synapse with dedicated pool):</p>
+      <ul>
+        <li>Compute and storage are <strong>tightly coupled</strong> — when data grows, you pay for bigger compute too</li>
+      </ul>
+      <p style="margin-top:8px">In a Lakehouse (ADLS + Databricks):</p>
+      <ul>
+        <li>Data grows → only cheap ADLS storage cost increases</li>
+        <li>Compute (Databricks clusters) can be <strong>scaled independently and shut down when idle</strong></li>
+        <li>ADLS costs ~₹1.5 per GB/month vs Synapse dedicated pool at ~₹150+ per DWU/hour</li>
+      </ul>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Lakehouse</h4>
+      <div class="q-item">
+        <div class="q">Q: What problems does a Data Lakehouse solve that neither a DWH nor a Data Lake could alone?</div>
+        <div class="a">A Data Lake lacks ACID transactions and schema enforcement — leading to unreliable data. A Data Warehouse can't handle unstructured data or ML workloads cost-effectively. A Lakehouse (ADLS + Delta Lake + Databricks) gives you ACID transactions on cheap object storage, supports all data types, enables ML and streaming, while keeping compute and storage independent for cost efficiency.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Explain Medallion Architecture.</div>
+        <div class="a">Medallion Architecture organizes data in three progressive quality layers: Bronze (raw ingestion, no transformation), Silver (cleaned, deduplicated, type-cast data), and Gold (aggregated, business-ready data consumed by BI and ML). Each layer improves data quality and is stored in Delta format on ADLS in Databricks.</div>
+        <div class="mistake">🚨 Mistake: Saying Medallion is only for Data Lakes — it's the standard pattern for Lakehouse implementations in Databricks.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 10 — DELTA LAKE ═══════════════════════════════ -->
+  <div class="chapter" id="ch10">
+    <div class="chapter-header ch-blue">
+      <div class="chapter-num">10</div>
+      <div>
+        <div class="chapter-title" style="color:var(--blue)">⚡ Delta Lake</div>
+        <div class="chapter-sub">Open-source storage framework — ACID on your Data Lake</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Concept</span>
+      <h3>🔷 What is Delta Lake?</h3>
+      <p><strong>Delta Lake</strong> is an open-source storage framework created by Databricks that brings <em>ACID transactions, schema enforcement, time travel, and scalable metadata management</em> to Data Lakes. It does NOT replace ADLS — it enhances it.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> ADLS is the bank vault (storage). Delta Lake is the ledger + audit trail system on top — tracking every change, enabling rollbacks, and ensuring consistency.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">How It Works</span>
+      <h3>🔧 Delta Lake Internals</h3>
+      <p>Delta Lake works by storing data as <strong>Parquet files</strong> + a <strong>transaction log (_delta_log)</strong> folder:</p>
+      <div class="flow" style="flex-direction:column;align-items:flex-start">
+        <div style="background:var(--surface2);border-radius:8px;padding:12px;width:100%;margin-bottom:8px">
+          <strong style="color:var(--yellow)">📁 ADLS Container / Delta Table Directory</strong>
+          <div style="margin-top:8px;font-family:monospace;font-size:13px;color:var(--muted)">
+            ├── <span style="color:var(--green)">part-00001.snappy.parquet</span>  ← actual data<br>
+            ├── <span style="color:var(--green)">part-00002.snappy.parquet</span>  ← actual data<br>
+            └── <span style="color:var(--blue)">_delta_log/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--yellow)">00000000000000000000.json</span>  ← txn log (version 0)<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--yellow)">00000000000000000001.json</span>  ← txn log (version 1)<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:var(--purple)">00000000000000000010.checkpoint.parquet</span>  ← checkpoint
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">Each JSON file in <code>_delta_log</code> records exactly what changed — which files were added or removed. This enables <strong>time travel</strong>, <strong>ACID</strong>, and <strong>schema evolution</strong>.</p>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Key Features</span>
+      <h3>✅ Delta Lake Key Features</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--blue)">
+          <strong style="color:var(--blue)">ACID Transactions</strong>
+          <p style="font-size:12px;margin-top:4px">Multiple writers won't corrupt the table. Reads always see a consistent snapshot.</p>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--green)">
+          <strong style="color:var(--green)">Time Travel</strong>
+          <p style="font-size:12px;margin-top:4px">Query any previous version of the data. Restore accidentally deleted data.</p>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--yellow)">
+          <strong style="color:var(--yellow)">Schema Enforcement</strong>
+          <p style="font-size:12px;margin-top:4px">Rejects writes that don't match the schema — prevents garbage data from entering.</p>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--purple)">
+          <strong style="color:var(--purple)">Schema Evolution</strong>
+          <p style="font-size:12px;margin-top:4px">Safely add new columns without breaking existing queries — using mergeSchema.</p>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--orange)">
+          <strong style="color:var(--orange)">Upserts (MERGE)</strong>
+          <p style="font-size:12px;margin-top:4px">MERGE INTO for insert-or-update logic. Critical for SCD Type 2 patterns in banking.</p>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;border-left:3px solid var(--cyan)">
+          <strong style="color:var(--cyan)">Unified Batch + Streaming</strong>
+          <p style="font-size:12px;margin-top:4px">Same Delta table works for both batch writes (ADF) and streaming writes (Event Hubs + Spark Streaming).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Code Examples</span>
+      <h3>💻 Delta Lake in PySpark</h3>
+      <pre><code><span class="cm"># 1. Write data as Delta format</span>
+df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>).save(<span class="str">"abfss://container@account.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># 2. Read Delta table</span>
+df = spark.read.format(<span class="str">"delta"</span>).load(<span class="str">"abfss://container@account.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># 3. Time Travel — Query Version 3 of the table</span>
+df_v3 = spark.read.format(<span class="str">"delta"</span>) \
+    .option(<span class="str">"versionAsOf"</span>, <span class="num">3</span>) \
+    .load(<span class="str">"abfss://container@account.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># 4. MERGE (Upsert) — Update if exists, Insert if new</span>
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+delta_table = DeltaTable.forPath(spark, <span class="str">"abfss://container@account.dfs.core.windows.net/transactions"</span>)
+
+delta_table.alias(<span class="str">"target"</span>).merge(
+    source_df.alias(<span class="str">"source"</span>),
+    <span class="str">"target.txn_id = source.txn_id"</span>
+).whenMatchedUpdateAll() \
+ .whenNotMatchedInsertAll() \
+ .execute()
+
+<span class="cm"># 5. Schema Evolution — add new column safely</span>
+df_new.write.format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"append"</span>) \
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+    .save(<span class="str">"abfss://container@account.dfs.core.windows.net/transactions"</span>)</code></pre>
+    </div>
+
+    <div class="card">
+      <span class="label label-pink">Delta Lake vs Delta Format</span>
+      <h3>⚖️ Delta Lake vs Delta File Format — Important Distinction!</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>Delta File Format</th><th>Delta Lake Framework</th></tr>
+          <tr><td>What it is</td><td>Parquet files + _delta_log transaction log</td><td>Open-source software layer (APIs, engine)</td></tr>
+          <tr><td>Purpose</td><td>How data is stored physically</td><td>How you interact with Delta files (ACID, time travel, MERGE)</td></tr>
+          <tr><td>Analogy</td><td>The file format (like .xlsx)</td><td>The software that reads/writes .xlsx (like Excel)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Delta Lake</h4>
+      <div class="q-item">
+        <div class="q">Q: How does Delta Lake achieve ACID transactions?</div>
+        <div class="a">Delta Lake maintains a _delta_log directory containing JSON commit files. Each write operation appends a new JSON file atomically — listing which Parquet files were added or removed. Readers always see a consistent snapshot by reading the latest committed log entry. Conflicting concurrent writes are detected and rejected through optimistic concurrency control.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: What is Time Travel in Delta Lake and when would you use it in banking?</div>
+        <div class="a">Time Travel lets you query any historical version of a Delta table using VERSION AS OF or TIMESTAMP AS OF. In banking, if a data pipeline accidentally overwrites a customer balance table, I can use time travel to query the previous version and restore it — without maintaining separate backup files. It's essentially built-in point-in-time recovery.</div>
+        <div class="mistake">🚨 Mistake: Saying Delta Lake stores separate copies of all historical data — it only stores changed files, not full copies. Time travel reads the log to reconstruct the state.</div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>🧠 Quiz</h4>
+      <p>A Spark job writes to a Delta table. Simultaneously, another job reads the same table. What happens?</p>
+      <ul class="options">
+        <li>A. Both jobs fail due to a write conflict</li>
+        <li>B. The reader sees partial/corrupted data</li>
+        <li class="correct">C. The reader sees a consistent snapshot of the data before the write started (Snapshot Isolation)</li>
+        <li>D. The write job is blocked until the read completes</li>
+      </ul>
+      <p style="font-size:12px;margin-top:8px;color:#d0aadf">✅ <strong>C is correct.</strong> Delta Lake uses MVCC (Multi-Version Concurrency Control) — readers always see a consistent snapshot. The writer creates a new version atomically without blocking readers.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 11 — DATA CATALOG ═══════════════════════════════ -->
+  <div class="chapter" id="ch11">
+    <div class="chapter-header ch-cyan">
+      <div class="chapter-num">11</div>
+      <div>
+        <div class="chapter-title" style="color:var(--cyan)">📚 Data Catalog</div>
+        <div class="chapter-sub">Metadata inventory — discover, understand, and govern your data assets</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Concept</span>
+      <h3>🔷 What is a Data Catalog?</h3>
+      <p>A <strong>Data Catalog</strong> is a <em>metadata management system</em> that acts as an inventory of all data assets in your organization — telling you <em>what data exists, where it lives, who owns it, and who can access it</em>. It does NOT store actual data — only information ABOUT the data.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> A Data Catalog is like a bank's file registry — it doesn't contain the actual customer files, but it tells you "Customer file #12345 is in Cabinet 3, Row B, owned by the KYC team, and only compliance staff can access it."
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Unity Catalog</span>
+      <h3>🏗️ Databricks Unity Catalog — How It Works</h3>
+      <div class="flow" style="flex-direction:column;align-items:flex-start">
+        <div style="font-family:monospace;background:var(--surface2);padding:16px;border-radius:8px;width:100%;font-size:13px">
+          <span style="color:var(--yellow)">Unity Catalog Metastore</span> (1 per Azure Region per Company)<br>
+          &nbsp;&nbsp;└── <span style="color:var(--blue)">Catalog</span> (e.g., banking_prod, banking_dev)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:var(--green)">Schema / Database</span> (e.g., transactions, customers)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:var(--purple)">Table / View</span> (e.g., fact_transactions, dim_customer)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted)">(metadata only — actual data in ADLS as Delta files)</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:12px">Unity Catalog knows WHERE each Delta table lives in ADLS, controls WHO can query it, tracks DATA LINEAGE (which pipeline created it), and applies ROW/COLUMN security — all as tiny metadata files (KBs, not GBs). All real data always lives in ADLS.</p>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Capabilities</span>
+      <h3>✅ What Unity Catalog Provides</h3>
+      <div class="grid-2">
+        <ul>
+          <li><strong>Data Discovery:</strong> Search tables, columns, descriptions across all catalogs</li>
+          <li><strong>Access Control:</strong> GRANT/REVOKE at catalog, schema, table, column, row level</li>
+          <li><strong>Data Lineage:</strong> Visual graph of where data came from and how it flows</li>
+        </ul>
+        <ul>
+          <li><strong>Schema Registry:</strong> Track column names, types, and changes over time</li>
+          <li><strong>Tagging:</strong> Tag sensitive columns (PII, PCI) for compliance</li>
+          <li><strong>Audit Logs:</strong> Who accessed what data and when</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Data Catalog</h4>
+      <div class="q-item">
+        <div class="q">Q: Why does a Data Catalog matter in a large banking data platform?</div>
+        <div class="a">In a large bank with hundreds of Delta tables in ADLS across multiple teams, without a catalog, engineers waste hours finding the right table or unknowingly create duplicates. Unity Catalog solves this — it's a single source of truth for what data exists, where it lives, who owns it, and who can access it. It also enforces column-level security for PII data like Aadhaar numbers without duplicating the underlying data.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 12 — DATA GOVERNANCE ═══════════════════════════════ -->
+  <div class="chapter" id="ch12">
+    <div class="chapter-header ch-pink">
+      <div class="chapter-num">12</div>
+      <div>
+        <div class="chapter-title" style="color:var(--pink)">🛡️ Data Governance & Data Management</div>
+        <div class="chapter-sub">Policies, Quality, Security, Lineage — controlling your data assets</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-pink">Concept</span>
+      <h3>🔷 What is Data Governance?</h3>
+      <p><strong>Data Governance</strong> is the set of <em>policies, standards, processes, and roles</em> that ensure data is accurate, consistent, secure, and used responsibly across the organization.</p>
+      <p style="margin-top:8px"><strong>Data Management</strong> is the day-to-day <em>operational implementation</em> of governance policies — the tools and processes that enforce those rules.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> Governance is the RBI regulation that says "banks must mask customer PAN numbers in reports." Data Management is the team that implements that masking in Databricks using column-level security in Unity Catalog.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Key Pillars</span>
+      <h3>🏛️ 5 Pillars of Data Governance</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border-left:3px solid var(--blue);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--blue)">1. Data Quality</strong>
+          <p style="font-size:12px">Accuracy, completeness, consistency, timeliness. No duplicate transactions, no null account numbers.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--green);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--green)">2. Data Security</strong>
+          <p style="font-size:12px">RBAC, column-level masking, row-level filters. Only compliance team sees Aadhaar numbers.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--yellow);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--yellow)">3. Data Lineage</strong>
+          <p style="font-size:12px">Track where data came from, how it was transformed. Critical for regulatory audits.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--purple);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--purple)">4. Data Ownership</strong>
+          <p style="font-size:12px">Every dataset has a named owner/steward responsible for its quality and documentation.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--pink);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--pink)">5. Data Discoverability</strong>
+          <p style="font-size:12px">Engineers can find and understand available data assets via catalog. Reduces duplication.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--orange);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--orange)">6. Compliance</strong>
+          <p style="font-size:12px">GDPR, RBI guidelines, PCI-DSS — governance policies ensure regulatory compliance.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Azure Tools</span>
+      <h3>🔧 Azure Data Governance Tools</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Tool</th><th>Purpose</th></tr>
+          <tr><td><strong>Azure Purview / Microsoft Purview</strong></td><td>Enterprise data catalog + lineage + compliance scanning across all Azure services</td></tr>
+          <tr><td><strong>Unity Catalog (Databricks)</strong></td><td>Fine-grained access control, lineage, catalog for Delta tables</td></tr>
+          <tr><td><strong>Azure Key Vault</strong></td><td>Secrets, connection strings, encryption keys management</td></tr>
+          <tr><td><strong>Azure Active Directory (AAD)</strong></td><td>Identity management + RBAC for data access</td></tr>
+          <tr><td><strong>Azure Policy</strong></td><td>Enforce organizational standards across Azure resources</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 13 — DATA MODELLING ═══════════════════════════════ -->
+  <div class="chapter" id="ch13">
+    <div class="chapter-header ch-orange">
+      <div class="chapter-num">13</div>
+      <div>
+        <div class="chapter-title" style="color:var(--orange)">📐 Data Modelling</div>
+        <div class="chapter-sub">Star Schema · Snowflake Schema · Fact vs Dimension · SCD Types</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-orange">Concept</span>
+      <h3>🔷 What is Data Modelling?</h3>
+      <p><strong>Data Modelling</strong> is the process of designing <em>how data is structured, organized, and related</em> for efficient storage, retrieval, and analysis. In Data Engineering, this primarily means <strong>Dimensional Modelling</strong> (Kimball methodology) for analytical systems.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> Like designing the layout of a library — which shelves (tables) to have, how to organize books (rows), what labels to use (columns), and how to link sections (foreign keys).
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">Fact vs Dimension</span>
+      <h3>📊 Fact Tables vs Dimension Tables</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border:1px solid var(--blue);border-radius:8px;padding:14px">
+          <strong style="color:var(--blue)">📈 Fact Table</strong>
+          <p style="font-size:12px;margin-top:6px">Contains measurable, quantitative business events — the "what happened." Has foreign keys to dimension tables and numerical measures.</p>
+          <p style="font-size:11px;color:var(--yellow);margin-top:6px">Banking Example: fact_transactions (txn_id, amount, date_id, branch_id, customer_id, status)</p>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:14px">
+          <strong style="color:var(--green)">📋 Dimension Table</strong>
+          <p style="font-size:12px;margin-top:6px">Contains descriptive attributes for context — the "who, what, where, when." Usually smaller, denormalized.</p>
+          <p style="font-size:11px;color:var(--yellow);margin-top:6px">Banking Example: dim_customer (customer_id, name, city, segment), dim_date (date_id, day, month, year, quarter)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Star Schema</span>
+      <h3 style="color:var(--cyan)">⭐ Star Schema — Most Used in DWH</h3>
+      <p>In a <strong>Star Schema</strong>, one central Fact table is surrounded by denormalized Dimension tables — forming a star shape. Simple, fast for queries, great for Power BI.</p>
+      <div style="background:var(--surface2);border-radius:10px;padding:20px;margin:12px 0;text-align:center">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:8px;max-width:400px;margin:0 auto">
+          <div></div>
+          <div style="background:#1a3a2a;border:1px solid var(--green);border-radius:6px;padding:8px;font-size:11px;color:var(--green)">dim_date<br><small style="color:var(--muted)">date_id, month, year</small></div>
+          <div></div>
+          <div style="background:#1a2a3a;border:1px solid var(--blue);border-radius:6px;padding:8px;font-size:11px;color:var(--blue)">dim_customer<br><small style="color:var(--muted)">cust_id, name, city</small></div>
+          <div style="background:#2a1a0a;border:2px solid var(--yellow);border-radius:6px;padding:8px;font-size:11px;color:var(--yellow);font-weight:700">⭐ FACT<br>transactions<br><small style="color:var(--muted)">amount, txn_id</small></div>
+          <div style="background:#1a3a2a;border:1px solid var(--green);border-radius:6px;padding:8px;font-size:11px;color:var(--green)">dim_branch<br><small style="color:var(--muted)">branch_id, city</small></div>
+          <div></div>
+          <div style="background:#2a1a3a;border:1px solid var(--purple);border-radius:6px;padding:8px;font-size:11px;color:var(--purple)">dim_product<br><small style="color:var(--muted)">product_id, type</small></div>
+          <div></div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)"><strong>Key:</strong> Dimensions are <em>denormalized</em> (all attributes in one table). Simple JOINs, fast for BI tools.</p>
+    </div>
+
+    <div class="card">
+      <span class="label label-purple">Snowflake Schema</span>
+      <h3 style="color:var(--purple)">❄️ Snowflake Schema</h3>
+      <p>In a <strong>Snowflake Schema</strong>, dimension tables are <em>normalized</em> — split into multiple related tables. More complex, saves storage, but requires more JOINs.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>Star Schema</th><th>Snowflake Schema</th></tr>
+          <tr><td>Dimension tables</td><td>Denormalized (one table)</td><td>Normalized (multiple tables)</td></tr>
+          <tr><td>JOINs needed</td><td>Fewer (simpler queries)</td><td>More (complex queries)</td></tr>
+          <tr><td>Storage</td><td>More (some redundancy)</td><td>Less (no redundancy)</td></tr>
+          <tr><td>Query Speed</td><td>Faster ✅</td><td>Slower ❌</td></tr>
+          <tr><td>Maintenance</td><td>Easier</td><td>Harder</td></tr>
+          <tr><td>Best For</td><td>Power BI, most BI tools</td><td>Very large dimensions</td></tr>
+          <tr><td>Industry Preference</td><td>⭐ More common</td><td>Less common</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">SCD Types</span>
+      <h3>🕐 Slowly Changing Dimensions (SCD)</h3>
+      <p>SCD handles how dimension data changes over time. In banking, a customer's address or credit tier can change — SCDs manage this history.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Type</th><th>Strategy</th><th>History Kept?</th><th>Banking Example</th></tr>
+          <tr><td><strong>SCD Type 1</strong></td><td>Overwrite old value</td><td>❌ No</td><td>Typo fix in customer name</td></tr>
+          <tr><td><strong>SCD Type 2</strong></td><td>Add new row with valid_from/valid_to</td><td>✅ Full history</td><td>Customer moves city — keep old and new rows</td></tr>
+          <tr><td><strong>SCD Type 3</strong></td><td>Add prev_value column</td><td>⚠️ One version back</td><td>Track previous and current credit tier</td></tr>
+        </table>
+      </div>
+      <pre style="margin-top:12px"><code><span class="cm">-- SCD Type 2 MERGE using Delta Lake</span>
+delta_customers.alias(<span class="str">"target"</span>).merge(
+    new_customers.alias(<span class="str">"source"</span>),
+    <span class="str">"target.customer_id = source.customer_id AND target.is_current = true"</span>
+).whenMatchedUpdate(
+    condition=<span class="str">"target.city != source.city"</span>,
+    set={<span class="str">"is_current"</span>: <span class="str">"false"</span>, <span class="str">"valid_to"</span>: <span class="str">"current_date()"</span>}
+).whenNotMatchedInsert(
+    values={<span class="str">"customer_id"</span>: <span class="str">"source.customer_id"</span>, <span class="str">"city"</span>: <span class="str">"source.city"</span>,
+            <span class="str">"is_current"</span>: <span class="str">"true"</span>, <span class="str">"valid_from"</span>: <span class="str">"current_date()"</span>, <span class="str">"valid_to"</span>: <span class="str">"null"</span>}
+).execute()</code></pre>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Data Modelling</h4>
+      <div class="q-item">
+        <div class="q">Q: When would you choose a Snowflake Schema over a Star Schema?</div>
+        <div class="a">Star Schema is preferred when query performance is critical because it requires fewer JOINs. Snowflake Schema is better when dimension tables are very large and storage cost is a concern, or when the data has natural hierarchies (e.g., Country → State → City). In practice, most BI tools like Power BI perform better with Star Schema.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Explain SCD Type 2 with a banking use case.</div>
+        <div class="a">SCD Type 2 preserves full history by adding new rows instead of updating. When a bank customer moves from Chennai to Mumbai, instead of overwriting the city, we close the old row (set valid_to = today, is_current = false) and insert a new row with Mumbai (valid_from = today, is_current = true). This lets us accurately report transaction totals per city for any historical date.</div>
+        <div class="mistake">🚨 Mistake: Confusing SCD Type 1 (overwrite, no history) with Type 2 (new row, full history). In any compliance-heavy banking system, Type 2 is the default for dimensional data.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 14 — ETL / ELT ═══════════════════════════════ -->
+  <div class="chapter" id="ch14">
+    <div class="chapter-header ch-green">
+      <div class="chapter-num">14</div>
+      <div>
+        <div class="chapter-title" style="color:var(--green)">🔄 ETL & ELT</div>
+        <div class="chapter-sub">Extract → Transform → Load · Modern data pipeline patterns</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">Concept</span>
+      <h3>🔷 ETL vs ELT — The Fundamental Difference</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border:1px solid var(--blue);border-radius:8px;padding:14px">
+          <strong style="color:var(--blue)">🏭 ETL (Extract → Transform → Load)</strong>
+          <p style="font-size:12px;margin-top:6px">Transform data BEFORE loading it into the target. Data is cleaned/transformed in a staging area or ETL tool, then loaded into a Data Warehouse.</p>
+          <p style="font-size:11px;color:var(--yellow);margin-top:6px">Used with: Azure Data Factory, SSIS → Azure Synapse</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Slower ingestion, but target stays clean</p>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:14px">
+          <strong style="color:var(--green)">🚀 ELT (Extract → Load → Transform)</strong>
+          <p style="font-size:12px;margin-top:6px">Load RAW data first into the lake, THEN transform inside it using Spark/SQL. Modern approach for big data.</p>
+          <p style="font-size:11px;color:var(--yellow);margin-top:6px">Used with: ADF → ADLS → Databricks (Bronze→Silver→Gold)</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">✅ Faster ingestion, full raw history preserved</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">ETL Deep Dive</span>
+      <h3>🔧 ETL Process in Detail</h3>
+      <div class="flow">
+        <div class="flow-box blue">E — Extract<br><small>Read from sources</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box yellow">T — Transform<br><small>Clean + enrich</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">L — Load<br><small>Write to target</small></div>
+      </div>
+      <div class="grid-3" style="margin-top:12px">
+        <div style="background:var(--surface2);padding:12px;border-radius:8px">
+          <strong style="color:var(--blue)">Extract</strong>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>Full load vs Incremental</li>
+            <li>CDC (Change Data Capture)</li>
+            <li>API calls, DB connectors</li>
+            <li>Azure ADF Copy Activity</li>
+          </ul>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px">
+          <strong style="color:var(--yellow)">Transform</strong>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>Data type casting</li>
+            <li>Deduplication</li>
+            <li>Null handling</li>
+            <li>Joins, aggregations</li>
+            <li>Business rules</li>
+          </ul>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:8px">
+          <strong style="color:var(--green)">Load</strong>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>Full overwrite</li>
+            <li>Append only</li>
+            <li>Upsert (MERGE)</li>
+            <li>SCD Type 2 insert</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Banking Pipeline Example</span>
+      <h3 style="color:var(--cyan)">🏦 ELT Pipeline — Fraud Detection (Azure + Databricks)</h3>
+      <p><strong>Architecture:</strong> Core Banking → ADF → ADLS Bronze → Databricks Silver → Gold → Power BI</p>
+      <pre><code><span class="cm"># Bronze Layer: Load raw transactions from ADLS (no transformation)</span>
+bronze_df = spark.read.format(<span class="str">"csv"</span>) \
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .option(<span class="str">"inferSchema"</span>, <span class="str">"true"</span>) \
+    .load(<span class="str">"abfss://raw@bankdatalake.dfs.core.windows.net/transactions/*.csv"</span>)
+
+bronze_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"append"</span>) \
+    .save(<span class="str">"abfss://bronze@bankdatalake.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># Silver Layer: Clean, deduplicate, cast types</span>
+silver_df = bronze_df \
+    .dropDuplicates([<span class="str">"txn_id"</span>]) \
+    .filter(<span class="fn">col</span>(<span class="str">"amount"</span>).isNotNull()) \
+    .withColumn(<span class="str">"txn_date"</span>, <span class="fn">to_date</span>(<span class="fn">col</span>(<span class="str">"txn_date"</span>), <span class="str">"yyyy-MM-dd"</span>)) \
+    .withColumn(<span class="str">"amount"</span>, <span class="fn">col</span>(<span class="str">"amount"</span>).cast(<span class="str">"double"</span>))
+
+silver_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+    .option(<span class="str">"overwriteSchema"</span>, <span class="str">"true"</span>) \
+    .save(<span class="str">"abfss://silver@bankdatalake.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># Gold Layer: Aggregate for fraud detection KPIs</span>
+gold_df = silver_df \
+    .filter(<span class="fn">col</span>(<span class="str">"status"</span>) == <span class="str">"COMPLETED"</span>) \
+    .groupBy(<span class="str">"customer_id"</span>, <span class="str">"txn_date"</span>) \
+    .agg(
+        <span class="fn">sum</span>(<span class="str">"amount"</span>).alias(<span class="str">"daily_total"</span>),
+        <span class="fn">count</span>(<span class="str">"txn_id"</span>).alias(<span class="str">"txn_count"</span>)
+    ) \
+    .filter(<span class="fn">col</span>(<span class="str">"daily_total"</span>) &gt; <span class="num">500000</span>)  <span class="cm"># flag high-value days</span>
+
+gold_df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+    .save(<span class="str">"abfss://gold@bankdatalake.dfs.core.windows.net/fraud_flags"</span>)</code></pre>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — ETL/ELT</h4>
+      <div class="q-item">
+        <div class="q">Q: What is the difference between ETL and ELT? Which would you use for a modern Lakehouse?</div>
+        <div class="a">In ETL, data is transformed before loading — good for Data Warehouses that need clean data immediately. In ELT, raw data is loaded first into cheap storage (ADLS Bronze), then transformed using distributed compute (Databricks). ELT is preferred for modern Lakehouses because ADLS storage is cheap (no cost to store raw data), Spark handles massive transformations efficiently, and you preserve the original data for debugging or reprocessing.</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: What is Incremental Load vs Full Load?</div>
+        <div class="a">Full Load overwrites all data — safe but expensive and slow for large tables. Incremental Load only processes new or changed records since the last run — done via watermarks (last_modified > last_run_timestamp) or CDC (Change Data Capture). In banking, a transactions table with millions of daily rows always uses incremental load in production.</div>
+        <div class="mistake">🚨 Mistake: Using Full Load for production pipelines with large tables — it's acceptable for small dimension tables but never for fact tables.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 15 — BIG DATA ═══════════════════════════════ -->
+  <div class="chapter" id="ch15">
+    <div class="chapter-header ch-yellow">
+      <div class="chapter-num">15</div>
+      <div>
+        <div class="chapter-title" style="color:var(--yellow)">🐘 Big Data</div>
+        <div class="chapter-sub">5Vs · Hadoop · Spark · Why traditional systems fail</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Concept</span>
+      <h3>🔷 What is Big Data?</h3>
+      <p><strong>Big Data</strong> refers to datasets that are so large, fast, or complex that traditional data processing tools (like a single-server RDBMS) cannot handle them efficiently. It's defined by the <strong>5 Vs</strong>.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> A single bank branch processes 1,000 transactions/day — that's normal data. A national bank processing 50 million transactions per hour, with real-time fraud detection across 500 data sources — that's Big Data.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-orange">5Vs</span>
+      <h3>📊 The 5 Vs of Big Data</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border-left:3px solid var(--blue);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--blue)">Volume</strong>
+          <p style="font-size:12px">Size of data — TBs, PBs, ZBs. Traditional DBs can't store or process this much. Banking: 10 years of all transactions = petabytes.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--green);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--green)">Velocity</strong>
+          <p style="font-size:12px">Speed of data generation. Real-time transaction streams at millions/second. Needs streaming (Kafka, Event Hubs).</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--yellow);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--yellow)">Variety</strong>
+          <p style="font-size:12px">Different data types — structured (SQL), semi-structured (JSON logs), unstructured (cheque images, call recordings).</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--purple);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--purple)">Veracity</strong>
+          <p style="font-size:12px">Trustworthiness/quality of data. Big data often has noise, errors, inconsistencies. Data governance solves this.</p>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--pink);padding:12px;border-radius:0 8px 8px 0">
+          <strong style="color:var(--pink)">Value</strong>
+          <p style="font-size:12px">Business value extracted from data. The goal of all data engineering — fraud detection, customer insights, risk models.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-red">Why Traditional Systems Fail</span>
+      <h3>⚠️ Why RDBMS / MapReduce Fail for Big Data</h3>
+      <div class="grid-2">
+        <div>
+          <strong style="color:var(--red)">RDBMS Limitations:</strong>
+          <ul style="font-size:13px;margin-top:8px">
+            <li>Vertical scaling only (bigger server = more $$)</li>
+            <li>Can't store unstructured data natively</li>
+            <li>Slow for analytical queries on PBs of data</li>
+            <li>No streaming data support</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color:var(--orange)">MapReduce Limitations:</strong>
+          <ul style="font-size:13px;margin-top:8px">
+            <li>Every intermediate result written to disk (slow I/O)</li>
+            <li>Rigid 2-step workflow (Map + Reduce only)</li>
+            <li>Multiple jobs needed for complex operations</li>
+            <li>Not suitable for iterative ML algorithms</li>
+          </ul>
+        </div>
+      </div>
+      <div class="highlight" style="margin-top:12px">
+        💡 <strong>Apache Spark solves MapReduce limitations</strong> by keeping intermediate results in-memory (RAM), using a DAG (Directed Acyclic Graph) for multi-step operations, and supporting both batch and streaming in one framework.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Big Data Stack</span>
+      <h3>🏗️ Modern Big Data Stack on Azure</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Layer</th><th>Function</th><th>Azure Tool</th></tr>
+          <tr><td>Ingestion</td><td>Collect data from sources</td><td>Azure Data Factory, Event Hubs, IoT Hub</td></tr>
+          <tr><td>Storage</td><td>Store raw and processed data</td><td>ADLS Gen2 (Data Lake)</td></tr>
+          <tr><td>Processing</td><td>Batch + streaming computation</td><td>Databricks (Apache Spark)</td></tr>
+          <tr><td>Serving</td><td>SQL analytics, BI</td><td>Azure Synapse, Databricks SQL</td></tr>
+          <tr><td>Visualization</td><td>Dashboards, reports</td><td>Power BI</td></tr>
+          <tr><td>Orchestration</td><td>Schedule & monitor pipelines</td><td>Azure Data Factory, Databricks Workflows</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Big Data</h4>
+      <div class="q-item">
+        <div class="q">Q: What are the 5Vs of Big Data and which is most important?</div>
+        <div class="a">Volume (size), Velocity (speed), Variety (types), Veracity (quality), and Value (business outcome). Value is the ultimate measure — the other 4Vs are challenges that need to be overcome to extract value. A bank storing PBs of transactions (volume) at millions/second (velocity) in JSON + images (variety) is only useful if the data is trustworthy (veracity) and used for fraud detection or risk models (value).</div>
+      </div>
+      <div class="q-item">
+        <div class="q">Q: Why is Apache Spark faster than Hadoop MapReduce?</div>
+        <div class="a">Spark stores intermediate computation results in memory (RAM of worker nodes) instead of writing to disk after every step like MapReduce. Spark also uses a DAG (Directed Acyclic Graph) to optimize the entire execution plan at once, while MapReduce executes one Map+Reduce pair per job — requiring separate disk reads/writes between pipeline steps. Spark is 10-100x faster for multi-step data transformations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CHAPTER 16 — OBJECT STORAGE ═══════════════════════════════ -->
+  <div class="chapter" id="ch16">
+    <div class="chapter-header ch-cyan">
+      <div class="chapter-num">16</div>
+      <div>
+        <div class="chapter-title" style="color:var(--cyan)">☁️ Object Storage</div>
+        <div class="chapter-sub">ADLS Gen2 · How Spark reads from cloud · Blocks vs Objects</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-cyan">Concept</span>
+      <h3>🔷 What is Object Storage?</h3>
+      <p><strong>Object Storage</strong> stores data as <em>objects</em> (not files or blocks) — each object contains the data itself + metadata + a unique identifier. It's the backbone of cloud data lakes. Unlike file systems, there's no folder hierarchy — only flat namespaces with path-like keys.</p>
+      <div class="analogy">
+        <strong>🏦 Analogy:</strong> Object storage is like a warehouse where each item (object) has a unique barcode (key), can be any size, and comes with a tag (metadata) describing it. You retrieve items by barcode, not by searching shelves.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-blue">FS vs DFS vs Object Storage</span>
+      <h3>⚖️ File System vs Distributed FS vs Object Storage</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Aspect</th><th>File System (FS)</th><th>Distributed FS (HDFS)</th><th>Object Storage (ADLS)</th></tr>
+          <tr><td>Location</td><td>Single machine</td><td>Cluster of machines</td><td>Cloud (Azure data centers)</td></tr>
+          <tr><td>Unit</td><td>Files in folders</td><td>Blocks (128MB)</td><td>Objects with keys + metadata</td></tr>
+          <tr><td>Scaling</td><td>Vertical only</td><td>Horizontal (add nodes)</td><td>Infinite (managed by Azure)</td></tr>
+          <tr><td>Replication</td><td>None</td><td>3x by default</td><td>LRS/ZRS/GRS by Azure</td></tr>
+          <tr><td>Data Locality</td><td>N/A</td><td>Yes (Spark co-located)</td><td>No (remote reads via HTTP)</td></tr>
+          <tr><td>Cost</td><td>Disk hardware</td><td>On-premise servers</td><td>~₹1.5/GB/month (very cheap)</td></tr>
+          <tr><td>Best For</td><td>OS, local dev</td><td>On-premise Hadoop</td><td>Cloud Data Lake (current standard)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label label-green">ADLS + Spark</span>
+      <h3>🔧 How Spark Reads Data from ADLS Gen2</h3>
+      <p>Unlike HDFS where data is co-located on Spark worker nodes, in ADLS data is stored in Azure's distributed storage — Spark executors read it remotely over HTTP.</p>
+      <div class="flow">
+        <div class="flow-box blue">Spark Driver<br><small>Gets file metadata<br>from ADLS via ABFS</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box yellow">DAG Scheduler<br><small>Creates partitions<br>from byte ranges</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">Executors<br><small>HTTP GET byte-range<br>requests to ADLS</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box purple">In-Memory<br><small>Process partition<br>in RAM</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box cyan">Write Back<br><small>Stream results<br>back to ADLS</small></div>
+      </div>
+      <pre style="margin-top:12px"><code><span class="cm"># ABFS (Azure Blob File System) driver — how Spark accesses ADLS</span>
+<span class="cm"># abfss:// = Azure Blob File System Secure (HTTPS)</span>
+
+df = spark.read.format(<span class="str">"parquet"</span>) \
+    .load(<span class="str">"abfss://transactions@bankdatalake.dfs.core.windows.net/2024/01/"</span>)
+
+<span class="cm"># Spark executor internally makes HTTP byte-range requests like:</span>
+<span class="cm"># GET /2024/01/part-00001.parquet HTTP/1.1</span>
+<span class="cm"># Range: bytes=0-134217728  (first 128MB = one partition)</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="label label-yellow">Key Concept</span>
+      <h3>💡 Block vs Partition — Important Distinction</h3>
+      <div class="grid-2">
+        <div style="background:var(--surface2);border:1px solid var(--blue);border-radius:8px;padding:14px">
+          <strong style="color:var(--blue)">📦 Block (HDFS)</strong>
+          <ul style="font-size:12px;margin-top:8px">
+            <li>Physical storage unit (128MB)</li>
+            <li>Exists before Spark runs</li>
+            <li>Managed by HDFS NameNode</li>
+            <li>Purpose: How data is stored</li>
+          </ul>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--green);border-radius:8px;padding:14px">
+          <strong style="color:var(--green)">🔀 Partition (Spark)</strong>
+          <ul style="font-size:12px;margin-top:8px">
+            <li>Logical unit of parallelism</li>
+            <li>Created when Spark reads data</li>
+            <li>Subset of a DataFrame</li>
+            <li>Purpose: How data is processed</li>
+            <li>1 partition = 1 task = 1 core</li>
+          </ul>
+        </div>
+      </div>
+      <div class="highlight" style="margin-top:12px">
+        💡 <strong>Key Rule:</strong> spark.sql.files.maxPartitionBytes (default 128MB) controls partition size. spark.sql.shuffle.partitions (default 200) controls shuffle partitions after groupBy/join. Tune these for performance.
+      </div>
+    </div>
+
+    <div class="interview-box">
+      <h4>🎤 Interview Insights — Object Storage</h4>
+      <div class="q-item">
+        <div class="q">Q: How does Spark read data from ADLS differently from HDFS?</div>
+        <div class="a">In HDFS, Spark executors are co-located on data nodes — data is read locally from disk (data locality). In ADLS, Spark executors make remote HTTP byte-range requests to Azure's object storage API (via ABFS driver). Azure internally handles replication and distribution. This means ADLS reads are slightly slower per executor than HDFS local reads, but the unlimited scalability and managed durability (LRS/ZRS/GRS) outweigh this cost. Spark reads only the required byte ranges, not full files — critical for performance with Parquet columnar files.</div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>🧠 Final Quiz</h4>
+      <p>Your bank's data engineering team stores 500TB of transaction data in ADLS Gen2 in Parquet format. Analysts complain that queries are slow. You find there are 50 million small Parquet files (each ~10KB). What is the PRIMARY cause and fix?</p>
+      <ul class="options">
+        <li>A. Parquet is the wrong format — switch to CSV</li>
+        <li>B. ADLS is not suitable for analytics — migrate to HDFS</li>
+        <li class="correct">C. Small files problem — each tiny file creates a Spark task with high overhead. Fix by running OPTIMIZE (Delta Lake) to compact small files into larger ones.</li>
+        <li>D. Increase Databricks cluster size</li>
+      </ul>
+      <p style="font-size:12px;margin-top:8px;color:#d0aadf">✅ <strong>C is correct.</strong> 50 million tasks for 50 million files overwhelms the Spark driver and creates massive scheduling overhead. Delta Lake's OPTIMIZE command compacts small files into ~128MB Parquet files. Also use ZORDER for co-locating related data (e.g., ZORDER BY customer_id). This is called the "Small Files Problem" — a classic big data anti-pattern.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ SUMMARY ═══════════════════════════════ -->
+  <hr class="divider">
+  <div class="card" style="background: linear-gradient(135deg, #0d1b35 0%, #1a0d35 50%, #0d2a20 100%); border-color: var(--blue);">
+    <h3 style="color: var(--blue); font-size: 1.3rem; margin-bottom: 16px;">🗺️ The Big Picture — Everything Connected</h3>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="flow-box blue">Raw Data<br><small>CSV/JSON/Images</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box orange">ETL/ELT<br><small>ADF</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box cyan">Data Lake<br><small>ADLS Gen2</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box yellow">Delta Lake<br><small>ACID + Schema</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box purple">Lakehouse<br><small>Databricks</small></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="flow-box purple">Lakehouse</div>
+        <span class="arrow">→</span>
+        <div class="flow-box green">Gold Tables<br><small>Star Schema</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box blue">Data Mart<br><small>Dept-specific</small></div>
+        <span class="arrow">→</span>
+        <div class="flow-box pink">Power BI<br><small>Reports</small></div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:20px">
+      <div class="pro-tip">
+        <p><strong>💡 Pro Tip 1:</strong> In interviews, always connect your answer to a real problem. "Delta Lake solves the ACID transaction gap in Data Lakes — critical for banking where concurrent pipeline writes could corrupt transaction tables."</p>
+      </div>
+      <div class="pro-tip">
+        <p><strong>💡 Pro Tip 2:</strong> Know the cost argument. "Lakehouse separates compute and storage — I can scale Databricks clusters independently of ADLS storage cost, unlike Synapse Dedicated Pool which charges even when idle."</p>
+      </div>
+      <div class="pro-tip">
+        <p><strong>💡 Pro Tip 3:</strong> Always mention Medallion Architecture when asked about Data Lake design. Bronze (raw) → Silver (clean) → Gold (aggregated) is the industry-standard pattern for Databricks/ADLS implementations.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
+    📊 Data Engineering Complete Guide · Azure + Databricks · Interview-Ready · 
+    <br>Built from course notes, Spark architecture docs, and Databricks documentation.
+  </div>
+
+</div>
+</body>
+</html>
