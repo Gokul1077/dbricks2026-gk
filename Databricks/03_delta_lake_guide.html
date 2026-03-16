@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Month 2 · Delta Lake, Optimization & Databricks Features</title>
+<style>
+  :root {
+    --bg:#0b0e1a; --surface:#141828; --surface2:#1c2138; --surface3:#232840;
+    --border:#2a3058; --text:#e2e8f0; --muted:#7a869a;
+    --blue:#64b5f6; --blue-dk:#0d2540;
+    --green:#69f0ae; --green-dk:#0a2e1e;
+    --yellow:#ffd54f; --yellow-dk:#2e2100;
+    --orange:#ffb74d; --orange-dk:#2e1500;
+    --purple:#ce93d8; --purple-dk:#270d3a;
+    --pink:#f48fb1; --pink-dk:#2e0d1a;
+    --cyan:#80deea; --cyan-dk:#00252e;
+    --red:#ef9a9a; --red-dk:#2e0808;
+    --teal:#4db6ac; --teal-dk:#0a2522;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.75}
+
+  /* ── TOP BAR ── */
+  .topbar{display:flex;align-items:center;gap:14px;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;flex-wrap:wrap}
+  .month-badge{background:#e65100;color:#fff;font-weight:800;font-size:12px;padding:5px 12px;border-radius:6px;letter-spacing:1px}
+  .topbar h1{font-size:1.15rem;font-weight:700;color:var(--text)}
+  .progress{margin-left:auto;color:var(--muted);font-size:13px;font-weight:600}
+
+  /* ── NAV ── */
+  nav{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  nav span{color:var(--cyan);font-size:11px;font-weight:700;letter-spacing:1px;margin-right:6px}
+  nav a{color:var(--muted);text-decoration:none;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);transition:all .2s;white-space:nowrap}
+  nav a:hover{background:var(--blue-dk);color:var(--blue);border-color:var(--blue)}
+
+  /* ── LAYOUT ── */
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px}
+
+  /* ── WEEK HEADER ── */
+  .week-header{background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--cyan);border-radius:0 10px 10px 0;padding:14px 22px;margin-bottom:30px;font-family:monospace;font-size:1rem;color:var(--cyan);font-weight:700;letter-spacing:1px}
+
+  /* ── CHAPTER ── */
+  .chapter{margin-bottom:64px}
+  .ch-head{display:flex;align-items:flex-start;gap:16px;padding:22px 26px;border-radius:12px;margin-bottom:24px;border-left:4px solid}
+  .ch-blue{background:var(--blue-dk);border-color:var(--blue)}
+  .ch-green{background:var(--green-dk);border-color:var(--green)}
+  .ch-yellow{background:var(--yellow-dk);border-color:var(--yellow)}
+  .ch-orange{background:var(--orange-dk);border-color:var(--orange)}
+  .ch-purple{background:var(--purple-dk);border-color:var(--purple)}
+  .ch-teal{background:var(--teal-dk);border-color:var(--teal)}
+  .ch-pink{background:var(--pink-dk);border-color:var(--pink)}
+  .ch-num{font-size:2rem;font-weight:900;opacity:.35;line-height:1}
+  .ch-title{font-size:1.5rem;font-weight:800}
+  .ch-sub{font-size:.8rem;color:var(--muted);margin-top:3px}
+
+  /* ── CARD ── */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:18px}
+  .card p,.card li{color:var(--muted);line-height:1.85}
+  .card ul,.card ol{padding-left:20px}
+  .card li{margin-bottom:6px}
+  strong{color:var(--text)}
+
+  /* ── LABELS ── */
+  .lbl{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 9px;border-radius:4px;margin-bottom:10px}
+  .lbl-blue{background:var(--blue-dk);color:var(--blue)}
+  .lbl-green{background:var(--green-dk);color:var(--green)}
+  .lbl-yellow{background:var(--yellow-dk);color:var(--yellow)}
+  .lbl-orange{background:var(--orange-dk);color:var(--orange)}
+  .lbl-purple{background:var(--purple-dk);color:var(--purple)}
+  .lbl-cyan{background:var(--cyan-dk);color:var(--cyan)}
+  .lbl-pink{background:var(--pink-dk);color:var(--pink)}
+  .lbl-teal{background:var(--teal-dk);color:var(--teal)}
+  .lbl-red{background:var(--red-dk);color:var(--red)}
+
+  /* ── GRID ── */
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:680px){.g2,.g3{grid-template-columns:1fr}}
+
+  /* ── TABLE ── */
+  .tbl{overflow-x:auto;margin:10px 0}
+  table{width:100%;border-collapse:collapse;font-size:.86rem}
+  th{background:var(--surface2);color:var(--blue);text-align:left;padding:10px 14px;border:1px solid var(--border);font-weight:700}
+  td{padding:9px 14px;border:1px solid var(--border);color:var(--muted);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  td strong{color:var(--text)}
+
+  /* ── CODE ── */
+  pre{background:#070a10;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:12px 0;position:relative}
+  code{font-family:'Cascadia Code','Fira Code',monospace;font-size:.81rem;line-height:1.75}
+  .kw{color:#c792ea}.fn{color:#82aaff}.str{color:#c3e88d}.cm{color:#4a5568}
+  .num{color:#f78c6c}.bi{color:#89ddff}.va{color:#ffcb6b}.op{color:#89ddff}
+  .codelabel{position:absolute;top:8px;right:12px;font-size:10px;color:var(--muted);font-family:sans-serif;letter-spacing:.5px}
+
+  /* ── FLOW ── */
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:16px;background:var(--surface2);border-radius:10px;margin:12px 0}
+  .fb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;text-align:center;min-width:80px}
+  .fb.b{border-color:var(--blue);color:var(--blue)}
+  .fb.g{border-color:var(--green);color:var(--green)}
+  .fb.y{border-color:var(--yellow);color:var(--yellow)}
+  .fb.p{border-color:var(--purple);color:var(--purple)}
+  .fb.o{border-color:var(--orange);color:var(--orange)}
+  .fb.c{border-color:var(--cyan);color:var(--cyan)}
+  .fb.t{border-color:var(--teal);color:var(--teal)}
+  .fb.r{border-color:var(--red);color:var(--red)}
+  .ar{color:var(--muted);font-size:18px;padding:0 2px}
+
+  /* ── ANALOGY ── */
+  .analogy{background:var(--cyan-dk);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0;padding:13px 17px;margin:12px 0;color:#b0eef5;font-size:.9rem}
+  .analogy strong{color:var(--cyan)}
+
+  /* ── HIGHLIGHT ── */
+  .hl{background:rgba(100,181,246,.08);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;color:#b0d4f5;font-size:.88rem}
+  .hl-g{background:rgba(105,240,174,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;color:#9fe8c6;font-size:.88rem}
+  .hl-y{background:rgba(255,213,79,.08);border-left:3px solid var(--yellow);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;color:#e0c070;font-size:.88rem}
+  .hl-r{background:rgba(239,154,154,.08);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;color:#eaabab;font-size:.88rem}
+
+  /* ── INTERVIEW BOX ── */
+  .iq{background:var(--yellow-dk);border:1px solid var(--yellow);border-radius:10px;padding:18px 20px;margin-top:16px}
+  .iq h4{color:var(--yellow);margin-bottom:12px;font-size:.9rem}
+  .qi{background:rgba(0,0,0,.3);border-radius:6px;padding:10px 14px;margin-bottom:8px}
+  .qi .q{color:var(--yellow);font-size:12px;font-weight:700;margin-bottom:5px}
+  .qi .a{color:#ccc;font-size:12px;line-height:1.7}
+  .qi .m{color:var(--red);font-size:11px;margin-top:5px}
+
+  /* ── QUIZ ── */
+  .quiz{background:var(--purple-dk);border:1px solid var(--purple);border-radius:10px;padding:20px;margin-top:16px}
+  .quiz h4{color:var(--purple);margin-bottom:10px;font-size:.9rem}
+  .quiz p{color:#d0aadf;font-size:.88rem}
+  .quiz ul{list-style:none;padding:0;margin:10px 0}
+  .quiz ul li{padding:7px 12px;margin-bottom:6px;border-radius:6px;background:rgba(0,0,0,.3);color:#ccc;font-size:12px}
+  .quiz ul li.ok{background:var(--green-dk);color:var(--green);border:1px solid var(--green)}
+
+  /* ── STEP BOX ── */
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{counter-increment:step;display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+  .steps li::before{content:counter(step);background:var(--blue-dk);color:var(--blue);border:1px solid var(--blue);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;margin-top:2px}
+  .steps li p{color:var(--muted);font-size:.88rem;margin:0}
+
+  /* ── FILE TREE ── */
+  .ftree{background:#070a10;border:1px solid var(--border);border-radius:8px;padding:18px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.83rem;line-height:2;margin:12px 0}
+  .ftree .dir{color:var(--blue)}
+  .ftree .file{color:var(--green)}
+  .ftree .log{color:var(--yellow)}
+  .ftree .cm{color:#4a5568}
+
+  /* ── MINI CARD ── */
+  .mc{background:var(--surface2);padding:14px;border-radius:8px}
+  .mc.bl{border-left:3px solid var(--blue)}
+  .mc.gl{border-left:3px solid var(--green)}
+  .mc.yl{border-left:3px solid var(--yellow)}
+  .mc.pl{border-left:3px solid var(--purple)}
+  .mc.ol{border-left:3px solid var(--orange)}
+  .mc.cl{border-left:3px solid var(--cyan)}
+  .mc.tl{border-left:3px solid var(--teal)}
+  .mc h4{font-size:.88rem;margin-bottom:6px}
+  .mc p{font-size:.82rem;color:var(--muted)}
+
+  /* ── CHECKPOINT BADGE ── */
+  .checkpoint{display:flex;align-items:center;gap:12px;background:var(--green-dk);border:1px solid var(--green);border-radius:8px;padding:14px 18px;margin:20px 0}
+  .checkpoint span{font-size:1.5rem}
+  .checkpoint p{color:#9fe8c6;font-size:.88rem}
+  .checkpoint strong{color:var(--green)}
+
+  /* ── PRO TIP ── */
+  .pro{background:var(--teal-dk);border:1px solid var(--teal);border-radius:8px;padding:13px 17px;margin-top:12px}
+  .pro p{color:#a0ddd7;font-size:.87rem}
+  .pro strong{color:var(--teal)}
+
+  /* ── DIVIDER ── */
+  hr{border:none;border-top:1px solid var(--border);margin:44px 0}
+
+  /* ── TOC ── */
+  .toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:36px}
+  .toc h3{color:var(--blue);margin-bottom:16px;font-size:1rem}
+  .toc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+  .toc-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;text-decoration:none;color:var(--muted);font-size:12px;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .toc-item:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dk)}
+  .toc-n{background:var(--border);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+
+  /* ── HERO ── */
+  .hero{background:linear-gradient(135deg,#070f2e,#1a0730,#001a15);border:1px solid var(--border);border-radius:16px;padding:44px 36px;margin-bottom:36px;text-align:center}
+  .hero h1{font-size:2.1rem;font-weight:900;background:linear-gradient(90deg,var(--blue),var(--purple),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{color:var(--muted);margin-top:10px;font-size:1rem}
+  .hero .badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 13px;font-size:11px;color:var(--cyan)}
+
+  /* ── DELTA LOG VISUAL ── */
+  .dlog{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .dlog-box{background:var(--surface2);border-radius:10px;padding:16px}
+  .dlog-box h4{font-size:.85rem;margin-bottom:10px}
+  .dlog-entry{background:var(--surface);border-radius:6px;padding:8px 12px;margin-bottom:6px;font-family:monospace;font-size:.77rem;border-left:3px solid}
+  .dlog-entry.add{border-color:var(--green);color:var(--green)}
+  .dlog-entry.rm{border-color:var(--red);color:var(--red)}
+  .dlog-entry.meta{border-color:var(--yellow);color:var(--yellow)}
+  @media(max-width:680px){.dlog{grid-template-columns:1fr}}
+
+  /* ── VACUUM TIMELINE ── */
+  .timeline{position:relative;padding-left:28px;margin:14px 0}
+  .timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+  .tl-item{position:relative;margin-bottom:16px}
+  .tl-item::before{content:'';position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--bg)}
+  .tl-item.old::before{background:var(--red)}
+  .tl-item.vacuum::before{background:var(--green)}
+  .tl-item h5{font-size:.85rem;color:var(--text);margin-bottom:3px}
+  .tl-item p{font-size:.8rem;color:var(--muted)}
+
+  /* ── ZORDER VISUAL ── */
+  .zbox{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .zb{background:var(--surface2);border-radius:8px;padding:14px;text-align:center}
+  .zb h5{font-size:.82rem;margin-bottom:8px}
+  .zb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+  .zb-cell{height:22px;border-radius:3px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="month-badge">MONTH 2</span>
+  <h1>Intermediate — Delta Lake, Optimization &amp; Databricks Features</h1>
+  <span class="progress">0 / 17 topics</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span>WEEK 5</span>
+  <a href="#prereq">Prerequisites</a>
+  <a href="#ch1">What is Delta Lake?</a>
+  <a href="#ch2">Create &amp; Write</a>
+  <a href="#ch3">MERGE (Upsert)</a>
+  <a href="#ch4">Time Travel</a>
+  <a href="#ch5">VACUUM</a>
+  <a href="#ch6">OPTIMIZE &amp; Z-ORDER</a>
+  <a href="#ch7">Managed vs External</a>
+  <a href="#ch8">Schema Evolution</a>
+  <a href="#ch9">Streaming</a>
+  <a href="#ch10">Partitioning</a>
+  <a href="#summary">Summary</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>⚡ Delta Lake — Complete Interview Guide</h1>
+    <p>Week 5 · Delta Lake Core Concepts · From basics to production-grade optimization</p>
+    <div class="badges">
+      <span class="badge">Databricks</span>
+      <span class="badge">ADLS Gen2</span>
+      <span class="badge">PySpark + SQL</span>
+      <span class="badge">Interview-Ready</span>
+      <span class="badge">Banking Examples</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>📋 Chapter Navigation</h3>
+    <div class="toc-g">
+      <a href="#prereq"  class="toc-item"><span class="toc-n">0</span>Prerequisites</a>
+      <a href="#ch1"     class="toc-item"><span class="toc-n">1</span>What is Delta Lake?</a>
+      <a href="#ch2"     class="toc-item"><span class="toc-n">2</span>Create &amp; Write Tables</a>
+      <a href="#ch3"     class="toc-item"><span class="toc-n">3</span>MERGE / Upsert</a>
+      <a href="#ch4"     class="toc-item"><span class="toc-n">4</span>Time Travel &amp; History</a>
+      <a href="#ch5"     class="toc-item"><span class="toc-n">5</span>VACUUM</a>
+      <a href="#ch6"     class="toc-item"><span class="toc-n">6</span>OPTIMIZE &amp; Z-ORDER</a>
+      <a href="#ch7"     class="toc-item"><span class="toc-n">7</span>Managed vs External</a>
+      <a href="#ch8"     class="toc-item"><span class="toc-n">8</span>Schema Evolution</a>
+      <a href="#ch9"     class="toc-item"><span class="toc-n">9</span>Delta + Streaming</a>
+      <a href="#ch10"    class="toc-item"><span class="toc-n">10</span>Partitioning</a>
+      <a href="#summary" class="toc-item"><span class="toc-n">★</span>Summary</a>
+    </div>
+  </div>
+
+  <!-- ═══ PREREQUISITES ═══ -->
+  <div class="chapter" id="prereq">
+    <div class="ch-head ch-teal">
+      <div class="ch-num">00</div>
+      <div>
+        <div class="ch-title" style="color:var(--teal)">🔧 Prerequisites — Must Know Before Delta Lake</div>
+        <div class="ch-sub">Parquet · HDFS vs Object Storage · ACID · Data Lake problems · Spark basics</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-teal">Why This Matters</span>
+      <p>Delta Lake is built <em>on top of</em> Parquet files and solves the core problems of raw Data Lakes. To truly understand Delta Lake, you need to know what came before and why it was broken.</p>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <span class="lbl lbl-blue">Parquet Format</span>
+        <h3 style="color:var(--blue);margin-bottom:8px">📦 What is Parquet?</h3>
+        <p>Parquet is a <strong>columnar binary file format</strong> — data is stored column-by-column instead of row-by-row. This makes analytics queries (reading 2 out of 100 columns) extremely fast.</p>
+        <div style="margin-top:12px">
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:8px">
+            <strong style="color:var(--red)">Row format (CSV):</strong>
+            <div style="font-family:monospace;font-size:11px;color:var(--muted);margin-top:4px">
+              Row1: [id=1, name="Alice", amount=5000, city="Chennai"]<br>
+              Row2: [id=2, name="Bob",   amount=3000, city="Mumbai"]
+            </div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:12px">
+            <strong style="color:var(--green)">Columnar format (Parquet):</strong>
+            <div style="font-family:monospace;font-size:11px;color:var(--muted);margin-top:4px">
+              id col:     [1, 2, 3, 4 ...]<br>
+              name col:   ["Alice","Bob" ...]<br>
+              amount col: [5000, 3000 ...]
+            </div>
+          </div>
+        </div>
+        <div class="hl-g" style="margin-top:10px">If you only need <code>amount</code>, Parquet reads ONLY the amount column from disk. CSV reads ALL columns. On 1 TB data with 100 columns, this is a 50x speedup.</div>
+      </div>
+
+      <div class="card">
+        <span class="lbl lbl-red">Data Lake Problems</span>
+        <h3 style="color:var(--red);margin-bottom:8px">🚨 Why Raw Parquet on a Lake Fails</h3>
+        <ul>
+          <li><strong>No ACID:</strong> Two writers simultaneously → corrupted data</li>
+          <li><strong>No schema check:</strong> Anyone can write garbage columns</li>
+          <li><strong>No "undo":</strong> Deleted data is gone forever</li>
+          <li><strong>No upserts:</strong> Can't update a specific row in Parquet</li>
+          <li><strong>Small files:</strong> Thousands of tiny files → slow queries</li>
+          <li><strong>No history:</strong> Can't query "what did data look like last week?"</li>
+        </ul>
+        <div class="hl-r" style="margin-top:10px">
+          💡 <strong>Delta Lake</strong> solves ALL of these by adding a <code>_delta_log</code> transaction log on top of Parquet files.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">ACID — Quick Recap</span>
+      <h3 style="color:var(--yellow);margin-bottom:12px">⚗️ ACID Properties (you must know this cold)</h3>
+      <div class="g2">
+        <div class="mc bl"><h4 style="color:var(--blue)">A — Atomicity</h4><p>All or nothing. A fund transfer either fully completes or fully rolls back. No partial state.</p></div>
+        <div class="mc gl"><h4 style="color:var(--green)">C — Consistency</h4><p>DB moves from one valid state to another. Total balance never changes mid-transfer.</p></div>
+        <div class="mc yl"><h4 style="color:var(--yellow)">I — Isolation</h4><p>Concurrent transactions don't see each other's in-progress changes. Readers see a stable snapshot.</p></div>
+        <div class="mc pl"><h4 style="color:var(--purple)">D — Durability</h4><p>Once committed, data survives a crash. Written to durable storage (ADLS / disk).</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">Spark Basics Recap</span>
+      <h3 style="color:var(--cyan);margin-bottom:12px">⚡ Spark Concepts Needed for Delta Lake</h3>
+      <div class="g3">
+        <div class="mc cl"><h4 style="color:var(--cyan)">SparkSession</h4><p>Entry point to Spark. Lives on driver. You create it once per application.</p></div>
+        <div class="mc bl"><h4 style="color:var(--blue)">DataFrame</h4><p>Distributed table-like structure. Lazy — nothing runs until you call an action like .write or .show().</p></div>
+        <div class="mc gl"><h4 style="color:var(--green)">Partition</h4><p>A logical chunk of a DataFrame. Each partition is processed by one Spark task on one core.</p></div>
+        <div class="mc yl"><h4 style="color:var(--yellow)">Action vs Transform</h4><p>Transforms are lazy (filter, select). Actions trigger execution (write, count, show).</p></div>
+        <div class="mc ol"><h4 style="color:var(--orange)">ADLS Gen2</h4><p>Azure Data Lake Storage. Where Delta table files physically live. Accessed via abfss:// path.</p></div>
+        <div class="mc pl"><h4 style="color:var(--purple)">Catalog / Metastore</h4><p>Metadata registry. Knows table names → ADLS paths. Unity Catalog in Databricks.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 1 — WHAT IS DELTA LAKE ═══ -->
+  <div class="chapter" id="ch1">
+    <div class="ch-head ch-blue">
+      <div class="ch-num">01</div>
+      <div>
+        <div class="ch-title" style="color:var(--blue)">What is Delta Lake?</div>
+        <div class="ch-sub">ACID on your Data Lake · _delta_log · Delta vs plain Parquet · Interview Q: "What problem does Delta Lake solve?"</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-blue">Concept Snapshot</span>
+      <h3 style="color:var(--blue);margin-bottom:8px">🔷 One-liner definition</h3>
+      <p><strong>Delta Lake</strong> is an open-source storage framework (created by Databricks) that adds a <strong>transaction log (_delta_log)</strong> on top of Parquet files stored in a Data Lake (ADLS Gen2) — giving you ACID transactions, schema enforcement, time travel, and upserts on cheap cloud storage.</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> Plain Parquet files on ADLS = a bank vault with no ledger. Delta Lake = that same vault but now with a <em>complete audit ledger</em> — every deposit/withdrawal is recorded, you can roll back mistakes, and two tellers can't corrupt the same account simultaneously.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">Internals</span>
+      <h3 style="color:var(--cyan);margin-bottom:12px">🔧 How Delta Lake Actually Works — The _delta_log</h3>
+      <p>When you write a Delta table, Spark creates two things in your ADLS path:</p>
+
+      <div class="ftree">
+        <span class="dir">abfss://bronze@bankdatalake.dfs.core.windows.net/transactions/</span><br>
+        &nbsp;&nbsp;├── <span class="file">part-00001-abc123.snappy.parquet</span> <span class="cm">← actual data file (version 0 write)</span><br>
+        &nbsp;&nbsp;├── <span class="file">part-00002-def456.snappy.parquet</span> <span class="cm">← actual data file (version 0 write)</span><br>
+        &nbsp;&nbsp;├── <span class="file">part-00003-ghi789.snappy.parquet</span> <span class="cm">← actual data file (version 1 append)</span><br>
+        &nbsp;&nbsp;└── <span class="dir">_delta_log/</span> <span class="cm">← transaction log folder</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="log">00000000000000000000.json</span> <span class="cm">← version 0: initial write</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="log">00000000000000000001.json</span> <span class="cm">← version 1: append</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="log">00000000000000000002.json</span> <span class="cm">← version 2: MERGE (update)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="log">00000000000000000010.checkpoint.parquet</span> <span class="cm">← checkpoint every 10 versions</span>
+      </div>
+
+      <div class="dlog">
+        <div class="dlog-box">
+          <h4 style="color:var(--yellow)">📄 version 0 (initial write)</h4>
+          <div class="dlog-entry meta">metaData: schema, partitionBy, config</div>
+          <div class="dlog-entry add">+ add: part-00001.parquet (stats: 50K rows)</div>
+          <div class="dlog-entry add">+ add: part-00002.parquet (stats: 50K rows)</div>
+        </div>
+        <div class="dlog-box">
+          <h4 style="color:var(--orange)">📄 version 2 (MERGE update)</h4>
+          <div class="dlog-entry rm">- remove: part-00001.parquet (has changed rows)</div>
+          <div class="dlog-entry add">+ add: part-00004.parquet (rewritten with updates)</div>
+        </div>
+      </div>
+
+      <div class="hl">
+        💡 <strong>Key insight:</strong> Delta Lake NEVER modifies existing Parquet files. Updates work by <em>marking old files as removed</em> in the log and <em>writing new files</em> with the changes. The old files remain on disk until you run VACUUM. This is how time travel works!
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-green">Delta vs Plain Parquet</span>
+      <h3 style="margin-bottom:12px">⚖️ Delta Table vs Plain Parquet — Side by Side</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Feature</th><th>Plain Parquet on ADLS</th><th>Delta Lake (Parquet + _delta_log)</th></tr>
+          <tr><td>ACID Transactions</td><td style="color:var(--red)">❌ No</td><td style="color:var(--green)">✅ Yes — log-based atomic commits</td></tr>
+          <tr><td>Schema Enforcement</td><td style="color:var(--red)">❌ Anyone writes anything</td><td style="color:var(--green)">✅ Rejects mismatched schema writes</td></tr>
+          <tr><td>Row Updates/Deletes</td><td style="color:var(--red)">❌ Impossible natively</td><td style="color:var(--green)">✅ MERGE, UPDATE, DELETE</td></tr>
+          <tr><td>Time Travel</td><td style="color:var(--red)">❌ No history</td><td style="color:var(--green)">✅ Query any past version</td></tr>
+          <tr><td>Concurrent Writers</td><td style="color:var(--red)">❌ Corrupts data</td><td style="color:var(--green)">✅ OCC (optimistic concurrency)</td></tr>
+          <tr><td>Streaming + Batch</td><td style="color:var(--yellow)">⚠️ Separate paths needed</td><td style="color:var(--green)">✅ Same table for both</td></tr>
+          <tr><td>Small files fix</td><td style="color:var(--red)">❌ Manual</td><td style="color:var(--green)">✅ OPTIMIZE command</td></tr>
+          <tr><td>Storage format</td><td>Parquet files</td><td>Parquet files + JSON transaction log</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — "What problem does Delta Lake solve?"</h4>
+      <div class="qi">
+        <div class="q">Q: What problem does Delta Lake solve?</div>
+        <div class="a">Plain Data Lakes on ADLS suffer from four critical problems: (1) No ACID transactions — concurrent writes corrupt data. (2) No schema enforcement — garbage data gets ingested. (3) No update/delete capability — Parquet files are immutable. (4) No history — you can't audit or recover from bad writes. Delta Lake adds a transaction log (_delta_log) on top of Parquet files, solving all four problems without changing the cheap object storage underneath.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: Is Delta Lake a replacement for ADLS or Parquet?</div>
+        <div class="a">No. Delta Lake is a storage framework that sits ON TOP of ADLS. It still stores data as Parquet files on ADLS — it just adds a _delta_log transaction log folder alongside them. Think of ADLS as the vault and Delta Lake as the ledger system for that vault. They work together, not as alternatives.</div>
+        <div class="m">🚨 Mistake: Saying "Delta Lake replaces Parquet" — Delta Lake uses Parquet as its storage format. Delta IS Parquet + transaction log.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 2 — CREATE & WRITE ═══ -->
+  <div class="chapter" id="ch2">
+    <div class="ch-head ch-green">
+      <div class="ch-num">02</div>
+      <div>
+        <div class="ch-title" style="color:var(--green)">Create &amp; Write Delta Tables</div>
+        <div class="ch-sub">df.write.format("delta") · Write modes · DeltaTable.forPath() · SQL CREATE TABLE</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-green">Write Modes</span>
+      <h3 style="margin-bottom:12px">📝 4 Ways to Write a Delta Table</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Mode</th><th>Behavior</th><th>When to Use</th></tr>
+          <tr><td><strong>overwrite</strong></td><td>Delete all existing data, write new</td><td>Full refresh of dimension tables, small reference data</td></tr>
+          <tr><td><strong>append</strong></td><td>Add new data, keep existing</td><td>Daily incremental loads to fact tables (transactions)</td></tr>
+          <tr><td><strong>ignore</strong></td><td>Do nothing if table/data exists</td><td>First-time setup scripts, idempotent jobs</td></tr>
+          <tr><td><strong>error</strong></td><td>Throw error if target exists</td><td>Development/testing to catch accidental overwrites</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-green">PySpark Code</span>
+      <h3 style="margin-bottom:12px">💻 Creating Delta Tables — All Methods</h3>
+      <pre><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># METHOD 1: Write DataFrame as Delta (external path on ADLS)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, current_date
+
+spark = SparkSession.builder.appName(<span class="str">"DeltaDemo"</span>).getOrCreate()
+
+<span class="cm"># Sample banking transactions DataFrame</span>
+data = [(<span class="num">1</span>, <span class="str">"ACC001"</span>, <span class="num">50000.0</span>, <span class="str">"COMPLETED"</span>, <span class="str">"Chennai"</span>),
+        (<span class="num">2</span>, <span class="str">"ACC002"</span>, <span class="num">12000.0</span>, <span class="str">"PENDING"</span>,   <span class="str">"Mumbai"</span>),
+        (<span class="num">3</span>, <span class="str">"ACC003"</span>, <span class="num">75000.0</span>, <span class="str">"COMPLETED"</span>, <span class="str">"Delhi"</span>)]
+cols = [<span class="str">"txn_id"</span>, <span class="str">"account_no"</span>, <span class="str">"amount"</span>, <span class="str">"status"</span>, <span class="str">"city"</span>]
+df = spark.createDataFrame(data, cols)
+
+<span class="cm"># Write as Delta — creates Parquet files + _delta_log</span>
+delta_path = <span class="str">"abfss://silver@bankdatalake.dfs.core.windows.net/transactions"</span>
+
+df.write \
+  .format(<span class="str">"delta"</span>) \
+  .mode(<span class="str">"overwrite"</span>) \          <span class="cm"># options: overwrite, append, ignore, error</span>
+  .save(delta_path)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># METHOD 2: Register as a named table in Unity Catalog / Hive Metastore</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+df.write \
+  .format(<span class="str">"delta"</span>) \
+  .mode(<span class="str">"overwrite"</span>) \
+  .saveAsTable(<span class="str">"banking_prod.silver.transactions"</span>)
+  <span class="cm"># catalog.schema.table  ←  Unity Catalog format</span>
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># METHOD 3: SQL DDL — CREATE TABLE in Databricks notebook</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"""
+CREATE TABLE IF NOT EXISTS banking_prod.silver.transactions (
+    txn_id     BIGINT,
+    account_no STRING,
+    amount     DOUBLE,
+    status     STRING,
+    city       STRING
+)
+USING DELTA
+LOCATION 'abfss://silver@bankdatalake.dfs.core.windows.net/transactions'
+COMMENT 'Silver layer — cleaned transaction records'
+"""</span>)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># METHOD 4: Read back the Delta table</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># By path:</span>
+df_read = spark.read.format(<span class="str">"delta"</span>).load(delta_path)
+
+<span class="cm"># By table name (requires metastore registration):</span>
+df_read = spark.read.table(<span class="str">"banking_prod.silver.transactions"</span>)
+
+<span class="cm"># SQL:</span>
+df_read = spark.sql(<span class="str">"SELECT * FROM banking_prod.silver.transactions WHERE status = 'COMPLETED'"</span>)
+df_read.show()
+<span class="codelabel">PySpark</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-blue">DeltaTable API</span>
+      <h3 style="margin-bottom:8px">🔗 DeltaTable.forPath() — The Python Object for Delta Operations</h3>
+      <p><code>DeltaTable.forPath()</code> gives you a Python object representing an existing Delta table — it's the entry point for MERGE, UPDATE, DELETE, VACUUM, OPTIMIZE, and history operations.</p>
+      <pre><code><span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+<span class="cm"># Get a handle to the Delta table object</span>
+delta_txn = DeltaTable.forPath(spark, delta_path)
+
+<span class="cm"># OR by name (if registered in metastore)</span>
+delta_txn = DeltaTable.forName(spark, <span class="str">"banking_prod.silver.transactions"</span>)
+
+<span class="cm"># Inspect the table</span>
+<span class="fn">print</span>(delta_txn.history().show())    <span class="cm"># all commit history</span>
+<span class="fn">print</span>(delta_txn.detail().show())     <span class="cm"># location, format, row count</span>
+<span class="codelabel">PySpark — DeltaTable API</span></code></pre>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — Create &amp; Write</h4>
+      <div class="qi">
+        <div class="q">Q: What is the difference between .save(path) and .saveAsTable(name)?</div>
+        <div class="a">.save(path) writes data to ADLS at that path but does NOT register the table in any metastore — only people who know the exact ADLS path can read it. .saveAsTable(name) both writes the data AND registers it in Unity Catalog/Hive Metastore — anyone can query it by name using SQL or spark.read.table(). In production, always use saveAsTable with Unity Catalog for governance.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: When would you use append mode vs overwrite for a banking transaction table?</div>
+        <div class="a">Overwrite replaces all data — use it for dimension tables (like dim_customer) during a full refresh. Append adds only new records — use it for fact tables (like transactions) during daily incremental loads. Overwriting a transaction table with 3 years of history every day would be extremely wasteful and slow. Always use append or MERGE for large fact tables.</div>
+        <div class="m">🚨 Mistake: Using overwrite mode for production fact tables — this is a common junior mistake that causes full data refresh every run, wasting hours of compute.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 3 — MERGE ═══ -->
+  <div class="chapter" id="ch3">
+    <div class="ch-head ch-orange">
+      <div class="ch-num">03</div>
+      <div>
+        <div class="ch-title" style="color:var(--orange)">MERGE (Upsert) Operation</div>
+        <div class="ch-sub">DeltaTable.merge() · whenMatchedUpdate · whenNotMatchedInsert · SCD Type 1 &amp; 2</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-orange">Concept</span>
+      <h3 style="color:var(--orange);margin-bottom:8px">🔷 What is MERGE (Upsert)?</h3>
+      <p><strong>MERGE</strong> = <strong>Upsert</strong> = <strong>U</strong>pdate if exists + In<strong>sert</strong> if new. It's the most powerful Delta Lake operation — it compares a <em>source</em> DataFrame against the <em>target</em> Delta table and decides what to do for each row.</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> Every day new customer data arrives. For existing customers, update their address. For new customers, add their record. For customers who've been deleted, remove them. MERGE does all three in one atomic operation.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">Logic Flow</span>
+      <h3 style="margin-bottom:12px">🔀 MERGE Logic — How it Decides</h3>
+      <div class="flow">
+        <div class="fb b">Source DataFrame<br><small>new/changed data</small></div>
+        <span class="ar">→</span>
+        <div class="fb y">Match condition<br><small>txn_id = txn_id</small></div>
+        <span class="ar">→</span>
+        <div class="fb g">MATCHED?<br><small>Row exists in target</small></div>
+        <span class="ar">→</span>
+        <div class="fb o">whenMatchedUpdate<br><small>Update columns</small></div>
+      </div>
+      <div class="flow" style="margin-top:6px">
+        <div class="fb b">Source DataFrame</div>
+        <span class="ar">→</span>
+        <div class="fb y">Match condition</div>
+        <span class="ar">→</span>
+        <div class="fb r">NOT MATCHED?<br><small>New row</small></div>
+        <span class="ar">→</span>
+        <div class="fb g">whenNotMatchedInsert<br><small>Add new row</small></div>
+      </div>
+      <div class="flow" style="margin-top:6px">
+        <div class="fb b">Target Delta table</div>
+        <span class="ar">→</span>
+        <div class="fb r">NOT MATCHED BY SOURCE?<br><small>Row deleted in source</small></div>
+        <span class="ar">→</span>
+        <div class="fb r">whenNotMatchedBySourceDelete<br><small>Delete from target</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-orange">Code</span>
+      <h3 style="margin-bottom:12px">💻 MERGE — PySpark and SQL Examples</h3>
+      <pre><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># SCENARIO: Daily transaction status update</span>
+<span class="cm"># - If txn_id exists and status changed → UPDATE</span>
+<span class="cm"># - If txn_id is new → INSERT</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+<span class="cm"># Target: existing Delta table</span>
+delta_txn = DeltaTable.forPath(spark, delta_path)
+
+<span class="cm"># Source: new updates arriving today</span>
+new_updates = spark.createDataFrame([
+    (<span class="num">2</span>, <span class="str">"ACC002"</span>, <span class="num">12000.0</span>, <span class="str">"COMPLETED"</span>, <span class="str">"Mumbai"</span>),  <span class="cm"># existing — status changed</span>
+    (<span class="num">4</span>, <span class="str">"ACC004"</span>, <span class="num">8500.0</span>,  <span class="str">"PENDING"</span>,   <span class="str">"Pune"</span>)     <span class="cm"># new record</span>
+], [<span class="str">"txn_id"</span>, <span class="str">"account_no"</span>, <span class="str">"amount"</span>, <span class="str">"status"</span>, <span class="str">"city"</span>])
+
+<span class="cm"># MERGE operation</span>
+delta_txn.alias(<span class="str">"target"</span>) \
+  .merge(
+    new_updates.alias(<span class="str">"source"</span>),
+    <span class="str">"target.txn_id = source.txn_id"</span>   <span class="cm"># match condition (join key)</span>
+  ) \
+  .whenMatchedUpdate(set={               <span class="cm"># row exists in both → UPDATE</span>
+    <span class="str">"status"</span>: <span class="str">"source.status"</span>,
+    <span class="str">"amount"</span>: <span class="str">"source.amount"</span>
+  }) \
+  .whenNotMatchedInsertAll() \           <span class="cm"># new row in source only → INSERT all cols</span>
+  .execute()
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># SCD TYPE 1 — Overwrite existing (no history kept)</span>
+<span class="cm"># Use case: Fix typo in customer name</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+delta_customers.alias(<span class="str">"t"</span>).merge(
+  new_customers.alias(<span class="str">"s"</span>),
+  <span class="str">"t.customer_id = s.customer_id"</span>
+).whenMatchedUpdateAll() \               <span class="cm"># update ALL columns</span>
+ .whenNotMatchedInsertAll() \
+ .execute()
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># SCD TYPE 2 — Keep full history (add new row, close old row)</span>
+<span class="cm"># Use case: Customer moves from Chennai to Bangalore</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_date, lit
+
+delta_dim_customer.alias(<span class="str">"t"</span>).merge(
+  new_addresses.alias(<span class="str">"s"</span>),
+  <span class="str">"t.customer_id = s.customer_id AND t.is_current = true AND t.city != s.city"</span>
+).whenMatchedUpdate(set={               <span class="cm"># close old row</span>
+    <span class="str">"is_current"</span>: lit(<span class="str">"false"</span>),
+    <span class="str">"valid_to"</span>:   current_date()
+}).whenNotMatchedInsert(values={        <span class="cm"># add new row with new city</span>
+    <span class="str">"customer_id"</span>: <span class="str">"s.customer_id"</span>,
+    <span class="str">"city"</span>:        <span class="str">"s.city"</span>,
+    <span class="str">"is_current"</span>:  lit(<span class="str">"true"</span>),
+    <span class="str">"valid_from"</span>:  current_date(),
+    <span class="str">"valid_to"</span>:    lit(<span class="bi">None</span>)
+}).execute()
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># SQL MERGE (equivalent, use in Databricks SQL cells)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"""
+MERGE INTO banking_prod.silver.transactions AS target
+USING new_updates_view AS source
+ON target.txn_id = source.txn_id
+WHEN MATCHED THEN
+  UPDATE SET target.status = source.status,
+             target.amount = source.amount
+WHEN NOT MATCHED THEN
+  INSERT (txn_id, account_no, amount, status, city)
+  VALUES (source.txn_id, source.account_no, source.amount,
+          source.status, source.city)
+"""</span>)
+<span class="codelabel">PySpark + SQL</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">SCD Types</span>
+      <h3 style="margin-bottom:12px">📋 SCD Type 1 vs Type 2 — Quick Reference</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Aspect</th><th>SCD Type 1</th><th>SCD Type 2</th></tr>
+          <tr><td>History kept?</td><td style="color:var(--red)">❌ No — overwrites old value</td><td style="color:var(--green)">✅ Yes — adds new row, closes old</td></tr>
+          <tr><td>Extra columns needed</td><td>None</td><td>valid_from, valid_to, is_current</td></tr>
+          <tr><td>Banking use case</td><td>Fix typo in name, update phone</td><td>Customer moves city, changes tier</td></tr>
+          <tr><td>MERGE clause</td><td>whenMatchedUpdateAll()</td><td>whenMatchedUpdate (close) + whenNotMatchedInsert (new)</td></tr>
+          <tr><td>Regulatory use</td><td>Low-risk corrections</td><td>Required for audit trails, compliance</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — MERGE</h4>
+      <div class="qi">
+        <div class="q">Q: How do you implement SCD Type 2 using Delta Lake?</div>
+        <div class="a">SCD Type 2 tracks full history by adding new rows instead of overwriting. I use a Delta MERGE with three conditions: (1) WHEN MATCHED AND the tracked attribute changed → UPDATE the old row to set is_current=false and valid_to=today. (2) WHEN NOT MATCHED BY TARGET → INSERT the new row with is_current=true, valid_from=today. The match condition includes is_current=true so we only compare against active records. This gives a full audit trail — critical in banking for regulatory reporting on customer data at any point in time.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: What is the difference between whenMatchedUpdate and whenMatchedUpdateAll?</div>
+        <div class="a">whenMatchedUpdateAll() updates ALL columns in the target with corresponding source values — equivalent to `SET * = source.*`. whenMatchedUpdate(set={}) lets you specify exactly which columns to update and with what expressions — more fine-grained control. Use UpdateAll for simple SCD Type 1. Use specific set={} when you need partial updates or computed values like audit timestamps.</div>
+        <div class="m">🚨 Mistake: Using whenMatchedUpdateAll for SCD Type 2 — this would overwrite the valid_to/is_current columns you're trying to preserve on the old row. Always use explicit set={} for SCD Type 2.</div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>🧠 Quiz</h4>
+      <p>A customer's account status changes from PENDING to COMPLETED. Your Delta table has 1 million rows. Which MERGE clause runs for this customer's row?</p>
+      <ul>
+        <li>A. whenNotMatchedInsertAll — it's a new row</li>
+        <li class="ok">B. whenMatchedUpdate — the row exists in target (same txn_id), update the status column</li>
+        <li>C. whenNotMatchedBySourceDelete — it was deleted from source</li>
+        <li>D. MERGE fails — Delta doesn't support status updates</li>
+      </ul>
+      <p style="font-size:11px;margin-top:8px;color:#d0aadf">✅ <strong>B.</strong> The match condition (txn_id = txn_id) finds the existing row. Since it MATCHED, the whenMatchedUpdate clause runs, updating only the status column. Delta internally marks the old Parquet file as removed and writes a new file with the updated row.</p>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 4 — TIME TRAVEL ═══ -->
+  <div class="chapter" id="ch4">
+    <div class="ch-head ch-purple">
+      <div class="ch-num">04</div>
+      <div>
+        <div class="ch-title" style="color:var(--purple)">Time Travel &amp; History</div>
+        <div class="ch-sub">DESCRIBE HISTORY · VERSION AS OF · TIMESTAMP AS OF · RESTORE</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-purple">Concept</span>
+      <h3 style="color:var(--purple);margin-bottom:8px">🔷 What is Time Travel?</h3>
+      <p>Delta Lake's <strong>Time Travel</strong> lets you <em>query any historical version</em> of a table — by version number or timestamp — using the transaction log. Since Delta never deletes old Parquet files until VACUUM runs, every version's data is accessible.</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> A bank's statement system can show your account balance "as of December 31, 2023" even though it's now 2024. Delta Lake gives you the same capability — query your data as it existed at any past point in time.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">How It Works</span>
+      <h3 style="margin-bottom:12px">🔧 Time Travel Internals</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <h5>Version 0 — Initial Load (Jan 1)</h5>
+          <p>100K rows written. Parquet files: part-0001.parquet, part-0002.parquet</p>
+        </div>
+        <div class="tl-item">
+          <h5>Version 1 — Append (Jan 2)</h5>
+          <p>10K new rows appended. New file: part-0003.parquet added to log</p>
+        </div>
+        <div class="tl-item">
+          <h5>Version 2 — MERGE update (Jan 3)</h5>
+          <p>500 rows updated. part-0001.parquet marked as REMOVED, new part-0004.parquet added</p>
+        </div>
+        <div class="tl-item old">
+          <h5>VERSION AS OF 0 → reads part-0001 + part-0002</h5>
+          <p>Original 100K rows — the old part-0001 file is still on ADLS, just "logically removed"</p>
+        </div>
+        <div class="tl-item vacuum">
+          <h5>After VACUUM (retention expired)</h5>
+          <p>Old files physically deleted. Time travel to versions before VACUUM cutoff no longer possible.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-purple">Code</span>
+      <h3 style="margin-bottom:12px">💻 Time Travel — All Commands</h3>
+      <pre><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STEP 1: See full history of the table</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+delta_txn = DeltaTable.forPath(spark, delta_path)
+delta_txn.history().show(truncate=<span class="bi">False</span>)
+
+<span class="cm"># SQL equivalent:</span>
+spark.sql(<span class="str">"DESCRIBE HISTORY banking_prod.silver.transactions"</span>).show()
+
+<span class="cm"># Output columns: version, timestamp, userId, operation, operationParameters</span>
+<span class="cm"># Example output:</span>
+<span class="cm"># version | timestamp           | operation | operationMetrics</span>
+<span class="cm"># 2       | 2024-01-03 10:30:00 | MERGE     | {numUpdated: 500}</span>
+<span class="cm"># 1       | 2024-01-02 08:00:00 | WRITE     | {numFiles: 1}</span>
+<span class="cm"># 0       | 2024-01-01 06:00:00 | WRITE     | {numFiles: 2}</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STEP 2: Query a specific VERSION</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># PySpark — by version number</span>
+df_v0 = spark.read.format(<span class="str">"delta"</span>) \
+    .option(<span class="str">"versionAsOf"</span>, <span class="num">0</span>) \
+    .load(delta_path)
+<span class="fn">print</span>(f<span class="str">"Version 0 row count: {df_v0.count()}"</span>)  <span class="cm"># 100,000</span>
+
+df_v2 = spark.read.format(<span class="str">"delta"</span>) \
+    .option(<span class="str">"versionAsOf"</span>, <span class="num">2</span>) \
+    .load(delta_path)
+<span class="fn">print</span>(f<span class="str">"Version 2 row count: {df_v2.count()}"</span>)  <span class="cm"># 110,000 (after merge)</span>
+
+<span class="cm"># SQL — by version</span>
+spark.sql(<span class="str">"SELECT * FROM banking_prod.silver.transactions VERSION AS OF 0"</span>)
+
+<span class="cm"># SQL — by timestamp</span>
+spark.sql(<span class="str">"SELECT * FROM banking_prod.silver.transactions TIMESTAMP AS OF '2024-01-02'"</span>)
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STEP 3: RESTORE — Rollback to a previous version</span>
+<span class="cm"># Use case: A bad pipeline wrote corrupted data — undo it!</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># Restore by version number</span>
+delta_txn.restoreToVersion(<span class="num">1</span>)
+
+<span class="cm"># Restore by timestamp</span>
+delta_txn.restoreToTimestamp(<span class="str">"2024-01-02T08:00:00"</span>)
+
+<span class="cm"># SQL equivalent:</span>
+spark.sql(<span class="str">"RESTORE TABLE banking_prod.silver.transactions TO VERSION AS OF 1"</span>)
+spark.sql(<span class="str">"RESTORE TABLE banking_prod.silver.transactions TO TIMESTAMP AS OF '2024-01-02'"</span>)
+
+<span class="cm"># Important: RESTORE itself creates a new version!</span>
+<span class="cm"># If you were at version 5 and restored to version 1 → new version 6 is created</span>
+<span class="cm"># The full history is preserved — this is an auditable rollback.</span>
+<span class="codelabel">PySpark + SQL</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">Time Travel Limits</span>
+      <h3 style="margin-bottom:12px">⚠️ Time Travel — What You Must Know</h3>
+      <div class="g2">
+        <div class="mc yl">
+          <h4 style="color:var(--yellow)">Default Retention: 30 days</h4>
+          <p>Delta keeps old files for 30 days by default. You can query any version within this window. After VACUUM runs, old files are deleted and time travel to those versions is gone.</p>
+          <pre style="margin-top:8px;font-size:.77rem;padding:10px"><code><span class="cm"># Change retention period</span>
+spark.sql(<span class="str">"""
+ALTER TABLE banking_prod.silver.transactions
+SET TBLPROPERTIES (
+  'delta.logRetentionDuration' = 'interval 60 days',
+  'delta.deletedFileRetentionDuration' = 'interval 60 days'
+)
+"""</span>)</code></pre>
+        </div>
+        <div class="mc gl">
+          <h4 style="color:var(--green)">RESTORE creates a new version</h4>
+          <p>RESTORE is non-destructive — it creates a new version entry in the log. Your history from version 1 to 5 is preserved even after restoring to version 1. This is an auditable rollback — important for compliance.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — Time Travel</h4>
+      <div class="qi">
+        <div class="q">Q: How do you recover accidentally deleted data in Delta Lake?</div>
+        <div class="a">Delta Lake's time travel feature lets me recover from accidental data loss. First, I use DESCRIBE HISTORY to identify the last good version before the deletion. Then I either use spark.read with versionAsOf to read the good version and re-insert the missing rows, or I use RESTORE TABLE to roll the entire table back to that version. RESTORE is preferred for full table recovery since it's atomic and creates a new auditable version in the log.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: Can you query yesterday's data in Delta Lake without keeping a separate backup?</div>
+        <div class="a">Yes, that's exactly what time travel provides. SELECT * FROM transactions TIMESTAMP AS OF '2024-01-01' gives you the table as it existed at midnight on Jan 1, using the transaction log to reconstruct which Parquet files were active at that timestamp. No separate backup is needed — as long as VACUUM hasn't deleted the old files (default 30-day retention).</div>
+        <div class="m">🚨 Mistake: Forgetting that time travel stops working after VACUUM deletes old files. Always set a sufficiently long retention period before running VACUUM aggressively.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 5 — VACUUM ═══ -->
+  <div class="chapter" id="ch5">
+    <div class="ch-head ch-pink">
+      <div class="ch-num">05</div>
+      <div>
+        <div class="ch-title" style="color:var(--pink)">VACUUM</div>
+        <div class="ch-sub">Remove old files · Retention threshold · What happens if you VACUUM too aggressively?</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-pink">Concept</span>
+      <h3 style="color:var(--pink);margin-bottom:8px">🔷 What is VACUUM?</h3>
+      <p><strong>VACUUM</strong> is a Delta Lake maintenance command that <em>physically deletes old Parquet files</em> from ADLS that are no longer part of the current table version and have exceeded the retention threshold. Without VACUUM, your ADLS storage grows unboundedly even though logically the data was "deleted."</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> VACUUM is like the annual shredding of old bank records. Documents are "logically deleted" from the active system but physically still exist in the archive room (ADLS). VACUUM shreds (physically deletes) files older than the retention period — freeing up space.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">Before vs After</span>
+      <h3 style="margin-bottom:12px">🗂️ What VACUUM Does to Your ADLS Files</h3>
+      <div class="g2">
+        <div class="dlog-box">
+          <h4 style="color:var(--red)">❌ Before VACUUM (Day 45)</h4>
+          <div class="dlog-entry meta">part-0001.parquet (version 0 — 45 days old)</div>
+          <div class="dlog-entry rm">part-0002.parquet (version 0 — 45 days old, logically removed at v2)</div>
+          <div class="dlog-entry meta">part-0003.parquet (version 1 — 44 days old)</div>
+          <div class="dlog-entry add">part-0004.parquet (version 2 — 2 days old — CURRENT)</div>
+          <div class="dlog-entry add">part-0005.parquet (version 3 — 1 day old — CURRENT)</div>
+          <p style="font-size:11px;color:var(--muted);margin-top:8px">Storage: 5 Parquet files (3 obsolete, wasting space)</p>
+        </div>
+        <div class="dlog-box">
+          <h4 style="color:var(--green)">✅ After VACUUM (30-day retention)</h4>
+          <div class="dlog-entry rm">part-0001.parquet → 🗑️ DELETED (45 days old)</div>
+          <div class="dlog-entry rm">part-0002.parquet → 🗑️ DELETED (45 days old)</div>
+          <div class="dlog-entry rm">part-0003.parquet → 🗑️ DELETED (44 days old)</div>
+          <div class="dlog-entry add">part-0004.parquet ✅ KEPT (2 days old)</div>
+          <div class="dlog-entry add">part-0005.parquet ✅ KEPT (1 day old)</div>
+          <p style="font-size:11px;color:var(--muted);margin-top:8px">Storage: 2 Parquet files. Time travel to version 0/1 now IMPOSSIBLE.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-pink">Code</span>
+      <h3 style="margin-bottom:12px">💻 VACUUM — Commands and Configuration</h3>
+      <pre><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STEP 1: DRY RUN first — see what would be deleted (safe preview)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"""
+VACUUM banking_prod.silver.transactions
+RETAIN 720 HOURS   -- 30 days = 720 hours
+DRY RUN            -- preview only, does NOT delete
+"""</span>)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STEP 2: Run VACUUM with 30-day retention (default)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"VACUUM banking_prod.silver.transactions RETAIN 720 HOURS"</span>)
+
+<span class="cm"># PySpark API equivalent:</span>
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+delta_txn = DeltaTable.forPath(spark, delta_path)
+delta_txn.vacuum(<span class="num">720</span>)  <span class="cm"># hours</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># ⚠️  DANGER: VACUUM 0 HOURS — deletes ALL old files immediately</span>
+<span class="cm"># This DESTROYS time travel! Only do this if you're sure.</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># First, disable the safety check:</span>
+spark.conf.set(<span class="str">"spark.databricks.delta.retentionDurationCheck.enabled"</span>, <span class="str">"false"</span>)
+spark.sql(<span class="str">"VACUUM banking_prod.silver.transactions RETAIN 0 HOURS"</span>)  <span class="cm"># ⚠️ IRREVERSIBLE</span>
+<span class="cm"># Re-enable safety check:</span>
+spark.conf.set(<span class="str">"spark.databricks.delta.retentionDurationCheck.enabled"</span>, <span class="str">"true"</span>)
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># BEST PRACTICE: Set table-level retention properties</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"""
+ALTER TABLE banking_prod.silver.transactions
+SET TBLPROPERTIES (
+  'delta.deletedFileRetentionDuration' = 'interval 30 days',
+  'delta.logRetentionDuration'         = 'interval 60 days'
+)
+"""</span>)
+<span class="cm"># logRetentionDuration: how long to keep _delta_log JSON files</span>
+<span class="cm"># deletedFileRetentionDuration: how long before VACUUM can delete Parquet files</span>
+<span class="codelabel">SQL + PySpark</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">Aggressive VACUUM Risk</span>
+      <h3 style="margin-bottom:12px">⚠️ What Happens if You VACUUM Too Aggressively?</h3>
+      <div class="hl-r">
+        🚨 <strong>VACUUM &lt; 168 hours (7 days)</strong> breaks concurrent readers! Active queries reading a snapshot may be referencing Parquet files that VACUUM just deleted, causing <code>FileNotFoundException</code>.
+      </div>
+      <div class="g2" style="margin-top:12px">
+        <div class="mc ol">
+          <h4 style="color:var(--orange)">VACUUM RETAIN 0 HOURS risks:</h4>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>All time travel history destroyed</li>
+            <li>Active concurrent reads break</li>
+            <li>Streaming jobs reading Delta can fail</li>
+            <li>Cannot undo a bad MERGE/DELETE</li>
+          </ul>
+        </div>
+        <div class="mc gl">
+          <h4 style="color:var(--green)">Safe VACUUM practices:</h4>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>Always use DRY RUN first</li>
+            <li>Minimum: RETAIN 168 HOURS (7 days)</li>
+            <li>Production recommendation: 720 HOURS (30 days)</li>
+            <li>Schedule during off-peak hours</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — VACUUM</h4>
+      <div class="qi">
+        <div class="q">Q: What happens if you VACUUM too aggressively (e.g., RETAIN 0 HOURS)?</div>
+        <div class="a">VACUUM with 0 hours retention immediately deletes ALL old Parquet files — including those referenced by active concurrent readers. This can cause FileNotFoundException on live queries. More critically, all time travel history is permanently destroyed — you can no longer restore to any previous version. In banking, this means losing the ability to recover from pipeline errors or regulatory audit queries on historical states. The safe minimum is 168 hours (7 days) to allow concurrent readers to finish, and 720 hours (30 days) is the production standard.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: Is VACUUM mandatory? What happens if you never run it?</div>
+        <div class="a">VACUUM is not mandatory but important for cost management. Without it, every UPDATE/DELETE/MERGE creates new Parquet files while old ones accumulate on ADLS indefinitely. For a busy banking transaction table with millions of daily updates, this means your ADLS storage grows unboundedly and you pay for terabytes of stale files. VACUUM is typically scheduled as a weekly Databricks Workflow job.</div>
+        <div class="m">🚨 Mistake: Confusing VACUUM with OPTIMIZE — VACUUM deletes old unused Parquet files for storage savings. OPTIMIZE compacts many small Parquet files into fewer large ones for query speed. They solve different problems.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 6 — OPTIMIZE & ZORDER ═══ -->
+  <div class="chapter" id="ch6">
+    <div class="ch-head ch-yellow">
+      <div class="ch-num">06</div>
+      <div>
+        <div class="ch-title" style="color:var(--yellow)">OPTIMIZE &amp; Z-ORDER</div>
+        <div class="ch-sub">Fix small files · Z-ORDER for faster queries · What is data skipping? · Interview: "What is the small files problem?"</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">The Problem</span>
+      <h3 style="color:var(--yellow);margin-bottom:8px">🔷 The Small Files Problem</h3>
+      <p>Every Spark job — especially streaming and frequent appends — writes many small Parquet files (sometimes thousands per hour). Querying a table with 100,000 files of 1KB each is far slower than querying 100 files of 128MB each — because Spark creates one task per file, and the overhead of opening/closing thousands of files dominates execution time.</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> Imagine finding a customer's total balance from 10,000 separate slips of paper (small files) vs from 10 organized ledgers (large files). OPTIMIZE re-organizes the slips into ledgers.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">OPTIMIZE</span>
+      <h3 style="margin-bottom:12px">📦 OPTIMIZE — Compact Small Files into Target File Size (128MB)</h3>
+      <div class="flow">
+        <div class="fb r">Before: 1000 files<br><small>each ~1MB</small></div>
+        <span class="ar">──OPTIMIZE──→</span>
+        <div class="fb g">After: 8 files<br><small>each ~128MB</small></div>
+        <span class="ar">→</span>
+        <div class="fb c">Query speed<br><small>10–50x faster</small></div>
+      </div>
+
+      <pre style="margin-top:14px"><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># OPTIMIZE — compact small files to ~128MB target size</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"OPTIMIZE banking_prod.silver.transactions"</span>)
+
+<span class="cm"># OPTIMIZE on a specific partition only (more targeted, faster)</span>
+spark.sql(<span class="str">"""
+OPTIMIZE banking_prod.silver.transactions
+WHERE txn_date = '2024-01-01'
+"""</span>)
+
+<span class="cm"># PySpark API:</span>
+delta_txn = DeltaTable.forPath(spark, delta_path)
+delta_txn.optimize().executeCompaction()
+<span class="codelabel">SQL</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-orange">Z-ORDER</span>
+      <h3 style="color:var(--orange);margin-bottom:12px">🎯 Z-ORDER — Co-locate Related Data for Even Faster Queries</h3>
+      <p>Z-ORDER is an optimization technique that <em>physically co-locates related data</em> within Parquet files by a specified column. When you query by that column, Spark reads far fewer files — this is called <strong>data skipping</strong>.</p>
+
+      <div class="zbox">
+        <div class="zb">
+          <h5 style="color:var(--red)">Without Z-ORDER (random distribution)</h5>
+          <div class="zb-grid">
+            <div class="zb-cell" style="background:#1a1a4a">C</div>
+            <div class="zb-cell" style="background:#1a4a1a">M</div>
+            <div class="zb-cell" style="background:#4a1a1a">D</div>
+            <div class="zb-cell" style="background:#1a1a4a">C</div>
+            <div class="zb-cell" style="background:#4a1a1a">D</div>
+            <div class="zb-cell" style="background:#1a4a1a">M</div>
+            <div class="zb-cell" style="background:#4a2a1a">P</div>
+            <div class="zb-cell" style="background:#1a1a4a">C</div>
+            <div class="zb-cell" style="background:#1a4a1a">M</div>
+            <div class="zb-cell" style="background:#4a1a1a">D</div>
+            <div class="zb-cell" style="background:#4a2a1a">P</div>
+            <div class="zb-cell" style="background:#1a1a4a">C</div>
+          </div>
+          <p style="font-size:10px;margin-top:6px;color:var(--muted)">WHERE city='Chennai': must scan ALL 4 files</p>
+        </div>
+        <div class="zb">
+          <h5 style="color:var(--green)">After Z-ORDER BY city</h5>
+          <div class="zb-grid">
+            <div class="zb-cell" style="background:#0d3b1e">C</div>
+            <div class="zb-cell" style="background:#0d3b1e">C</div>
+            <div class="zb-cell" style="background:#0d3b1e">C</div>
+            <div class="zb-cell" style="background:#0d3b1e">C</div>
+            <div class="zb-cell" style="background:#1a2e4a">M</div>
+            <div class="zb-cell" style="background:#1a2e4a">M</div>
+            <div class="zb-cell" style="background:#1a2e4a">M</div>
+            <div class="zb-cell" style="background:#1a2e4a">M</div>
+            <div class="zb-cell" style="background:#4a1a1a">D</div>
+            <div class="zb-cell" style="background:#4a1a1a">D</div>
+            <div class="zb-cell" style="background:#4a2a1a">P</div>
+            <div class="zb-cell" style="background:#4a2a1a">P</div>
+          </div>
+          <p style="font-size:10px;margin-top:6px;color:var(--muted)">WHERE city='Chennai': reads ONLY 1 file ✅</p>
+        </div>
+      </div>
+
+      <pre style="margin-top:14px"><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># OPTIMIZE + Z-ORDER together (most common pattern)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># Z-ORDER by columns you most frequently filter on</span>
+spark.sql(<span class="str">"""
+OPTIMIZE banking_prod.silver.transactions
+ZORDER BY (customer_id, txn_date)
+"""</span>)
+<span class="cm"># Now queries like WHERE customer_id = 'C123' AND txn_date = '2024-01-01'</span>
+<span class="cm"># will skip most files — only read files containing that customer</span>
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># Data Skipping — how Delta knows which files to skip</span>
+<span class="cm"># Delta stores min/max stats for each file in the _delta_log</span>
+<span class="cm"># Example: file part-0001.parquet has min(customer_id)=C100, max(customer_id)=C200</span>
+<span class="cm"># If your query is WHERE customer_id = 'C500', this file is SKIPPED entirely</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cm"># PySpark API:</span>
+delta_txn.optimize().executeZOrderBy(<span class="str">"customer_id"</span>, <span class="str">"txn_date"</span>)
+<span class="codelabel">SQL + PySpark</span></code></pre>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">OPTIMIZE vs Z-ORDER vs VACUUM</span>
+      <h3 style="margin-bottom:12px">⚖️ Three Maintenance Commands — Comparison</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Command</th><th>What It Does</th><th>Solves</th><th>When to Run</th></tr>
+          <tr><td><strong style="color:var(--yellow)">OPTIMIZE</strong></td><td>Compacts many small files → fewer large files</td><td>Small files problem, slow scans</td><td>After heavy streaming/appends, daily or weekly</td></tr>
+          <tr><td><strong style="color:var(--orange)">OPTIMIZE + ZORDER</strong></td><td>Compact + physically sort data by specified columns</td><td>Slow filtered queries on high-cardinality columns</td><td>After OPTIMIZE, for tables with frequent WHERE filters</td></tr>
+          <tr><td><strong style="color:var(--pink)">VACUUM</strong></td><td>Deletes old Parquet files that are no longer active</td><td>ADLS storage cost, stale file accumulation</td><td>Weekly, after OPTIMIZE (not before!)</td></tr>
+        </table>
+      </div>
+      <div class="hl-y" style="margin-top:10px">
+        💡 <strong>Correct order:</strong> OPTIMIZE first → then VACUUM. OPTIMIZE creates new compacted files and marks old ones as removed. VACUUM then cleans up those removed files. If you VACUUM before OPTIMIZE, you lose time travel history prematurely.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-green">Auto Optimize (Databricks)</span>
+      <h3 style="margin-bottom:8px">🤖 Auto Optimize — Let Databricks Handle It</h3>
+      <p>Databricks offers <strong>Auto Optimize</strong> — two features that reduce manual maintenance:</p>
+      <div class="g2" style="margin-top:10px">
+        <div class="mc gl">
+          <h4 style="color:var(--green)">Auto Compaction</h4>
+          <p>After each write, Databricks automatically compacts small files produced during that write. No need to manually run OPTIMIZE after every streaming batch.</p>
+          <pre style="margin-top:8px;font-size:.76rem;padding:8px"><code>spark.sql(<span class="str">"""
+ALTER TABLE transactions
+SET TBLPROPERTIES (
+  'delta.autoOptimize.autoCompact' = 'true'
+)
+"""</span>)</code></pre>
+        </div>
+        <div class="mc bl">
+          <h4 style="color:var(--blue)">Optimized Writes</h4>
+          <p>Databricks automatically sizes Parquet files before writing — merges small data during the write itself rather than after. Great for streaming pipelines.</p>
+          <pre style="margin-top:8px;font-size:.76rem;padding:8px"><code>spark.sql(<span class="str">"""
+ALTER TABLE transactions
+SET TBLPROPERTIES (
+  'delta.autoOptimize.optimizeWrite' = 'true'
+)
+"""</span>)</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — OPTIMIZE &amp; Z-ORDER</h4>
+      <div class="qi">
+        <div class="q">Q: What is the small files problem and how does Delta Lake solve it?</div>
+        <div class="a">The small files problem occurs when frequent small writes (streaming, micro-batch appends) create thousands of tiny Parquet files. Spark creates one task per file, so scanning 100,000 × 1KB files involves 100,000 tasks with massive scheduling overhead — often slower than scanning 100 × 100MB files. Delta Lake's OPTIMIZE command compacts small files into ~128MB target files by reading them all and rewriting into fewer, larger files. The old small files are marked as removed in _delta_log and can later be cleaned up by VACUUM.</div>
+      </div>
+      <div class="qi">
+        <div class="q">Q: When would you use Z-ORDER vs table partitioning?</div>
+        <div class="a">Partitioning (by txn_date for example) creates physical folder separation in ADLS — best for high-cardinality columns with coarse filtering (filter by month/year). Z-ORDER reorders data within each partition file — best for high-cardinality columns within a partition (customer_id within a month partition). Z-ORDER doesn't create extra folders, avoids the small partition problem, and can be applied to multiple columns. In practice: partition by date, Z-ORDER by customer_id for a banking transaction table.</div>
+        <div class="m">🚨 Mistake: Over-partitioning by high-cardinality columns like customer_id — this creates millions of tiny partitions (worse than small files). Z-ORDER is the right tool for high-cardinality filtering.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 7 — MANAGED VS EXTERNAL ═══ -->
+  <div class="chapter" id="ch7">
+    <div class="ch-head ch-teal">
+      <div class="ch-num">07</div>
+      <div>
+        <div class="ch-title" style="color:var(--teal)">Managed vs External Tables</div>
+        <div class="ch-sub">Who owns the data? · DROP TABLE behavior · Unity Catalog patterns</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-teal">Concept</span>
+      <h3 style="margin-bottom:12px">⚖️ Managed vs External Delta Tables</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Aspect</th><th>Managed Table</th><th>External Table</th></tr>
+          <tr><td>Data ownership</td><td>Databricks/Unity Catalog manages data location</td><td>You specify and own the ADLS path</td></tr>
+          <tr><td>Data location</td><td>Unity Catalog default storage location</td><td>Any abfss:// path you specify with LOCATION</td></tr>
+          <tr><td>DROP TABLE behavior</td><td style="color:var(--red)">❌ Deletes BOTH metadata AND data files</td><td style="color:var(--green)">✅ Deletes only metadata. Data files remain on ADLS.</td></tr>
+          <tr><td>Safety</td><td>Risky — one DROP destroys data</td><td>Safer — data survives accidental DROP</td></tr>
+          <tr><td>Use in production</td><td>Small/temp tables, development</td><td>⭐ Preferred for production data</td></tr>
+          <tr><td>How to create</td><td>CREATE TABLE ... USING DELTA (no LOCATION)</td><td>CREATE TABLE ... USING DELTA LOCATION 'abfss://...'</td></tr>
+        </table>
+      </div>
+      <pre style="margin-top:14px"><code><span class="cm"># Managed Table — Databricks chooses location</span>
+spark.sql(<span class="str">"""
+CREATE TABLE banking_prod.silver.transactions (
+  txn_id BIGINT, amount DOUBLE, status STRING
+) USING DELTA
+"""</span>)  <span class="cm"># ⚠️ DROP TABLE deletes ALL data</span>
+
+<span class="cm"># External Table — YOU specify ADLS location (Production standard)</span>
+spark.sql(<span class="str">"""
+CREATE TABLE banking_prod.silver.transactions (
+  txn_id BIGINT, amount DOUBLE, status STRING
+) USING DELTA
+LOCATION 'abfss://silver@bankdatalake.dfs.core.windows.net/transactions'
+"""</span>)  <span class="cm"># ✅ DROP TABLE only removes metadata; data on ADLS is safe</span>
+
+<span class="cm"># df.write.format("delta").save(path) = External</span>
+<span class="cm"># df.write.format("delta").saveAsTable(name) = Managed (if no path config)</span>
+<span class="codelabel">SQL</span></code></pre>
+    </div>
+
+    <div class="iq">
+      <h4>🎤 Interview Insights — Managed vs External</h4>
+      <div class="qi">
+        <div class="q">Q: What happens when you DROP a managed vs external Delta table?</div>
+        <div class="a">For a managed table, DROP TABLE deletes both the Unity Catalog metadata AND all the underlying Parquet files from ADLS — data is permanently gone. For an external table, DROP TABLE only removes the metadata entry from Unity Catalog — the Delta files on ADLS remain untouched. In production, we always use external tables with explicit ADLS paths to prevent accidental data loss from DROP commands.</div>
+        <div class="m">🚨 Mistake: Creating production fact tables as managed tables — a single DROP TABLE by any authorized user permanently deletes all banking transaction history. Always use EXTERNAL tables with LOCATION in production.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 8 — SCHEMA EVOLUTION ═══ -->
+  <div class="chapter" id="ch8">
+    <div class="ch-head ch-green">
+      <div class="ch-num">08</div>
+      <div>
+        <div class="ch-title" style="color:var(--green)">Schema Enforcement &amp; Evolution</div>
+        <div class="ch-sub">Schema-on-Write · mergeSchema · overwriteSchema · ALTER TABLE ADD COLUMN</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-green">Two Behaviors</span>
+      <h3 style="margin-bottom:12px">🔧 Schema Enforcement vs Schema Evolution</h3>
+      <div class="g2">
+        <div class="mc gl">
+          <h4 style="color:var(--green)">Schema Enforcement (Default ON)</h4>
+          <p>Delta Lake rejects any write whose schema doesn't match the existing table schema. Prevents garbage data from corrupting the table. No option needed — it's the default.</p>
+          <pre style="margin-top:8px;font-size:.77rem;padding:8px"><code><span class="cm"># This FAILS if 'fraud_score' column doesn't exist in table</span>
+df_with_extra_col.write \
+  .format(<span class="str">"delta"</span>) \
+  .mode(<span class="str">"append"</span>) \
+  .save(delta_path)
+<span class="cm"># → AnalysisException: A schema mismatch detected</span></code></pre>
+        </div>
+        <div class="mc bl">
+          <h4 style="color:var(--blue)">Schema Evolution (Opt-in)</h4>
+          <p>Allow the table schema to evolve safely — add new columns from the source, or overwrite the entire schema. Use mergeSchema or overwriteSchema options.</p>
+          <pre style="margin-top:8px;font-size:.77rem;padding:8px"><code><span class="cm"># ALLOW new columns to be added automatically</span>
+df_with_extra_col.write \
+  .format(<span class="str">"delta"</span>) \
+  .mode(<span class="str">"append"</span>) \
+  .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+  .save(delta_path)
+<span class="cm"># New column 'fraud_score' added to table schema</span>
+<span class="cm"># Old rows get NULL for the new column</span></code></pre>
+        </div>
+      </div>
+      <pre style="margin-top:12px"><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># mergeSchema: ADD new columns (safe — old data gets NULL)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+df_new_cols.write.format(<span class="str">"delta"</span>).mode(<span class="str">"append"</span>) \
+  .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>).save(delta_path)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># overwriteSchema: REPLACE entire schema (dangerous — use with caution)</span>
+<span class="cm"># Only works with mode("overwrite")</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+df_totally_new.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+  .option(<span class="str">"overwriteSchema"</span>, <span class="str">"true"</span>).save(delta_path)
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># ALTER TABLE — Add column explicitly (safest, explicit, auditable)</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+spark.sql(<span class="str">"""
+ALTER TABLE banking_prod.silver.transactions
+ADD COLUMNS (
+  fraud_score DOUBLE COMMENT 'ML fraud probability 0-1',
+  processed_at TIMESTAMP
+)
+"""</span>)
+
+<span class="cm"># SQL auto-enable schema evolution for all writes:</span>
+spark.sql(<span class="str">"SET spark.databricks.delta.schema.autoMerge.enabled = true"</span>)
+<span class="codelabel">PySpark + SQL</span></code></pre>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 9 — STREAMING ═══ -->
+  <div class="chapter" id="ch9">
+    <div class="ch-head ch-blue">
+      <div class="ch-num">09</div>
+      <div>
+        <div class="ch-title" style="color:var(--blue)">Delta Lake + Streaming</div>
+        <div class="ch-sub">Delta as a source and sink · Structured Streaming · Event Hubs → Delta</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-blue">Concept</span>
+      <h3 style="margin-bottom:8px">🔷 Delta as Both Streaming Source and Sink</h3>
+      <p>Delta Lake's transaction log enables it to work natively with <strong>Structured Streaming</strong>. You can <em>write</em> streaming data directly into a Delta table (sink) OR <em>read</em> a Delta table as a stream — processing each new committed version as a new batch.</p>
+      <div class="analogy">
+        <strong>🏦 Bank Analogy:</strong> Azure Event Hubs receives real-time card transaction swipes. Spark Streaming reads them and writes to a Bronze Delta table. Another streaming job reads that Bronze Delta table and applies fraud scoring — writing results to Silver. The same Delta table serves as both a write target and a change stream source.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-blue">Code</span>
+      <h3 style="margin-bottom:12px">💻 Event Hubs → Delta Streaming Pipeline</h3>
+      <pre><code><span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STREAMING SINK: Write Event Hubs stream → Bronze Delta Table</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> from_json, col
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StringType, DoubleType, LongType
+
+<span class="cm"># Define schema for incoming transaction events</span>
+schema = StructType() \
+  .add(<span class="str">"txn_id"</span>, LongType()) \
+  .add(<span class="str">"account_no"</span>, StringType()) \
+  .add(<span class="str">"amount"</span>, DoubleType()) \
+  .add(<span class="str">"status"</span>, StringType())
+
+<span class="cm"># Read from Event Hubs (configured via connection string in Key Vault)</span>
+ehConf = {
+  <span class="str">"eventhubs.connectionString"</span>: spark.conf.get(<span class="str">"eventhubs.connectionString"</span>)
+}
+raw_stream = spark.readStream \
+  .format(<span class="str">"eventhubs"</span>) \
+  .options(**ehConf) \
+  .load() \
+  .select(from_json(col(<span class="str">"body"</span>).cast(<span class="str">"string"</span>), schema).alias(<span class="str">"data"</span>)) \
+  .select(<span class="str">"data.*"</span>)
+
+<span class="cm"># Write stream to Bronze Delta table (continuous micro-batches)</span>
+query = raw_stream.writeStream \
+  .format(<span class="str">"delta"</span>) \
+  .outputMode(<span class="str">"append"</span>) \
+  .option(<span class="str">"checkpointLocation"</span>, <span class="str">"abfss://checkpoints@bankdatalake.dfs.core.windows.net/bronze-txn"</span>) \
+  .trigger(processingTime=<span class="str">"30 seconds"</span>) \  <span class="cm"># process every 30s</span>
+  .table(<span class="str">"banking_prod.bronze.transactions"</span>)
+
+query.awaitTermination()
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+<span class="cm"># STREAMING SOURCE: Read Delta table as a stream</span>
+<span class="cm"># Processes each new commit version as a new micro-batch</span>
+<span class="cm"># ─────────────────────────────────────────────────────────────────</span>
+bronze_stream = spark.readStream \
+  .format(<span class="str">"delta"</span>) \
+  .table(<span class="str">"banking_prod.bronze.transactions"</span>)
+
+<span class="cm"># Apply transformations and write to Silver</span>
+silver_query = bronze_stream \
+  .filter(col(<span class="str">"amount"</span>).isNotNull()) \
+  .filter(col(<span class="str">"amount"</span>) &gt; <span class="num">0</span>) \
+  .writeStream \
+  .format(<span class="str">"delta"</span>) \
+  .outputMode(<span class="str">"append"</span>) \
+  .option(<span class="str">"checkpointLocation"</span>, <span class="str">"abfss://checkpoints@bankdatalake.dfs.core.windows.net/silver-txn"</span>) \
+  .table(<span class="str">"banking_prod.silver.transactions"</span>)
+<span class="codelabel">PySpark Structured Streaming</span></code></pre>
+
+      <div class="hl-y" style="margin-top:10px">
+        💡 <strong>checkpointLocation is mandatory</strong> for streaming — it records the last processed version so the job can resume from where it left off after a restart. Without it, restarting the job reprocesses all data from the beginning.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTER 10 — PARTITIONING ═══ -->
+  <div class="chapter" id="ch10">
+    <div class="ch-head ch-purple">
+      <div class="ch-num">10</div>
+      <div>
+        <div class="ch-title" style="color:var(--purple)">Partitioning Delta Tables</div>
+        <div class="ch-sub">partitionBy · Partition pruning · When NOT to partition · Z-ORDER vs partitioning</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-purple">Concept</span>
+      <h3 style="margin-bottom:8px">🔷 What is Table Partitioning?</h3>
+      <p><strong>Partitioning</strong> physically splits your Delta table data into separate ADLS subfolders by a column's values. When you query with a filter on the partition column, Spark only reads the relevant subfolder — skipping all others entirely (partition pruning).</p>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-purple">Code &amp; Structure</span>
+      <h3 style="margin-bottom:12px">💻 Partitioning — Code and ADLS Layout</h3>
+      <pre><code><span class="cm"># Write Delta table partitioned by txn_date</span>
+df.write \
+  .format(<span class="str">"delta"</span>) \
+  .mode(<span class="str">"overwrite"</span>) \
+  .partitionBy(<span class="str">"txn_date"</span>) \
+  .save(<span class="str">"abfss://silver@bankdatalake.dfs.core.windows.net/transactions"</span>)
+<span class="codelabel">PySpark</span></code></pre>
+
+      <div class="ftree" style="margin-top:12px">
+        <span class="dir">transactions/</span><br>
+        &nbsp;&nbsp;├── <span class="dir">txn_date=2024-01-01/</span> <span class="cm">← partition folder</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">part-00001.snappy.parquet</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">part-00002.snappy.parquet</span><br>
+        &nbsp;&nbsp;├── <span class="dir">txn_date=2024-01-02/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">part-00001.snappy.parquet</span><br>
+        &nbsp;&nbsp;└── <span class="dir">_delta_log/</span>
+      </div>
+
+      <div class="hl-g" style="margin-top:10px">
+        Query: <code>WHERE txn_date = '2024-01-01'</code> → Spark reads ONLY the <code>txn_date=2024-01-01/</code> folder. All other date folders are completely skipped. This is called <strong>partition pruning</strong>.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-yellow">When NOT to Partition</span>
+      <h3 style="margin-bottom:12px">⚠️ Partitioning Rules — Common Mistakes</h3>
+      <div class="g2">
+        <div class="mc gl">
+          <h4 style="color:var(--green)">✅ Good Partition Columns</h4>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>Low cardinality (few distinct values)</li>
+            <li>Date, month, year, region, status</li>
+            <li>Columns you frequently filter on</li>
+            <li>Columns with balanced data distribution</li>
+          </ul>
+          <p style="font-size:11px;margin-top:8px;color:var(--muted)">Example: PARTITION BY txn_date — only 365 folders per year</p>
+        </div>
+        <div class="mc rl" style="border-left:3px solid var(--red)">
+          <h4 style="color:var(--red)">❌ Bad Partition Columns</h4>
+          <ul style="font-size:12px;margin-top:6px">
+            <li>High cardinality (millions of distinct values)</li>
+            <li>customer_id, txn_id, email, timestamp</li>
+            <li>Creates millions of tiny partition folders</li>
+            <li>Worse than the small files problem!</li>
+          </ul>
+          <p style="font-size:11px;margin-top:8px;color:var(--muted)">Example: PARTITION BY customer_id — 10 million folders, each with 1 row</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="lbl lbl-cyan">Partitioning vs Z-ORDER</span>
+      <h3 style="margin-bottom:12px">⚖️ Partitioning vs Z-ORDER — When to Use Which</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Aspect</th><th>Partitioning</th><th>Z-ORDER</th></tr>
+          <tr><td>How it works</td><td>Creates separate ADLS subfolders per partition value</td><td>Sorts data within files by column values</td></tr>
+          <tr><td>Best for</td><td>Low cardinality columns (date, region)</td><td>High cardinality columns (customer_id)</td></tr>
+          <tr><td>Pruning mechanism</td><td>Folder-level skip (coarse)</td><td>File-level skip via min/max stats (fine-grained)</td></tr>
+          <tr><td>Multiple columns</td><td>Nested folders (complex)</td><td>Multi-column Z-ORDER (simple)</td></tr>
+          <tr><td>Risk</td><td>Too many partitions = small files problem</td><td>Only effective with Data Skipping enabled</td></tr>
+          <tr><td>Banking recommendation</td><td>Partition by txn_date or year/month</td><td>Z-ORDER by customer_id within each partition</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SUMMARY ═══ -->
+  <hr>
+  <div class="chapter" id="summary">
+    <div class="ch-head ch-teal">
+      <div class="ch-num">★</div>
+      <div>
+        <div class="ch-title" style="color:var(--teal)">Complete Summary — Delta Lake at a Glance</div>
+        <div class="ch-sub">Everything connected · Production architecture · Quick reference</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:14px;color:var(--blue)">🗺️ Delta Lake — Full Picture</h3>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:10px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="fb b">Event Hubs<br><small>Real-time streams</small></div>
+          <span class="ar">→</span>
+          <div class="fb o">ADF / Spark<br><small>Batch ingest</small></div>
+          <span class="ar">→</span>
+          <div class="fb c">ADLS Gen2<br><small>Raw Parquet files</small></div>
+          <span class="ar">+</span>
+          <div class="fb y">_delta_log<br><small>Transaction log</small></div>
+          <span class="ar">=</span>
+          <div class="fb g">Delta Table<br><small>ACID + History</small></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="fb g">Delta Table</div>
+          <span class="ar">→</span>
+          <div class="fb t">MERGE<br><small>Upsert/SCD</small></div>
+          <div class="fb p">Time Travel<br><small>Audit/Recovery</small></div>
+          <div class="fb y">OPTIMIZE<br><small>Fix small files</small></div>
+          <div class="fb o">Z-ORDER<br><small>Query speed</small></div>
+          <div class="fb r">VACUUM<br><small>Storage cost</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:14px;color:var(--yellow)">⚡ Delta Lake — Quick Reference Card</h3>
+      <div class="tbl">
+        <table>
+          <tr><th>Command</th><th>Purpose</th><th>Interview Keyword</th></tr>
+          <tr><td><code>df.write.format("delta").save(path)</code></td><td>Create/write Delta table</td><td>"External table, ADLS path"</td></tr>
+          <tr><td><code>.mode("overwrite" / "append")</code></td><td>Write mode</td><td>"Full refresh vs incremental"</td></tr>
+          <tr><td><code>DeltaTable.forPath().merge()</code></td><td>Upsert (insert or update)</td><td>"SCD Type 1/2, MERGE INTO"</td></tr>
+          <tr><td><code>DESCRIBE HISTORY table</code></td><td>Show all commit versions</td><td>"Audit trail, lineage"</td></tr>
+          <tr><td><code>VERSION AS OF N</code></td><td>Query specific past version</td><td>"Time travel, point-in-time"</td></tr>
+          <tr><td><code>RESTORE TABLE TO VERSION N</code></td><td>Rollback to previous state</td><td>"Disaster recovery"</td></tr>
+          <tr><td><code>VACUUM table RETAIN N HOURS</code></td><td>Delete old files, save storage</td><td>"Storage cost, not before 168h"</td></tr>
+          <tr><td><code>OPTIMIZE table</code></td><td>Compact small files → 128MB</td><td>"Small files problem"</td></tr>
+          <tr><td><code>OPTIMIZE table ZORDER BY (col)</code></td><td>Co-locate data for fast filtering</td><td>"Data skipping, query perf"</td></tr>
+          <tr><td><code>mergeSchema = true</code></td><td>Allow new columns on write</td><td>"Schema evolution, additive"</td></tr>
+          <tr><td><code>LOCATION 'abfss://...'</code></td><td>External table — data owned by you</td><td>"DROP safe, production pattern"</td></tr>
+          <tr><td><code>writeStream.format("delta")</code></td><td>Stream into Delta table</td><td>"Unified batch+streaming"</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="g3" style="margin-top:18px">
+      <div class="pro">
+        <p><strong>💡 Pro Tip 1 — VACUUM order:</strong> Always run OPTIMIZE before VACUUM. OPTIMIZE creates better-structured files; VACUUM then cleans up the old ones. Never run VACUUM RETAIN 0 HOURS on a production table without a DRY RUN first.</p>
+      </div>
+      <div class="pro">
+        <p><strong>💡 Pro Tip 2 — Z-ORDER columns:</strong> Z-ORDER your most selective filter columns — the ones used in WHERE clauses that narrow down results significantly. customer_id, account_no, and txn_date together make great Z-ORDER candidates for a banking table.</p>
+      </div>
+      <div class="pro">
+        <p><strong>💡 Pro Tip 3 — checkpoint location:</strong> In streaming jobs, always put the checkpoint in a different ADLS container from your Delta tables. If you accidentally delete the Delta data, you don't want the checkpoint to be gone too.</p>
+      </div>
+    </div>
+
+    <div class="checkpoint" style="margin-top:20px">
+      <span>✅</span>
+      <p><strong>Week 5 Complete!</strong> You now understand every core Delta Lake concept from internals (_delta_log) to production maintenance (OPTIMIZE + VACUUM + Z-ORDER), MERGE operations (SCD Type 1 & 2), and Time Travel recovery — all interview-ready with banking examples and working PySpark code.</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:30px;color:var(--muted);font-size:12px">
+    Month 2 · Week 5 · Delta Lake Core Concepts · Azure + Databricks · Interview-Ready Guide<br>
+    Built from Spark notes, Delta Lake documentation, and Databricks best practices.
+  </div>
+</div>
+</body>
+</html>
