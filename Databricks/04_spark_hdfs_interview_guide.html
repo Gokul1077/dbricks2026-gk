@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HDFS → Spark: The Data Engineer's Interview Masterclass</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c14;
+    --surface: #111622;
+    --surface2: #181f2e;
+    --border: #1e2a40;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-violet: #8b5cf6;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --code-bg: #0d1117;
+    --highlight: #1e3a5f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    counter-reset: chapter;
+  }
+
+  /* ─── HERO ─────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #0a0c14 0%, #0d1a2e 50%, #0a1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content:'';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 60% 30%, rgba(59,130,246,0.08), transparent);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.35);
+    color: var(--accent-blue);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px,5vw,52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero h1 span.grad {
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 640px;
+    margin-bottom: 28px;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .tag-blue  { border-color: rgba(59,130,246,0.4);  color: var(--accent-blue);   background: rgba(59,130,246,0.08);  }
+  .tag-green { border-color: rgba(16,185,129,0.4);  color: var(--accent-green);  background: rgba(16,185,129,0.08);  }
+  .tag-amber { border-color: rgba(245,158,11,0.4);  color: var(--accent-amber);  background: rgba(245,158,11,0.08);  }
+  .tag-cyan  { border-color: rgba(6,182,212,0.4);   color: var(--accent-cyan);   background: rgba(6,182,212,0.08);   }
+  .tag-violet{ border-color: rgba(139,92,246,0.4);  color: var(--accent-violet); background: rgba(139,92,246,0.08);  }
+  .tag-rose  { border-color: rgba(244,63,94,0.4);   color: var(--accent-rose);   background: rgba(244,63,94,0.08);   }
+
+  /* ─── LAYOUT ───────────────────────────────── */
+  .wrapper { max-width: 960px; margin: 0 auto; padding: 0 28px 80px; }
+
+  /* ─── TOC ──────────────────────────────────── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 36px 0;
+  }
+  .toc h2 { font-family:'Syne',sans-serif; font-size:16px; color:var(--accent-blue); margin-bottom:16px; letter-spacing:1px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: var(--text-dim); text-decoration: none; font-size:14px; transition: color 0.2s; }
+  .toc a:hover { color: var(--accent-cyan); }
+  .toc .sub { color: var(--text-muted); font-size:12px; margin-left:8px; }
+
+  /* ─── CHAPTERS ─────────────────────────────── */
+  .chapter {
+    margin-top: 60px;
+    counter-increment: chapter;
+  }
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chapter-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .chapter-num::before { content: "CH-0" counter(chapter); }
+  .chapter h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* ─── SECTION ──────────────────────────────── */
+  .section { margin: 28px 0; }
+  .section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section h3::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 18px;
+    border-radius: 2px;
+    background: var(--accent-cyan);
+  }
+  .section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-amber);
+    margin: 16px 0 8px;
+    letter-spacing: 0.5px;
+  }
+
+  p { margin-bottom: 12px; color: var(--text-dim); }
+  p strong { color: var(--text); }
+
+  /* ─── CARDS ─────────────────────────────────── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin: 20px 0; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
+  .card .card-icon { font-size: 24px; margin-bottom: 10px; }
+  .card .card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:6px; color:var(--text); }
+  .card .card-body { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ─── CALLOUTS ──────────────────────────────── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-left: 3px solid;
+    font-size: 14px;
+  }
+  .callout-blue   { background: rgba(59,130,246,0.07);  border-color: var(--accent-blue);   color: #93c5fd; }
+  .callout-green  { background: rgba(16,185,129,0.07);  border-color: var(--accent-green);  color: #6ee7b7; }
+  .callout-amber  { background: rgba(245,158,11,0.07);  border-color: var(--accent-amber);  color: #fcd34d; }
+  .callout-rose   { background: rgba(244,63,94,0.07);   border-color: var(--accent-rose);   color: #fda4af; }
+  .callout-violet { background: rgba(139,92,246,0.07);  border-color: var(--accent-violet); color: #c4b5fd; }
+  .callout strong { color: #fff; }
+  .callout-title { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; display:block; }
+
+  /* ─── TABLE ─────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--surface2); }
+  th {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid rgba(30,42,64,0.6); color: var(--text-muted); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(59,130,246,0.04); }
+  td strong { color: var(--text); }
+  td .yes { color: var(--accent-green); font-weight:600; }
+  td .no  { color: var(--accent-rose);  font-weight:600; }
+  td .partial { color: var(--accent-amber); font-weight:600; }
+
+  /* ─── CODE ──────────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  pre .code-label {
+    position: absolute;
+    top: 8px; right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .num { color: #f78c6c; }
+  .cm  { color: #546e7a; font-style:italic; }
+  .var { color: #89ddff; }
+  .cls { color: #ffcb6b; }
+  .op  { color: #89ddff; }
+  .inline-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(59,130,246,0.12);
+    color: var(--accent-cyan);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  /* ─── DIAGRAM ───────────────────────────────── */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .diagram-title {
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:16px;
+  }
+
+  /* Flow diagram SVG */
+  .flow-svg { width: 100%; max-width: 800px; display: block; margin: 0 auto; }
+  .flow-box { fill: var(--surface2); stroke: var(--accent-blue); stroke-width: 1.5; rx: 8; ry: 8; }
+  .flow-box-green { fill: rgba(16,185,129,0.1); stroke: var(--accent-green); stroke-width: 1.5; }
+  .flow-box-amber { fill: rgba(245,158,11,0.1); stroke: var(--accent-amber); stroke-width: 1.5; }
+  .flow-box-rose  { fill: rgba(244,63,94,0.1);  stroke: var(--accent-rose);  stroke-width: 1.5; }
+  .flow-box-violet{ fill: rgba(139,92,246,0.1); stroke: var(--accent-violet);stroke-width: 1.5; }
+  .flow-text { fill: var(--text); font-family: 'DM Sans',sans-serif; font-size: 13px; text-anchor: middle; dominant-baseline: middle; }
+  .flow-text-sm { fill: var(--text-muted); font-family:'JetBrains Mono',monospace; font-size:10px; text-anchor:middle; dominant-baseline:middle; }
+  .flow-arrow { stroke: var(--text-muted); stroke-width:1.5; fill: none; marker-end: url(#arr); }
+
+  /* ─── TIMELINE ──────────────────────────────── */
+  .timeline { position: relative; padding-left: 32px; margin: 20px 0; }
+  .timeline::before { content:''; position:absolute; left:8px; top:0; bottom:0; width:2px; background: linear-gradient(to bottom, var(--accent-blue), var(--accent-violet)); border-radius:2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-dot { position:absolute; left:-28px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--accent-blue); }
+  .tl-year { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent-cyan); margin-bottom:4px; letter-spacing:1px; }
+  .tl-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .tl-body { font-size:13px; color:var(--text-muted); }
+
+  /* ─── INTERVIEW BOX ─────────────────────────── */
+  .interview-box {
+    background: linear-gradient(135deg, rgba(245,158,11,0.04), rgba(245,158,11,0.08));
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .interview-box h3 { font-family:'Syne',sans-serif; font-size:15px; color:var(--accent-amber); margin-bottom:16px; }
+  .interview-q {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .interview-q .q-num { color:var(--accent-amber); font-weight:700; font-size:12px; margin-bottom:4px; display:block; }
+  .interview-a { font-size:13px; color:var(--text-muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--border); }
+  .mistake { color: var(--accent-rose); }
+  .correct { color: var(--accent-green); }
+
+  /* ─── QUIZ ──────────────────────────────────── */
+  .quiz-box {
+    background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(139,92,246,0.1));
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .quiz-box h3 { font-family:'Syne',sans-serif; font-size:15px; color:var(--accent-violet); margin-bottom:14px; }
+  .quiz-q { font-size:14px; color:var(--text); margin-bottom:14px; font-weight:500; }
+  .quiz-option {
+    display: flex; align-items: flex-start; gap:10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover { border-color:var(--accent-violet); color:var(--text); }
+  .quiz-option .opt-label { color:var(--accent-violet); font-weight:700; font-family:'JetBrains Mono',monospace; min-width:18px; }
+  .quiz-answer { background:rgba(16,185,129,0.07); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:14px 16px; margin-top:12px; font-size:13px; color:#6ee7b7; }
+  .quiz-answer strong { color: var(--accent-green); }
+
+  /* ─── PRO TIP ───────────────────────────────── */
+  .pro-tips { background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.2); border-radius:8px; padding:20px; margin:16px 0; }
+  .pro-tips h4 { color:var(--accent-cyan); font-family:'Syne',sans-serif; font-size:14px; margin-bottom:12px; }
+  .pro-tips ul { padding-left:20px; }
+  .pro-tips li { margin-bottom:8px; font-size:13px; color:var(--text-muted); }
+  .pro-tips li strong { color:var(--text); }
+
+  /* ─── STEP LIST ─────────────────────────────── */
+  .steps { counter-reset: step; margin: 16px 0; }
+  .step-item { counter-increment: step; display:flex; gap:16px; margin-bottom:14px; }
+  .step-num {
+    min-width: 28px; height: 28px;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.4);
+    color: var(--accent-blue);
+    border-radius: 50%;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-num::before { content: counter(step); }
+  .step-body { font-size:14px; color:var(--text-muted); }
+  .step-body strong { color:var(--text); }
+
+  /* ─── DIVIDER ───────────────────────────────── */
+  .divider { border:none; border-top:1px solid var(--border); margin:40px 0; }
+
+  /* ─── SNAPSHOT ──────────────────────────────── */
+  .snapshot {
+    display: flex;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent-cyan);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    align-items: flex-start;
+  }
+  .snapshot-icon { font-size:28px; flex-shrink:0; }
+  .snapshot-text h4 { font-family:'Syne',sans-serif; font-size:16px; color:var(--text); margin-bottom:6px; }
+  .snapshot-text p { font-size:13px; color:var(--text-muted); margin:0; }
+
+  /* ─── BADGE INLINE ──────────────────────────── */
+  .badge { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; padding:2px 7px; border-radius:3px; vertical-align:middle; margin-left:4px; }
+  .badge-blue   { background:rgba(59,130,246,0.15); color:var(--accent-blue); }
+  .badge-green  { background:rgba(16,185,129,0.15); color:var(--accent-green); }
+  .badge-amber  { background:rgba(245,158,11,0.15); color:var(--accent-amber); }
+  .badge-rose   { background:rgba(244,63,94,0.15);  color:var(--accent-rose); }
+
+  ul.list { padding-left:20px; margin:10px 0; }
+  ul.list li { margin-bottom:6px; font-size:14px; color:var(--text-muted); }
+  ul.list li strong { color:var(--text); }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+  @media(max-width:600px){ .two-col{ grid-template-columns:1fr; } }
+
+  /* scroll */
+  ::-webkit-scrollbar{ width:6px; height:6px; }
+  ::-webkit-scrollbar-track{ background:var(--bg); }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="hero">
+  <div style="max-width:960px;margin:0 auto;padding:0 28px;">
+    <div class="hero-badge">Data Engineering Interview Masterclass</div>
+    <h1>HDFS → Apache Spark<br><span class="grad">Why Modern Data Engineering Moved On</span></h1>
+    <p class="hero-sub">A complete chapter-by-chapter guide covering prerequisites, HDFS internals, MapReduce pain points, Spark architecture, and the full execution flow — tailored for interview success.</p>
+    <div class="hero-tags">
+      <span class="tag tag-blue">HDFS</span>
+      <span class="tag tag-cyan">Apache Spark</span>
+      <span class="tag tag-green">ADLS Gen2</span>
+      <span class="tag tag-violet">Databricks</span>
+      <span class="tag tag-amber">Interview Prep</span>
+      <span class="tag tag-rose">PySpark</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+<!-- TOC -->
+<div class="toc">
+  <h2>📋 TABLE OF CONTENTS</h2>
+  <ol>
+    <li><a href="#ch1">Prerequisites — JVM, Bytecode & Distributed Computing Basics</a></li>
+    <li><a href="#ch2">File Systems — FS vs DFS (Distributed File System)</a></li>
+    <li><a href="#ch3">HDFS — Architecture, Internals & Interview Deep Dive</a></li>
+    <li><a href="#ch4">MapReduce — How it Works & Why it Hurts</a></li>
+    <li><a href="#ch5">Why Modern Stacks Moved to Apache Spark</a></li>
+    <li><a href="#ch6">Apache Spark Architecture — Complete Walkthrough</a></li>
+    <li><a href="#ch7">Spark Execution Flow — Jobs → Stages → Tasks</a></li>
+    <li><a href="#ch8">HDFS vs ADLS Gen2 — Cloud Storage for Modern Stacks</a></li>
+    <li><a href="#ch9">Real-World Banking Pipeline — Azure + Databricks</a></li>
+    <li><a href="#ch10">Master Interview Q&amp;A + Quiz</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 1: PREREQUISITES                    -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>Prerequisites — JVM, Bytecode &amp; Distributed Computing Basics</h2>
+  </div>
+
+  <div class="section">
+    <h3>What is the JVM?</h3>
+    <div class="snapshot">
+      <div class="snapshot-icon">☕</div>
+      <div class="snapshot-text">
+        <h4>Java Virtual Machine (JVM)</h4>
+        <p>A virtual runtime engine that allows Java (or Scala/Kotlin) code to run on <strong>any operating system</strong> without recompiling. Think of it as a universal translator — you write code once, JVM runs it everywhere.</p>
+      </div>
+    </div>
+    <p><strong>Why does Spark care about JVM?</strong> Apache Spark is written in <strong>Scala</strong>, which compiles to JVM bytecode. Every Spark Executor, Driver process, and Worker runs inside a JVM. Even PySpark talks to JVM via a bridge called <strong>Py4J</strong>.</p>
+    <div class="callout callout-blue">
+      <span class="callout-title">🔵 Key Mental Model</span>
+      <strong>Java Source Code (.java)</strong> → compiler → <strong>Bytecode (.class file)</strong> → JVM interprets at runtime on any OS/hardware.
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Key Terms You Must Know Before Everything Else</h3>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🧱</div>
+        <div class="card-title">Node</div>
+        <div class="card-body">A single machine (physical server or virtual machine) in a cluster. Has its own CPU, RAM, and disk.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🖥️</div>
+        <div class="card-title">Cluster</div>
+        <div class="card-body">A collection of nodes connected by a network, working together as one logical unit.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-title">Block</div>
+        <div class="card-body">A fixed-size physical chunk of data stored on disk. In HDFS, default = 128 MB. Exists BEFORE Spark runs.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔀</div>
+        <div class="card-title">Partition</div>
+        <div class="card-body">A logical unit of data Spark creates at runtime. Defines how much data one task will process. Configurable.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">Process vs Thread</div>
+        <div class="card-body">A process = isolated JVM instance. A thread = lightweight execution unit inside a process. Executor cores = threads.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🦥</div>
+        <div class="card-title">Lazy Evaluation</div>
+        <div class="card-body">Spark does NOT execute transformations immediately. It builds a plan and executes only when an <strong>action</strong> (like .count()) is called.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 2: FS vs DFS                         -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>File Systems — Regular FS vs Distributed File System (DFS)</h2>
+  </div>
+
+  <div class="snapshot">
+    <div class="snapshot-icon">💾</div>
+    <div class="snapshot-text">
+      <h4>The Core Problem</h4>
+      <p>A single machine's disk can hold maybe 10–20 TB. Modern enterprises deal with <strong>petabytes</strong>. You need a way to spread data across hundreds of machines and still access it as if it's one file system.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>What is a Regular File System?</h3>
+    <p>A regular file system (like ext4 on Linux, NTFS on Windows) manages how data is stored and retrieved on a <strong>single machine's disk</strong>. It knows where files start and end on the local disk.</p>
+    <p><strong>Limitation:</strong> If your file is 5 TB and your disk is 1 TB — you can't store it. You can't process it either without reading it sequentially.</p>
+  </div>
+
+  <div class="section">
+    <h3>What is a Distributed File System (DFS)?</h3>
+    <p>A DFS <strong>splits large files into blocks</strong> and distributes those blocks across multiple machines. It presents a unified namespace — you see one big file, but internally it's spread across 100 nodes.</p>
+    <div class="two-col">
+      <div class="callout callout-rose">
+        <span class="callout-title">❌ Regular FS</span>
+        One machine. One disk. If disk fails → data lost. Can't scale beyond hardware limit.
+      </div>
+      <div class="callout callout-green">
+        <span class="callout-title">✅ Distributed FS (DFS/HDFS)</span>
+        Many machines. Data replicated. If one node fails → other replicas serve data. Scales horizontally.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>FS vs DFS — Comparison</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Regular File System</th><th>Distributed File System (DFS)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Storage location</strong></td><td>Single machine disk</td><td>Multiple machines across network</td></tr>
+          <tr><td><strong>File size limit</strong></td><td>Limited by single disk</td><td>Limited only by cluster size (practically unlimited)</td></tr>
+          <tr><td><strong>Fault tolerance</strong></td><td class="no">None — disk failure = data lost</td><td class="yes">Yes — data replicated (default 3× in HDFS)</td></tr>
+          <tr><td><strong>Parallelism</strong></td><td class="no">Sequential reads/writes</td><td class="yes">Multiple nodes read in parallel</td></tr>
+          <tr><td><strong>Examples</strong></td><td>ext4, NTFS, APFS</td><td>HDFS, ADLS Gen2, S3, GCS</td></tr>
+          <tr><td><strong>Data locality</strong></td><td>Always local (trivially)</td><td>HDFS: yes. ADLS: managed by Azure</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 3: HDFS                             -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>HDFS — Architecture, Internals &amp; Interview Deep Dive</h2>
+  </div>
+
+  <div class="snapshot">
+    <div class="snapshot-icon">🗄️</div>
+    <div class="snapshot-text">
+      <h4>Hadoop Distributed File System (HDFS)</h4>
+      <p>HDFS is a <strong>distributed, fault-tolerant file system</strong> designed to store very large files (GBs to TBs) across a cluster of commodity hardware. It is the storage backbone of the Hadoop ecosystem.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>The 2-Component Architecture</h3>
+    <p>HDFS has exactly two types of components — <strong>NameNode</strong> (the brain) and <strong>DataNode</strong> (the storage worker):</p>
+
+    <!-- SVG Architecture Diagram -->
+    <div class="diagram">
+      <div class="diagram-title">📐 HDFS Architecture Diagram</div>
+      <svg viewBox="0 0 720 380" class="flow-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+          </marker>
+        </defs>
+
+        <!-- Client -->
+        <rect x="10" y="160" width="110" height="60" rx="8" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="65" y="191" class="flow-text" fill="#c4b5fd" font-size="13">Client App</text>
+        <text x="65" y="207" class="flow-text-sm">(PySpark)</text>
+
+        <!-- NameNode -->
+        <rect x="200" y="80" width="140" height="80" rx="8" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1.5"/>
+        <text x="270" y="112" class="flow-text" fill="#fda4af" font-size="14" font-weight="bold">NameNode</text>
+        <text x="270" y="130" class="flow-text-sm">(Master / Brain)</text>
+        <text x="270" y="146" class="flow-text-sm">metadata only</text>
+
+        <!-- Secondary NameNode -->
+        <rect x="200" y="240" width="140" height="60" rx="8" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="270" y="266" class="flow-text" fill="#fcd34d" font-size="12">Secondary NameNode</text>
+        <text x="270" y="284" class="flow-text-sm">(NOT a hot standby)</text>
+
+        <!-- DataNodes -->
+        <rect x="440" y="40" width="120" height="60" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="500" y="65" class="flow-text" fill="#6ee7b7" font-size="13">DataNode 1</text>
+        <text x="500" y="82" class="flow-text-sm">Blk-1, Blk-4, Blk-7</text>
+
+        <rect x="440" y="155" width="120" height="60" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="500" y="180" class="flow-text" fill="#6ee7b7" font-size="13">DataNode 2</text>
+        <text x="500" y="197" class="flow-text-sm">Blk-2, Blk-5, Blk-8</text>
+
+        <rect x="440" y="270" width="120" height="60" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="500" y="295" class="flow-text" fill="#6ee7b7" font-size="13">DataNode 3</text>
+        <text x="500" y="312" class="flow-text-sm">Blk-3, Blk-6, Blk-9</text>
+
+        <!-- Replication labels -->
+        <rect x="590" y="40" width="120" height="60" rx="8" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="650" y="65" class="flow-text" fill="#93c5fd" font-size="11">Replication</text>
+        <text x="650" y="82" class="flow-text-sm">factor = 3</text>
+
+        <!-- Arrows: Client → NameNode -->
+        <line x1="120" y1="182" x2="196" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+        <text x="148" y="148" fill="#8b5cf6" font-size="10" font-family="JetBrains Mono">1. Ask where</text>
+        <text x="148" y="160" fill="#8b5cf6" font-size="10" font-family="JetBrains Mono">is my file?</text>
+
+        <!-- NameNode → Client block locations -->
+        <line x1="196" y1="145" x2="120" y2="185" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+        <text x="130" y="170" fill="#f43f5e" font-size="10" font-family="JetBrains Mono">2. Here are</text>
+        <text x="130" y="182" fill="#f43f5e" font-size="10" font-family="JetBrains Mono">block locs</text>
+
+        <!-- Client → DataNodes -->
+        <line x1="120" y1="175" x2="436" y2="75" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="120" y1="190" x2="436" y2="190" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="120" y1="200" x2="436" y2="290" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="280" y="225" fill="#10b981" font-size="11" font-family="JetBrains Mono">3. Read blocks directly</text>
+
+        <!-- NameNode ↔ Secondary -->
+        <line x1="270" y1="160" x2="270" y2="236" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+        <text x="280" y="200" fill="#f59e0b" font-size="10" font-family="JetBrains Mono">checkpoint</text>
+
+        <!-- DataNode → Replication -->
+        <line x1="560" y1="70" x2="586" y2="70" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">NameNode (Master)</div>
+        <div class="card-body">
+          Stores only <strong>metadata</strong> (file names, permissions, block-to-DataNode mappings). It does NOT store actual file data. The single point of contact for all clients. If NameNode goes down → entire HDFS is unavailable (SPOF).
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">💿</div>
+        <div class="card-title">DataNode (Worker)</div>
+        <div class="card-body">
+          Stores actual <strong>data blocks</strong>. Sends heartbeats to NameNode every 3 seconds. Handles block replication with other DataNodes. Multiple DataNodes per cluster.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📑</div>
+        <div class="card-title">Secondary NameNode</div>
+        <div class="card-body">
+          <strong>⚠️ Misleading name!</strong> It is NOT a hot standby. Its job is to periodically merge the fsimage + edit logs to reduce NameNode startup time. Full HA needs separate NameNode HA setup.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔢</div>
+        <div class="card-title">Block Size</div>
+        <div class="card-body">
+          Default = <strong>128 MB</strong> (Hadoop 2.x). Large block size reduces metadata overhead. A 1 GB file = 8 blocks of 128 MB each.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>How HDFS Stores a File — Step by Step</h3>
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Client asks NameNode:</strong> "I want to store a 384 MB file." NameNode responds with a list of DataNodes for each of the 3 blocks (384 / 128 = 3 blocks).</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Client writes Block-1 to DataNode-1.</strong> DataNode-1 pipelines (replicates) Block-1 to DataNode-2, which replicates to DataNode-3.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Same for Block-2 and Block-3</strong> — different DataNodes used to spread load.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>NameNode updates its metadata</strong> with block locations. Client never talks to NameNode for actual data — only for metadata.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>DataNodes send heartbeats</strong> every 3 seconds. If a node dies, NameNode detects it and triggers re-replication of its blocks elsewhere.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>HDFS — Key Properties for Interviews</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>Value / Behavior</th><th>Why It Matters</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Default block size</strong></td><td>128 MB (Hadoop 2), 64 MB (Hadoop 1)</td><td>Reduces NameNode metadata load</td></tr>
+          <tr><td><strong>Replication factor</strong></td><td>3 (default)</td><td>1 original + 2 copies = fault tolerance</td></tr>
+          <tr><td><strong>Write model</strong></td><td>Write-once, append-only</td><td>No random writes; optimized for batch</td></tr>
+          <tr><td><strong>Data locality</strong></td><td>NameNode knows which DataNode has which block</td><td>Spark moves computation to data, not data to computation</td></tr>
+          <tr><td><strong>SPOF risk</strong></td><td>Single NameNode = single point of failure</td><td>HDFS HA (High Availability) needed for production</td></tr>
+          <tr><td><strong>Best for</strong></td><td>Large sequential reads/writes</td><td>Bad for random access, small files, real-time</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Data Locality — The Killer Feature of HDFS</h3>
+    <p>In HDFS, Spark knows <em>exactly which DataNode has which block</em>. So Spark schedules tasks to run <strong>on the same node where the data lives</strong>, avoiding expensive network transfers.</p>
+    <div class="callout callout-green">
+      <span class="callout-title">✅ Data Locality Benefit</span>
+      <strong>Without data locality:</strong> Read 128 MB over network = slow.<br>
+      <strong>With data locality:</strong> Read 128 MB from local disk = 10-100× faster.<br>
+      Spark's task scheduler honors locality levels: PROCESS_LOCAL → NODE_LOCAL → RACK_LOCAL → ANY
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>HDFS Limitations (Why We Moved On)</h3>
+    <ul class="list">
+      <li><strong>SPOF:</strong> Single NameNode = entire cluster down if it fails (unless HA configured)</li>
+      <li><strong>Small files problem:</strong> Millions of small files overwhelm NameNode memory</li>
+      <li><strong>On-premise only:</strong> Requires dedicated hardware, high ops cost</li>
+      <li><strong>Not cloud-native:</strong> Cannot scale elastically like ADLS or S3</li>
+      <li><strong>No ACID transactions:</strong> No update/delete support natively</li>
+      <li><strong>Tightly coupled with compute:</strong> Storage and compute cannot scale independently</li>
+    </ul>
+  </div>
+
+  <div class="interview-box">
+    <h3>🎤 HDFS Interview Questions</h3>
+    <div class="interview-q">
+      <span class="q-num">Q1. What is the role of NameNode vs DataNode in HDFS?</span>
+      <div class="interview-a"><strong>Model Answer:</strong> NameNode is the master that stores metadata (file-to-block mapping, block-to-DataNode mapping, permissions) but never stores actual data. DataNodes store the physical blocks and handle all read/write operations. Clients contact NameNode to discover block locations, then interact with DataNodes directly.</div>
+    </div>
+    <div class="interview-q">
+      <span class="q-num">Q2. What happens when a DataNode fails?</span>
+      <div class="interview-a"><strong>Model Answer:</strong> DataNode sends heartbeats every 3 seconds. If NameNode doesn't receive a heartbeat for 10 minutes, it marks that node as dead and instructs other DataNodes to re-replicate the blocks that were on the failed node, restoring the replication factor back to 3.</div>
+    </div>
+    <div class="interview-q">
+      <span class="q-num">Q3 (Trick). Is Secondary NameNode a backup for NameNode?</span>
+      <div class="interview-a"><span class="mistake">❌ Common mistake:</span> Saying "yes, Secondary NameNode is a standby." <span class="correct">✅ Correct:</span> Secondary NameNode is a checkpointing service — it merges the fsimage and edit logs periodically to prevent edit log from growing too large. For true HA, you need HDFS NameNode HA with a Standby NameNode and ZooKeeper.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 4: MapReduce                        -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>MapReduce — How It Works &amp; Why It Hurts</h2>
+  </div>
+
+  <div class="snapshot">
+    <div class="snapshot-icon">🗺️</div>
+    <div class="snapshot-text">
+      <h4>MapReduce (Hadoop)</h4>
+      <p>A programming model for processing large datasets by breaking work into two phases: <strong>Map</strong> (filter &amp; transform data in parallel) and <strong>Reduce</strong> (aggregate results). Every intermediate result is written to disk.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>How MapReduce Works — Word Count Example</h3>
+
+    <div class="diagram">
+      <div class="diagram-title">📐 MapReduce Word Count Flow</div>
+      <svg viewBox="0 0 700 260" class="flow-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+          </marker>
+        </defs>
+
+        <!-- Input -->
+        <rect x="10" y="100" width="90" height="60" rx="6" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="55" y="125" class="flow-text" fill="#93c5fd" font-size="12">Input</text>
+        <text x="55" y="143" class="flow-text-sm">HDFS Blocks</text>
+
+        <!-- Map Phase -->
+        <rect x="130" y="60" width="100" height="50" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="180" y="80" class="flow-text" fill="#6ee7b7" font-size="12">Map Task 1</text>
+        <text x="180" y="97" class="flow-text-sm">(hello,1)(world,1)</text>
+
+        <rect x="130" y="125" width="100" height="50" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="180" y="145" class="flow-text" fill="#6ee7b7" font-size="12">Map Task 2</text>
+        <text x="180" y="162" class="flow-text-sm">(hello,1)(data,1)</text>
+
+        <rect x="130" y="190" width="100" height="50" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="180" y="210" class="flow-text" fill="#6ee7b7" font-size="12">Map Task 3</text>
+        <text x="180" y="227" class="flow-text-sm">(world,1)(data,1)</text>
+
+        <!-- DISK writes -->
+        <rect x="265" y="85" width="80" height="125" rx="6" fill="rgba(244,63,94,0.08)" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="305" y="130" class="flow-text" fill="#fda4af" font-size="11">DISK I/O</text>
+        <text x="305" y="148" class="flow-text-sm">⚠️ Slow!</text>
+        <text x="305" y="163" class="flow-text-sm">Shuffle+Sort</text>
+        <text x="305" y="178" class="flow-text-sm">on disk</text>
+
+        <!-- Reduce Phase -->
+        <rect x="380" y="70" width="110" height="55" rx="6" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="435" y="91" class="flow-text" fill="#c4b5fd" font-size="12">Reduce Task 1</text>
+        <text x="435" y="109" class="flow-text-sm">hello→2, world→2</text>
+
+        <rect x="380" y="165" width="110" height="55" rx="6" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="435" y="186" class="flow-text" fill="#c4b5fd" font-size="12">Reduce Task 2</text>
+        <text x="435" y="204" class="flow-text-sm">data→2</text>
+
+        <!-- Output -->
+        <rect x="520" y="100" width="90" height="60" rx="6" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="565" y="125" class="flow-text" fill="#fcd34d" font-size="12">Output</text>
+        <text x="565" y="143" class="flow-text-sm">HDFS file</text>
+
+        <!-- Arrows -->
+        <line x1="100" y1="118" x2="126" y2="90" stroke="#3b82f6" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="100" y1="130" x2="126" y2="148" stroke="#3b82f6" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="100" y1="140" x2="126" y2="210" stroke="#3b82f6" stroke-width="1.3" marker-end="url(#arr2)"/>
+
+        <line x1="230" y1="90" x2="261" y2="120" stroke="#10b981" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="230" y1="150" x2="261" y2="148" stroke="#10b981" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="230" y1="210" x2="261" y2="175" stroke="#10b981" stroke-width="1.3" marker-end="url(#arr2)"/>
+
+        <line x1="345" y1="130" x2="376" y2="100" stroke="#f43f5e" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="345" y1="148" x2="376" y2="190" stroke="#f43f5e" stroke-width="1.3" marker-end="url(#arr2)"/>
+
+        <line x1="490" y1="100" x2="516" y2="118" stroke="#8b5cf6" stroke-width="1.3" marker-end="url(#arr2)"/>
+        <line x1="490" y1="190" x2="516" y2="145" stroke="#8b5cf6" stroke-width="1.3" marker-end="url(#arr2)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Pain Point 1: Disk I/O Hell</h3>
+    <p>Every intermediate result — after Map, after Shuffle — is written to <strong>disk (HDFS)</strong>. Then the Reduce phase reads it back from disk. For iterative algorithms (like ML training with 100 iterations), this means <strong>200 disk read/write operations</strong>.</p>
+    <div class="callout callout-rose">
+      <span class="callout-title">🔴 MapReduce Bottleneck</span>
+      <strong>RAM access speed:</strong> ~100 GB/s &nbsp;|&nbsp; <strong>Disk access speed:</strong> ~200 MB/s<br>
+      MapReduce forces everything through disk. Spark keeps intermediate data in RAM. Result: Spark is 10–100× faster for iterative workloads.
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Pain Point 2: Rigid One Shuffle Workflow</h3>
+    <p>Every MapReduce job has <strong>exactly one Map phase and one Reduce phase</strong>. If your pipeline needs two different grouping keys (e.g., join on customer_id then aggregate on country), you need <strong>two separate MapReduce jobs</strong> — each reading and writing from HDFS.</p>
+
+    <pre><code><span class="cm">-- Real-world query needing 2 MapReduce jobs:</span>
+<span class="cm">-- "Total order amount per country for COMPLETED orders only"</span>
+
+<span class="cm">-- MapReduce Job 1: Filter completed orders + JOIN orders with customers</span>
+<span class="cm">-- Intermediate result → written to HDFS disk</span>
+
+<span class="cm">-- MapReduce Job 2: Read from HDFS again → GROUP BY country → SUM amount</span>
+<span class="cm">-- Final result → written to HDFS</span>
+
+<span class="cm">-- Spark does this in ONE DAG, in-memory, with ZERO intermediate HDFS writes</span>
+<span class="kw">df</span> = spark.read.parquet(<span class="str">"orders/"</span>)\
+  .filter(<span class="str">"status = 'COMPLETED'"</span>)\
+  .join(customers, <span class="str">"customer_id"</span>)\
+  .groupBy(<span class="str">"country"</span>)\
+  .agg(sum(<span class="str">"amount"</span>).alias(<span class="str">"total"</span>))
+<span class="cm"># One DAG. In-memory. No HDFS intermediate writes.</span>
+</code><span class="code-label">PYSPARK</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 5: WHY SPARK                        -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>Why Modern Stacks Moved to Apache Spark</h2>
+  </div>
+
+  <div class="section">
+    <h3>Evolution Timeline</h3>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-rose)"></div>
+        <div class="tl-year">2004</div>
+        <div class="tl-title">Google MapReduce Paper</div>
+        <div class="tl-body">Google published the MapReduce paper. Hadoop implemented it as open-source. Great for batch ETL, but extremely slow for iterative/ML workloads.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-amber)"></div>
+        <div class="tl-year">2006</div>
+        <div class="tl-title">Apache Hadoop Released</div>
+        <div class="tl-body">HDFS + MapReduce becomes the standard for big data. Enterprises invest heavily in on-premise Hadoop clusters.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-cyan)"></div>
+        <div class="tl-year">2009</div>
+        <div class="tl-title">Apache Spark Born (UC Berkeley)</div>
+        <div class="tl-body">Research project to solve MapReduce's in-memory limitation. Introduces RDDs and in-memory processing. Initial benchmarks show 100× speedup for ML workloads.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-blue)"></div>
+        <div class="tl-year">2013</div>
+        <div class="tl-title">Spark becomes Apache project</div>
+        <div class="tl-body">DataFrames API introduced. Catalyst Optimizer created. Spark SQL added. Streaming support begins.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-violet)"></div>
+        <div class="tl-year">2016</div>
+        <div class="tl-title">Structured Streaming + Databricks</div>
+        <div class="tl-body">Spark 2.0: Unified batch + streaming API. Databricks goes commercial, bringing Spark to Azure/cloud with managed clusters.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-green)"></div>
+        <div class="tl-year">2020+</div>
+        <div class="tl-title">Delta Lake + ADLS = Modern Lakehouse</div>
+        <div class="tl-body">HDFS largely replaced by cloud object storage (ADLS Gen2, S3). Delta Lake adds ACID transactions. Storage and compute fully decoupled. This is today's stack.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Spark vs MapReduce — The Critical Differences</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>MapReduce (Hadoop)</th><th>Apache Spark</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Intermediate storage</strong></td><td class="no">Disk (HDFS) — always</td><td class="yes">RAM (memory-first)</td></tr>
+          <tr><td><strong>Speed</strong></td><td class="no">Slow (disk I/O bottleneck)</td><td class="yes">10–100× faster (in-memory)</td></tr>
+          <tr><td><strong>Programming model</strong></td><td class="no">Rigid Map → Shuffle → Reduce</td><td class="yes">DAG of flexible transformations</td></tr>
+          <tr><td><strong>ML support</strong></td><td class="no">Very poor (too many disk writes per iteration)</td><td class="yes">Native MLlib, iterative algorithms in RAM</td></tr>
+          <tr><td><strong>Streaming</strong></td><td class="no">Not native</td><td class="yes">Structured Streaming built-in</td></tr>
+          <tr><td><strong>SQL support</strong></td><td class="partial">Hive (slow)</td><td class="yes">Spark SQL + Catalyst Optimizer</td></tr>
+          <tr><td><strong>Fault tolerance</strong></td><td class="yes">Yes (recompute from disk)</td><td class="yes">Yes (RDD lineage — recompute from lineage)</td></tr>
+          <tr><td><strong>Language support</strong></td><td class="partial">Java only (natively)</td><td class="yes">Python, Scala, Java, R, SQL</td></tr>
+          <tr><td><strong>Cloud-native</strong></td><td class="no">On-premise biased</td><td class="yes">Works with ADLS, S3, cloud object stores</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>How Spark Solves Each MapReduce Pain Point</h3>
+    <div class="two-col">
+      <div class="callout callout-green">
+        <span class="callout-title">✅ In-Memory Processing</span>
+        Spark stores intermediate results in <strong>executor RAM</strong>, not disk. Only shuffles (stage boundaries) write to disk. For iterative ML (100 epochs), Spark reads data once into memory and iterates in RAM.
+      </div>
+      <div class="callout callout-blue">
+        <span class="callout-title">✅ DAG Execution Model</span>
+        Spark builds a full <strong>DAG (Directed Acyclic Graph)</strong> of all transformations before executing. This allows Catalyst Optimizer to reorder, prune, and merge operations — impossible in MapReduce's fixed Map→Reduce model.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 6: SPARK ARCHITECTURE               -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>Apache Spark Architecture — Complete Walkthrough</h2>
+  </div>
+
+  <div class="section">
+    <h3>The Big Picture — All Components</h3>
+
+    <div class="diagram">
+      <div class="diagram-title">📐 Spark Full Architecture</div>
+      <svg viewBox="0 0 720 440" class="flow-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+          </marker>
+        </defs>
+
+        <!-- Driver Program -->
+        <rect x="10" y="10" width="200" height="160" rx="8" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="2"/>
+        <text x="110" y="35" class="flow-text" fill="#93c5fd" font-size="14" font-weight="bold">Driver JVM</text>
+
+        <rect x="25" y="48" width="170" height="35" rx="5" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1"/>
+        <text x="110" y="70" class="flow-text" fill="#67e8f9" font-size="12">SparkSession / SparkContext</text>
+
+        <rect x="25" y="92" width="80" height="35" rx="5" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="65" y="114" class="flow-text" fill="#fcd34d" font-size="11">DAG Scheduler</text>
+
+        <rect x="115" y="92" width="80" height="35" rx="5" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="1"/>
+        <text x="155" y="114" class="flow-text" fill="#c4b5fd" font-size="11">Task Scheduler</text>
+
+        <rect x="25" y="138" width="170" height="25" rx="5" fill="rgba(244,63,94,0.08)" stroke="#f43f5e" stroke-width="1"/>
+        <text x="110" y="154" class="flow-text" fill="#fda4af" font-size="11">Your PySpark Code (Driver Program)</text>
+
+        <!-- Cluster Manager -->
+        <rect x="260" y="10" width="200" height="80" rx="8" fill="rgba(244,63,94,0.08)" stroke="#f43f5e" stroke-width="2"/>
+        <text x="360" y="38" class="flow-text" fill="#fda4af" font-size="14" font-weight="bold">Cluster Manager</text>
+        <text x="360" y="58" class="flow-text-sm">(YARN / Standalone / K8s)</text>
+        <text x="360" y="74" class="flow-text-sm">Allocates CPU + Memory resources</text>
+
+        <!-- Worker Node 1 -->
+        <rect x="10" y="240" width="210" height="175" rx="8" fill="rgba(16,185,129,0.06)" stroke="#10b981" stroke-width="2"/>
+        <text x="115" y="262" class="flow-text" fill="#6ee7b7" font-size="13" font-weight="bold">Worker Node 1</text>
+        <text x="115" y="278" class="flow-text-sm">Worker JVM → launches executor</text>
+
+        <rect x="25" y="290" width="180" height="110" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+        <text x="115" y="310" class="flow-text" fill="#6ee7b7" font-size="12">Executor JVM</text>
+        <text x="115" y="328" class="flow-text-sm">cores=4 | memory=8GB</text>
+
+        <rect x="35" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="54" y="356" class="flow-text-sm" fill="#fcd34d">Task1</text>
+        <rect x="78" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="97" y="356" class="flow-text-sm" fill="#fcd34d">Task2</text>
+        <rect x="121" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="140" y="356" class="flow-text-sm" fill="#fcd34d">Task3</text>
+        <rect x="164" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="183" y="356" class="flow-text-sm" fill="#fcd34d">Task4</text>
+
+        <text x="115" y="388" class="flow-text-sm">cached partitions in memory</text>
+
+        <!-- Worker Node 2 -->
+        <rect x="250" y="240" width="210" height="175" rx="8" fill="rgba(16,185,129,0.06)" stroke="#10b981" stroke-width="2"/>
+        <text x="355" y="262" class="flow-text" fill="#6ee7b7" font-size="13" font-weight="bold">Worker Node 2</text>
+        <text x="355" y="278" class="flow-text-sm">Worker JVM → launches executor</text>
+
+        <rect x="265" y="290" width="180" height="110" rx="6" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+        <text x="355" y="310" class="flow-text" fill="#6ee7b7" font-size="12">Executor JVM</text>
+        <text x="355" y="328" class="flow-text-sm">cores=4 | memory=8GB</text>
+
+        <rect x="275" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="294" y="356" class="flow-text-sm" fill="#fcd34d">Task5</text>
+        <rect x="318" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="337" y="356" class="flow-text-sm" fill="#fcd34d">Task6</text>
+        <rect x="361" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="380" y="356" class="flow-text-sm" fill="#fcd34d">Task7</text>
+        <rect x="404" y="338" width="38" height="28" rx="4" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="423" y="356" class="flow-text-sm" fill="#fcd34d">Task8</text>
+
+        <text x="355" y="388" class="flow-text-sm">cached partitions in memory</text>
+
+        <!-- Storage -->
+        <rect x="500" y="240" width="210" height="80" rx="8" fill="rgba(139,92,246,0.08)" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="605" y="272" class="flow-text" fill="#c4b5fd" font-size="13" font-weight="bold">Storage Layer</text>
+        <text x="605" y="292" class="flow-text-sm">HDFS / ADLS Gen2</text>
+        <text x="605" y="308" class="flow-text-sm">Delta Lake / Parquet files</text>
+
+        <!-- Arrows -->
+        <line x1="210" y1="90" x2="256" y2="60" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <text x="215" y="75" fill="#3b82f6" font-family="JetBrains Mono" font-size="10">requests resources</text>
+
+        <line x1="256" y1="70" x2="210" y2="100" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <text x="218" y="100" fill="#f43f5e" font-family="JetBrains Mono" font-size="9">allocates workers</text>
+
+        <line x1="110" y1="175" x2="110" y2="236" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <text x="115" y="210" fill="#06b6d4" font-family="JetBrains Mono" font-size="10">sends tasks</text>
+
+        <line x1="210" y1="145" x2="246" y2="310" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr3)"/>
+        <text x="225" y="235" fill="#06b6d4" font-family="JetBrains Mono" font-size="10">sends tasks</text>
+
+        <line x1="355" y1="236" x2="560" y2="240" stroke="#8b5cf6" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr3)"/>
+        <text x="440" y="232" fill="#8b5cf6" font-family="JetBrains Mono" font-size="10">reads/writes data</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Each Component Explained (Brief — 1 Sentence Each)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>What It Is</th><th>Key Fact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Driver Program</strong></td><td>Your PySpark code / notebook</td><td>Contains the main() logic + SparkSession</td></tr>
+          <tr><td><strong>Driver Process</strong></td><td>JVM process executing your driver program</td><td>Runs on client machine (client mode) or cluster node (cluster mode)</td></tr>
+          <tr><td><strong>SparkSession</strong></td><td>Entry point to Spark APIs (SQL, DataFrame, etc.)</td><td>Lives ONLY on driver. Executors do NOT have SparkSession.</td></tr>
+          <tr><td><strong>SparkContext</strong></td><td>Low-level connection to cluster (inside SparkSession)</td><td>One SparkContext per application</td></tr>
+          <tr><td><strong>DAG Scheduler</strong></td><td>Splits DAG into stages at shuffle boundaries</td><td>Inside driver JVM</td></tr>
+          <tr><td><strong>Task Scheduler</strong></td><td>Converts stage→tasks, assigns to executors</td><td>Respects data locality</td></tr>
+          <tr><td><strong>Cluster Manager</strong></td><td>Allocates CPU+memory across applications</td><td>YARN, Standalone, K8s, or Databricks-managed</td></tr>
+          <tr><td><strong>Spark Master</strong></td><td>Cluster manager process in Standalone mode</td><td>Receives resource requests from driver</td></tr>
+          <tr><td><strong>Worker Node</strong></td><td>Physical/virtual machine in the cluster</td><td>Hosts one or more Executor JVMs</td></tr>
+          <tr><td><strong>Executor JVM</strong></td><td>JVM process on worker that runs tasks</td><td>Has fixed cores (task slots) + memory</td></tr>
+          <tr><td><strong>Core (Executor)</strong></td><td>A logical execution slot (thread) inside executor</td><td>One core = one task at a time</td></tr>
+          <tr><td><strong>Task</strong></td><td>Execution of one operation on one partition</td><td>1 task = 1 partition</td></tr>
+          <tr><td><strong>Partition</strong></td><td>Logical subset of data (basic unit of parallelism)</td><td>More partitions → more tasks → more parallelism</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Block vs Partition — They Are NOT the Same</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Block (HDFS)</th><th>Partition (Spark)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>What it is</strong></td><td>Physical storage chunk on disk</td><td>Logical unit of computation in memory</td></tr>
+          <tr><td><strong>When created</strong></td><td>When file is written to HDFS (before Spark)</td><td>When Spark reads data or does transformations</td></tr>
+          <tr><td><strong>Size</strong></td><td>Fixed (128 MB default)</td><td>Logical, configurable via spark.sql.files.maxPartitionBytes</td></tr>
+          <tr><td><strong>Managed by</strong></td><td>HDFS NameNode</td><td>Spark Driver / Task Scheduler</td></tr>
+          <tr><td><strong>Purpose</strong></td><td>How data is STORED</td><td>How data is PROCESSED</td></tr>
+          <tr><td><strong>Relationship</strong></td><td>One block → often one initial partition</td><td>Can span multiple blocks or be subdivided</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-amber">
+      <span class="callout-title">⚠️ Interview Trap</span>
+      <strong>"Are blocks and partitions the same thing?"</strong> — NO. Blocks are physical HDFS storage units. Partitions are logical Spark computation units. Spark reads HDFS blocks and creates partitions from them, but they are conceptually different layers.
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Deployment Modes — Client vs Cluster</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mode</th><th>Where Driver Runs</th><th>Use Case</th><th>Pros / Cons</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Local Mode</strong></td><td>Single machine (your laptop)</td><td>Development, unit tests</td><td>Simple, no cluster needed. Not for production.</td></tr>
+          <tr><td><strong>Client Mode</strong></td><td>Client/submitter machine (outside cluster)</td><td>Interactive: notebooks, debugging</td><td>Driver failure = job failure. OK for interactive use.</td></tr>
+          <tr><td><strong>Cluster Mode</strong></td><td>Inside cluster (one of the worker nodes)</td><td>Production batch jobs</td><td>Driver is fault-tolerant. Network efficient. Use for prod.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-violet">
+      <span class="callout-title">💜 Databricks Note</span>
+      In Databricks, <strong>cluster management is fully abstracted</strong>. You don't choose YARN vs Standalone — Databricks manages it. Your notebook IS the driver. This is why Databricks is preferred in enterprise: zero cluster management overhead.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 7: EXECUTION FLOW                   -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch7">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>Spark Execution Flow — Jobs → Stages → Tasks</h2>
+  </div>
+
+  <div class="section">
+    <h3>The Full Pipeline: From Code to Results</h3>
+    <div class="diagram">
+      <div class="diagram-title">📐 Spark Execution Pipeline</div>
+      <svg viewBox="0 0 700 100" class="flow-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <!-- boxes -->
+        <rect x="5"   y="25" width="80"  height="50" rx="6" fill="rgba(59,130,246,0.12)"  stroke="#3b82f6"  stroke-width="1.5"/>
+        <rect x="105" y="25" width="90"  height="50" rx="6" fill="rgba(6,182,212,0.12)"   stroke="#06b6d4"  stroke-width="1.5"/>
+        <rect x="215" y="25" width="90"  height="50" rx="6" fill="rgba(6,182,212,0.12)"   stroke="#06b6d4"  stroke-width="1.5"/>
+        <rect x="325" y="25" width="95"  height="50" rx="6" fill="rgba(245,158,11,0.12)"  stroke="#f59e0b"  stroke-width="1.5"/>
+        <rect x="440" y="25" width="90"  height="50" rx="6" fill="rgba(139,92,246,0.12)"  stroke="#8b5cf6"  stroke-width="1.5"/>
+        <rect x="550" y="25" width="90"  height="50" rx="6" fill="rgba(16,185,129,0.12)"  stroke="#10b981"  stroke-width="1.5"/>
+        <rect x="650" y="25" width="45"  height="50" rx="6" fill="rgba(244,63,94,0.12)"   stroke="#f43f5e"  stroke-width="1.5"/>
+
+        <!-- labels -->
+        <text x="45"  y="45" class="flow-text" fill="#93c5fd"  font-size="11">Unresolved</text>
+        <text x="45"  y="60" class="flow-text" fill="#93c5fd"  font-size="11">Logical Plan</text>
+        <text x="45"  y="73" class="flow-text-sm">lazy eval</text>
+
+        <text x="150" y="45" class="flow-text" fill="#67e8f9"  font-size="11">Catalyst</text>
+        <text x="150" y="60" class="flow-text" fill="#67e8f9"  font-size="11">Optimizer</text>
+        <text x="150" y="73" class="flow-text-sm">pushdown etc</text>
+
+        <text x="260" y="45" class="flow-text" fill="#67e8f9"  font-size="11">Physical</text>
+        <text x="260" y="60" class="flow-text" fill="#67e8f9"  font-size="11">Plan</text>
+        <text x="260" y="73" class="flow-text-sm">Tungsten codegen</text>
+
+        <text x="372" y="45" class="flow-text" fill="#fcd34d"  font-size="11">DAG</text>
+        <text x="372" y="60" class="flow-text" fill="#fcd34d"  font-size="11">Scheduler</text>
+        <text x="372" y="73" class="flow-text-sm">→ Stages</text>
+
+        <text x="485" y="45" class="flow-text" fill="#c4b5fd"  font-size="11">Task</text>
+        <text x="485" y="60" class="flow-text" fill="#c4b5fd"  font-size="11">Scheduler</text>
+        <text x="485" y="73" class="flow-text-sm">→ Tasks</text>
+
+        <text x="595" y="45" class="flow-text" fill="#6ee7b7"  font-size="11">Executor</text>
+        <text x="595" y="60" class="flow-text" fill="#6ee7b7"  font-size="11">Runs Tasks</text>
+        <text x="595" y="73" class="flow-text-sm">in parallel</text>
+
+        <text x="672" y="50" class="flow-text" fill="#fda4af"  font-size="11">Result</text>
+        <text x="672" y="65" class="flow-text" fill="#fda4af"  font-size="11">↩ Driver</text>
+
+        <!-- Arrows -->
+        <line x1="85"  y1="50" x2="101" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+        <line x1="195" y1="50" x2="211" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+        <line x1="305" y1="50" x2="321" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+        <line x1="420" y1="50" x2="436" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+        <line x1="530" y1="50" x2="546" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+        <line x1="640" y1="50" x2="646" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#arr4)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Jobs, Stages, Tasks — The Hierarchy</h3>
+    <div class="callout callout-blue">
+      <span class="callout-title">📐 Mental Model</span>
+      <strong>Application</strong> → contains multiple <strong>Jobs</strong> → each Job splits into <strong>Stages</strong> → each Stage splits into <strong>Tasks</strong><br>
+      Jobs triggered by <strong>actions</strong>. Stages split at <strong>shuffle boundaries</strong>. Tasks map 1:1 to <strong>partitions</strong>.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Unit</th><th>Created When</th><th>Determined By</th><th>Runs Where</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Job</strong></td><td>Action called (count(), collect(), write())</td><td>Number of actions in your code</td><td>Conceptual — triggered on driver</td></tr>
+          <tr><td><strong>Stage</strong></td><td>Shuffle boundary in the DAG</td><td>Narrow vs Wide transformations</td><td>DAG Scheduler on driver</td></tr>
+          <tr><td><strong>Task</strong></td><td>One per partition per stage</td><td>Number of partitions</td><td>Executor cores on worker nodes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Narrow vs Wide Transformations</h3>
+    <div class="two-col">
+      <div>
+        <div class="callout callout-green">
+          <span class="callout-title">✅ Narrow Transformation (same stage)</span>
+          Each input partition → exactly one output partition. No data movement across nodes.<br><br>
+          Examples: <code style="font-family:JetBrains Mono;font-size:12px">filter(), map(), select(), withColumn()</code>
+        </div>
+      </div>
+      <div>
+        <div class="callout callout-rose">
+          <span class="callout-title">⚠️ Wide Transformation (new stage = shuffle)</span>
+          One input partition's data → goes to MULTIPLE output partitions. Requires network shuffle.<br><br>
+          Examples: <code style="font-family:JetBrains Mono;font-size:12px">groupBy(), join(), distinct(), orderBy()</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Parallelism Formula — The Most Asked Interview Formula</h3>
+    <div class="callout callout-violet">
+      <span class="callout-title">📐 Spark Parallelism</span>
+      <strong>Effective Parallelism = min(number of partitions, total available executor cores)</strong><br><br>
+      If you have <strong>200 partitions</strong> and only <strong>96 cores</strong> → first 96 tasks run, then next 96, then final 8.<br>
+      Data size, node count, executor memory, CPU speed do NOT directly determine parallelism.
+    </div>
+
+    <h4>Partition Types</h4>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">Input Partitions</div>
+        <div class="card-body">Created when Spark reads data. Controlled by <span class="inline-code">spark.sql.files.maxPartitionBytes</span> (default 128MB). Check with <span class="inline-code">df.rdd.getNumPartitions()</span>.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Shuffle Partitions</div>
+        <div class="card-body">Created after a shuffle (groupBy, join). Controlled by <span class="inline-code">spark.sql.shuffle.partitions</span> (default <strong>200</strong>). Often the biggest performance tuning lever.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Output Partitions</div>
+        <div class="card-body">Controls how many files are written to storage. Too many = small files problem. Use <span class="inline-code">coalesce()</span> or <span class="inline-code">repartition()</span> to control.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Catalyst Optimizer + Tungsten Engine</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Role</th><th>Key Techniques</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Catalyst Optimizer</strong></td><td>Converts logical plan to optimized logical plan</td><td>Predicate Pushdown, Column Pruning, Constant Folding, Join Reordering</td></tr>
+          <tr><td><strong>Cost-Based Optimizer</strong></td><td>Picks best physical plan from candidates</td><td>Estimates CPU, RAM, I/O cost for each plan option</td></tr>
+          <tr><td><strong>Tungsten Engine</strong></td><td>Converts physical plan to JVM bytecode</td><td>Whole-Stage Code Gen, Off-heap memory, Cache-friendly structures</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><code><span class="cm"># How predicate pushdown saves time:</span>
+<span class="cm"># Without optimization: read ALL rows, THEN filter</span>
+df = spark.read.parquet(<span class="str">"transactions/"</span>)
+  .filter(<span class="str">"year = 2024"</span>)  <span class="cm"># Catalyst pushes this filter to file read level</span>
+
+<span class="cm"># Catalyst rewrites internally as:</span>
+<span class="cm"># "Read ONLY files/row-groups where year = 2024"</span>
+<span class="cm"># → reads 10% of data instead of 100%</span>
+
+<span class="cm"># Column pruning:</span>
+df.select(<span class="str">"customer_id"</span>, <span class="str">"amount"</span>)  <span class="cm"># Catalyst reads ONLY these 2 columns from parquet</span>
+<span class="cm"># All other columns are NEVER read from disk</span>
+</code><span class="code-label">PYSPARK</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 8: HDFS vs ADLS                     -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch8">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>HDFS vs ADLS Gen2 — Cloud Storage for Modern Stacks</h2>
+  </div>
+
+  <div class="section">
+    <h3>Why Enterprises Moved from HDFS to ADLS Gen2</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>HDFS (Hadoop)</th><th>ADLS Gen2 (Azure)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Storage type</strong></td><td>Distributed file system on cluster nodes</td><td>Cloud object storage (HTTP-based)</td></tr>
+          <tr><td><strong>Data locality</strong></td><td class="yes">Yes — Spark can co-locate compute with data</td><td class="partial">No — Spark reads over network (ABFS driver)</td></tr>
+          <tr><td><strong>Scalability</strong></td><td class="no">Limited by cluster size, requires re-provisioning</td><td class="yes">Virtually unlimited, scale independently of compute</td></tr>
+          <tr><td><strong>Cost model</strong></td><td class="no">Fixed (pay for cluster whether used or not)</td><td class="yes">Pay-per-GB stored + pay-per-request (elastic)</td></tr>
+          <tr><td><strong>Fault tolerance</strong></td><td>3× replication managed by cluster</td><td>Azure manages LRS/ZRS/GRS automatically</td></tr>
+          <tr><td><strong>ACID support</strong></td><td class="no">Not native</td><td class="yes">Yes — via Delta Lake on top of ADLS</td></tr>
+          <tr><td><strong>Ops burden</strong></td><td class="no">High — DataNode maintenance, NameNode HA, etc.</td><td class="yes">Zero — fully managed by Azure</td></tr>
+          <tr><td><strong>Access protocol</strong></td><td>HDFS API (hdfs://)</td><td>ABFS driver (abfss://)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>How Spark Reads from ADLS (No NameNode!)</h3>
+    <p>ADLS does not have a NameNode. Instead, Spark uses the <strong>ABFS (Azure Blob File System) driver</strong> to communicate with ADLS via HTTP range requests:</p>
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>ABFS driver authenticates</strong> with ADLS using service principal / managed identity / OAuth token.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Lists files and gets metadata</strong> (file sizes, schema for Parquet/Delta).</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Spark creates partitions</strong> based on file sizes (maxPartitionBytes setting).</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Each executor sends HTTP GET requests</strong> with byte-range headers to fetch only its partition's data.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Azure internally serves</strong> data from the nearest replica (LRS/ZRS). Spark doesn't know or care — it just receives bytes.</div>
+      </div>
+    </div>
+
+    <pre><code><span class="cm"># Accessing ADLS Gen2 from Databricks / PySpark</span>
+<span class="cm"># ABFS URI format: abfss://&lt;container&gt;@&lt;account&gt;.dfs.core.windows.net/path</span>
+
+spark.conf.<span class="fn">set</span>(
+  <span class="str">"fs.azure.account.auth.type.&lt;account&gt;.dfs.core.windows.net"</span>, 
+  <span class="str">"OAuth"</span>
+)
+spark.conf.<span class="fn">set</span>(
+  <span class="str">"fs.azure.account.oauth.provider.type.&lt;account&gt;.dfs.core.windows.net"</span>,
+  <span class="str">"org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"</span>
+)
+
+<span class="cm"># Read Parquet from ADLS — Spark creates HTTP range-read requests internally</span>
+df = spark.read.<span class="fn">parquet</span>(
+  <span class="str">"abfss://bronze@myadls.dfs.core.windows.net/transactions/"</span>
+)
+df.<span class="fn">printSchema</span>()
+print(<span class="str">f"Partitions: {df.rdd.getNumPartitions()}"</span>)
+</code><span class="code-label">PYSPARK</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 9: BANKING EXAMPLE                  -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch9">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>🏦 Real-World Banking Pipeline — Azure + Databricks</h2>
+  </div>
+
+  <div class="section">
+    <h3>Scenario: Daily Transaction Reconciliation Pipeline</h3>
+    <p><strong>Business need:</strong> Every night, process 50M+ banking transactions from core banking system, join with customer master data, detect anomalies, and produce reconciliation reports per region.</p>
+
+    <h4>Architecture Components</h4>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">Azure Event Hubs</div>
+        <div class="card-body">Ingests real-time transaction events from core banking. Partitioned Kafka-compatible stream.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">ADLS Gen2 (Bronze layer)</div>
+        <div class="card-body">Raw transaction files landed in Parquet format from Event Hubs capture. Immutable raw zone.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Databricks Spark Cluster</div>
+        <div class="card-body">Processes Bronze → Silver → Gold transformations using PySpark. Auto-scaling cluster.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Delta Lake (Silver/Gold)</div>
+        <div class="card-body">ACID-compliant table format on ADLS. Enables MERGE (upsert), time-travel, schema enforcement.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Unity Catalog</div>
+        <div class="card-body">Metadata catalog managing table locations, access control, lineage for all Delta tables.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Azure Key Vault</div>
+        <div class="card-body">Stores ADLS credentials, service principal secrets. Databricks Secret Scope reads from it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Data Flow</h3>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-rose)"></div>
+        <div class="tl-year">INGEST</div>
+        <div class="tl-title">Core banking → Event Hubs → ADLS Bronze</div>
+        <div class="tl-body">50M transaction events/day land as Parquet files in ADLS Bronze container. 128MB files = ~400 files = ~400 initial partitions for Spark.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-amber)"></div>
+        <div class="tl-year">STAGE 1 — Bronze → Silver</div>
+        <div class="tl-title">Cleansing + Schema Enforcement</div>
+        <div class="tl-body">Spark reads 400 partitions. Narrow transformations (filter, cast, withColumn) — single stage, no shuffle. 400 tasks run in parallel across executor cores.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-cyan)"></div>
+        <div class="tl-year">STAGE 2 — Join</div>
+        <div class="tl-title">Transactions JOIN Customer Master</div>
+        <div class="tl-body">Wide transformation. Triggers shuffle. Spark creates 200 shuffle partitions (spark.sql.shuffle.partitions). Catalyst may use BroadcastHashJoin if customer table &lt; 10MB.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-blue)"></div>
+        <div class="tl-year">STAGE 3 — Aggregate</div>
+        <div class="tl-title">GROUP BY region → SUM amounts</div>
+        <div class="tl-body">Second shuffle. Catalyst applies predicate pushdown and column pruning to minimize data scanned. Results written to Gold Delta table.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--accent-green)"></div>
+        <div class="tl-year">OUTPUT</div>
+        <div class="tl-title">Delta Lake Gold → Power BI / Reports</div>
+        <div class="tl-body">Gold Delta table partitioned by region_date. Power BI via Databricks SQL Warehouse for reporting. Unity Catalog enforces row-level security per analyst's region access.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Production PySpark Code</h3>
+    <pre><code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col, sum, broadcast, to_date
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+<span class="cm"># ── SparkSession (Driver creates this once) ─────────────────────────</span>
+spark = SparkSession.builder \
+  .appName(<span class="str">"TxnReconciliation"</span>) \
+  .config(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"400"</span>)  <span class="cm"># tuned for our data size</span>
+  .config(<span class="str">"spark.sql.files.maxPartitionBytes"</span>, <span class="str">"134217728"</span>)  <span class="cm"># 128MB</span>
+  .getOrCreate()
+
+<span class="cm"># ── Read Bronze (Parquet from ADLS) ─────────────────────────────────</span>
+bronze_path = <span class="str">"abfss://bronze@bankadls.dfs.core.windows.net/transactions/"</span>
+transactions = spark.read.<span class="fn">parquet</span>(bronze_path)
+<span class="cm"># Spark creates partitions lazily — no data read yet (lazy evaluation)</span>
+print(<span class="str">f"Input partitions: {transactions.rdd.getNumPartitions()}"</span>)
+
+<span class="cm"># ── Stage 1: Narrow transformations (no shuffle, single stage) ──────</span>
+silver_txns = transactions \
+  .<span class="fn">filter</span>(col(<span class="str">"status"</span>) == <span class="str">"COMPLETED"</span>) \                  <span class="cm"># narrow</span>
+  .<span class="fn">filter</span>(col(<span class="str">"txn_date"</span>) == <span class="str">"2024-01-15"</span>) \               <span class="cm"># narrow</span>
+  .<span class="fn">select</span>(<span class="str">"txn_id"</span>, <span class="str">"customer_id"</span>, <span class="str">"amount"</span>, <span class="str">"txn_date"</span>)  <span class="cm"># column pruning</span>
+<span class="cm"># Catalyst will push the filter + select all the way to Parquet read</span>
+
+<span class="cm"># ── Stage 2: Wide transformation — JOIN (triggers shuffle) ──────────</span>
+customers_path = <span class="str">"abfss://silver@bankadls.dfs.core.windows.net/customers/"</span>
+customers = spark.read.<span class="fn">parquet</span>(customers_path)
+<span class="cm"># If customers table is small, Catalyst uses BroadcastHashJoin (no shuffle!)</span>
+enriched = silver_txns.<span class="fn">join</span>(broadcast(customers), <span class="str">"customer_id"</span>)
+
+<span class="cm"># ── Stage 3: Wide transformation — GROUP BY (triggers shuffle) ──────</span>
+gold_df = enriched \
+  .<span class="fn">groupBy</span>(<span class="str">"region"</span>, <span class="str">"txn_date"</span>) \
+  .<span class="fn">agg</span>(
+    sum(<span class="str">"amount"</span>).alias(<span class="str">"total_amount"</span>),
+    count(<span class="str">"*"</span>).alias(<span class="str">"txn_count"</span>)
+  )
+
+<span class="cm"># ── Write to Delta Lake (action — triggers DAG execution) ───────────</span>
+gold_path = <span class="str">"abfss://gold@bankadls.dfs.core.windows.net/reconciliation/"</span>
+gold_df.write \
+  .<span class="fn">format</span>(<span class="str">"delta"</span>) \
+  .<span class="fn">mode</span>(<span class="str">"overwrite"</span>) \
+  .<span class="fn">partitionBy</span>(<span class="str">"region"</span>, <span class="str">"txn_date"</span>) \
+  .<span class="fn">save</span>(gold_path)
+<span class="cm"># ↑ THIS is the action. ONLY now does Spark build the DAG and run tasks.</span>
+<span class="cm"># All previous lines were just building the logical plan (lazy!).</span>
+</code><span class="code-label">PYSPARK — PRODUCTION</span></pre>
+
+    <div class="callout callout-green">
+      <span class="callout-title">✅ What Catalyst Does Here</span>
+      1. <strong>Predicate Pushdown:</strong> filter(status=COMPLETED) pushed into Parquet file scan → reads only relevant row groups<br>
+      2. <strong>Column Pruning:</strong> select(4 columns) → Parquet reads only those 4 column chunks, not all 30<br>
+      3. <strong>Broadcast Join:</strong> If customers table &lt; spark.sql.autoBroadcastJoinThreshold → BroadcastHashJoin (zero shuffle!)<br>
+      4. <strong>Stage merging:</strong> filter + select merged into Stage 1 (narrow pipeline)
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CH 10: INTERVIEW Q&A + QUIZ            -->
+<!-- ═══════════════════════════════════════ -->
+<div class="chapter" id="ch10">
+  <div class="chapter-header">
+    <span class="chapter-num"></span>
+    <h2>🎤 Master Interview Q&amp;A + Quiz</h2>
+  </div>
+
+  <div class="interview-box">
+    <h3>🎤 HDFS + Spark Interview Questions</h3>
+
+    <div class="interview-q">
+      <span class="q-num">Q1. Walk me through what happens when you submit a Spark job.</span>
+      <div class="interview-a">
+        <strong>Model Answer:</strong> (1) Driver program starts, SparkSession created. (2) Transformations build an unresolved logical plan (lazy). (3) Action triggers job creation. (4) Catalyst Optimizer resolves and optimizes the logical plan (predicate pushdown, column pruning). (5) Physical plan created via Tungsten code generation. (6) DAG Scheduler splits plan into stages at shuffle boundaries. (7) Task Scheduler converts each stage into tasks (1 per partition). (8) Tasks assigned to available executor cores based on locality. (9) Executors run tasks in parallel, cache intermediate results in RAM. (10) Results returned to driver.
+      </div>
+    </div>
+
+    <div class="interview-q">
+      <span class="q-num">Q2. What determines the number of tasks in a Spark stage?</span>
+      <div class="interview-a">
+        <strong>Model Answer:</strong> Number of tasks = number of partitions for that stage. For Stage 1 (input stage): determined by number of input file blocks (controlled by spark.sql.files.maxPartitionBytes). For Stage 2+ (post-shuffle stages): determined by spark.sql.shuffle.partitions (default 200). Executors and cores determine how many tasks run concurrently, not the total task count.
+      </div>
+    </div>
+
+    <div class="interview-q">
+      <span class="q-num">Q3. What is the difference between a Spark Driver and a Spark Executor?</span>
+      <div class="interview-a">
+        <strong>Model Answer:</strong> Driver is the JVM process that runs your application code, contains SparkSession, DAG Scheduler, and Task Scheduler. It orchestrates everything but doesn't process data. Executor is a JVM process on worker nodes that actually runs tasks on data partitions. Executors have fixed cores (task slots) and memory. One application has one driver and many executors.
+      </div>
+    </div>
+
+    <div class="interview-q">
+      <span class="q-num">Q4 (Trick). If I have 1000 partitions and 50 executor cores, how many stages are there?</span>
+      <div class="interview-a">
+        <span class="mistake">❌ Common mistake:</span> Confusing partitions with stages. <span class="correct">✅ Correct:</span> Stage count is determined by the number of shuffle boundaries in the DAG, NOT by partitions or cores. With 50 cores, Spark will process 50 tasks at a time, taking 20 rounds (1000/50). But the number of stages depends entirely on whether there are wide transformations (groupBy, join, etc.) in your code.
+      </div>
+    </div>
+
+    <div class="interview-q">
+      <span class="q-num">Q5. Why did modern data engineering move away from HDFS?</span>
+      <div class="interview-a">
+        <strong>Model Answer:</strong> (1) HDFS tightly couples storage and compute — can't scale independently. (2) Requires dedicated on-premise hardware with high ops overhead. (3) SPOF risk with NameNode. (4) No ACID transactions. (5) Cloud object storage (ADLS Gen2) offers elastic scaling, pay-per-use, zero ops, and geo-redundancy. Delta Lake adds ACID transactions on top of ADLS, giving the best of both worlds. Storage/compute decoupling with Databricks clusters means you pay for compute only when processing.
+      </div>
+    </div>
+
+    <div class="interview-q">
+      <span class="q-num">Q6. What is lazy evaluation in Spark and why does it matter?</span>
+      <div class="interview-a">
+        <strong>Model Answer:</strong> Lazy evaluation means Spark does NOT execute transformations (filter, select, groupBy) immediately. It builds an unresolved logical plan. Only when an action (count, collect, write) is called does Spark compile, optimize, and execute. This matters because: (1) Catalyst Optimizer can see the complete pipeline and apply optimizations across all steps. (2) No wasted computation — if a filter reduces 90% of rows, it's pushed down before joins. (3) Enables pipelining — consecutive narrow transformations merge into a single stage.
+      </div>
+    </div>
+  </div>
+
+  <div class="pro-tips">
+    <h4>💡 Pro Tips for Interviews</h4>
+    <ul>
+      <li><strong>Mention Catalyst Optimizer by name.</strong> Interviewers love when candidates can explain predicate pushdown and column pruning — these show you understand WHY Spark is fast, not just that it IS fast.</li>
+      <li><strong>Use the "partition = task" rule confidently.</strong> When asked about parallelism, state: "In Spark, parallelism = min(partitions, available executor cores). The default shuffle partition count of 200 is often suboptimal and needs tuning."</li>
+      <li><strong>Distinguish spark.sql.shuffle.partitions vs repartition().</strong> shuffle.partitions is a config that applies to ALL shuffles; repartition() is an explicit operation that introduces a full shuffle. For skewed data, explain salting or AQE (Adaptive Query Execution).</li>
+    </ul>
+  </div>
+
+  <div class="quiz-box">
+    <h3>🧠 Scenario Quiz</h3>
+    <p class="quiz-q">A banking pipeline reads 500 Parquet files (totalling 60 GB) from ADLS. After reading, the code does: <code style="font-family:JetBrains Mono">filter() → join(customers) → groupBy("region") → write()</code>. The cluster has 3 workers, each with 1 Executor of 8 cores. spark.sql.shuffle.partitions = 200. How many STAGES does this job have, and how many TOTAL TASKS run in Stage 1?</p>
+
+    <div class="quiz-option"><span class="opt-label">A</span> 1 stage, 500 tasks</div>
+    <div class="quiz-option"><span class="opt-label">B</span> 2 stages, 200 tasks in Stage 1</div>
+    <div class="quiz-option"><span class="opt-label">C</span> 3 stages, 500 tasks in Stage 1 (or ~470 depending on maxPartitionBytes)</div>
+    <div class="quiz-option"><span class="opt-label">D</span> 1 stage, 24 tasks (limited by cores)</div>
+
+    <div class="quiz-answer">
+      <strong>✅ Answer: C — 3 stages, ~500 tasks in Stage 1</strong><br><br>
+      <strong>Why 3 stages?</strong> There are 2 wide transformations: join (shuffle 1) and groupBy (shuffle 2). Each shuffle = new stage. So: Stage 1 (filter+read → join shuffle write), Stage 2 (join output → groupBy shuffle write), Stage 3 (groupBy output → write). <br>
+      <strong>Why ~500 tasks in Stage 1?</strong> Stage 1's task count = number of input partitions, which roughly equals number of files = 500. The 24 cores (3×8) determines how many tasks run CONCURRENTLY, not the total count. Option D confuses parallelism with task count — a classic mistake.
+    </div>
+  </div>
+
+</div>
+
+<!-- Final section -->
+<hr class="divider">
+<div style="text-align:center; padding:40px 0 20px; color:var(--text-muted); font-size:13px;">
+  <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); margin-bottom:8px; letter-spacing:1px;">HDFS → APACHE SPARK — INTERVIEW MASTERCLASS</div>
+  <div style="color:var(--text-dim);">Built for data engineers preparing for <span style="color:var(--accent-blue)">Azure</span> + <span style="color:var(--accent-cyan)">Databricks</span> roles</div>
+</div>
+
+</div><!-- end wrapper -->
+</body>
+</html>
