@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL for Data Engineers — Oracle Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-yellow: #f59e0b;
+    --accent-orange: #f97316;
+    --accent-pink: #ec4899;
+    --accent-purple: #a855f7;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --code-bg: #0d1b2a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .page-header {
+    background: linear-gradient(135deg, #0b0f1a 0%, #0d1b2e 50%, #0b1220 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 99px; padding: 4px 14px; font-size: 11px;
+    color: var(--accent-cyan); letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 16px; font-family: 'Space Mono', monospace;
+  }
+  .page-header h1 {
+    font-size: 2.6rem; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, #e2e8f0 0%, #93c5fd 50%, #06b6d4 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 12px;
+  }
+  .page-header p {
+    color: var(--text-muted); font-size: 1rem; max-width: 620px;
+  }
+  .header-tags { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    padding: 3px 12px; border-radius: 99px; font-size: 11px; font-weight: 600;
+    font-family: 'Space Mono', monospace; letter-spacing: 0.5px;
+  }
+  .tag-oracle { background: rgba(249,115,22,0.15); color: var(--accent-orange); border: 1px solid rgba(249,115,22,0.3); }
+  .tag-faang  { background: rgba(236,72,153,0.15); color: var(--accent-pink);   border: 1px solid rgba(236,72,153,0.3); }
+  .tag-sql    { background: rgba(16,185,129,0.15);  color: var(--accent-green);  border: 1px solid rgba(16,185,129,0.3); }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR NAV */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); padding: 0 20px 8px; font-family: 'Space Mono', monospace;
+  }
+  .sidebar-nav { list-style: none; }
+  .sidebar-nav li a {
+    display: block; padding: 9px 20px;
+    color: var(--text-muted); text-decoration: none; font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .sidebar-nav li a:hover,
+  .sidebar-nav li a.active {
+    color: var(--accent-cyan); border-left-color: var(--accent-cyan);
+    background: rgba(6,182,212,0.06);
+  }
+  .sidebar-nav .nav-group { margin-top: 16px; }
+  .sidebar-nav .nav-sub a { padding-left: 32px; font-size: 12px; }
+
+  /* MAIN */
+  .main { flex: 1; padding: 40px; max-width: 960px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    padding: 10px 24px; border: none; background: transparent;
+    color: var(--text-muted); font-family: 'Sora', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .tab-btn.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* SECTION BLOCKS */
+  .section {
+    margin-bottom: 40px;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:none; } }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .icon-blue   { background: rgba(59,130,246,0.15);  border: 1px solid rgba(59,130,246,0.25); }
+  .icon-green  { background: rgba(16,185,129,0.15);  border: 1px solid rgba(16,185,129,0.25); }
+  .icon-yellow { background: rgba(245,158,11,0.15);  border: 1px solid rgba(245,158,11,0.25); }
+  .icon-pink   { background: rgba(236,72,153,0.15);  border: 1px solid rgba(236,72,153,0.25); }
+  .icon-cyan   { background: rgba(6,182,212,0.15);   border: 1px solid rgba(6,182,212,0.25); }
+  .icon-orange { background: rgba(249,115,22,0.15);  border: 1px solid rgba(249,115,22,0.25); }
+  .icon-purple { background: rgba(168,85,247,0.15);  border: 1px solid rgba(168,85,247,0.25); }
+
+  .section-header h2 {
+    font-size: 1.2rem; font-weight: 700; color: var(--text);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+  .ct-blue   { color: var(--accent-blue); }
+  .ct-green  { color: var(--accent-green); }
+  .ct-yellow { color: var(--accent-yellow); }
+  .ct-cyan   { color: var(--accent-cyan); }
+  .ct-orange { color: var(--accent-orange); }
+  .ct-pink   { color: var(--accent-pink); }
+  .ct-purple { color: var(--accent-purple); }
+
+  .analogy-box {
+    background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.08));
+    border: 1px solid rgba(6,182,212,0.2);
+    border-left: 3px solid var(--accent-cyan);
+    border-radius: 8px; padding: 14px 18px; margin: 12px 0;
+    font-style: italic; color: var(--text-muted); font-size: 14px;
+  }
+  .analogy-box strong { color: var(--accent-cyan); font-style: normal; }
+
+  /* CODE */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    overflow-x: auto;
+    margin: 12px 0;
+    position: relative;
+  }
+  pre .code-label {
+    position: absolute; top: 8px; right: 12px;
+    font-size: 10px; color: var(--text-dim);
+    font-family: 'Space Mono', monospace; letter-spacing: 1px;
+  }
+  code { font-family: 'Space Mono', monospace; font-size: 13px; line-height: 1.7; }
+  .kw  { color: #60a5fa; }   /* keyword */
+  .fn  { color: #34d399; }   /* function */
+  .str { color: #fbbf24; }   /* string/value */
+  .cm  { color: #4b5563; font-style: italic; }  /* comment */
+  .cl  { color: #f9a8d4; }   /* clause */
+  .num { color: #c084fc; }   /* numbers */
+  .op  { color: #94a3b8; }   /* operators */
+  .tbl { color: #fb923c; }   /* table names */
+
+  /* TABLES */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  .data-table th {
+    background: var(--surface2); color: var(--text-muted);
+    padding: 10px 14px; text-align: left;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'Space Mono', monospace; border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 9px 14px; border-bottom: 1px solid rgba(31,45,69,0.6);
+    vertical-align: top;
+  }
+  .data-table tr:hover td { background: rgba(59,130,246,0.04); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* FLOW */
+  .flow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin: 14px 0;
+  }
+  .flow-step {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px;
+    font-size: 13px; font-weight: 600;
+  }
+  .flow-arrow { color: var(--text-dim); font-size: 18px; }
+
+  /* PILLS */
+  .pill {
+    display: inline-block; padding: 2px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 700; font-family: 'Space Mono', monospace;
+    margin: 2px;
+  }
+  .pill-blue   { background: rgba(59,130,246,0.15);  color: #93c5fd; }
+  .pill-green  { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+  .pill-yellow { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+  .pill-red    { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+  .pill-pink   { background: rgba(236,72,153,0.15);  color: #f9a8d4; }
+  .pill-cyan   { background: rgba(6,182,212,0.15);   color: #67e8f9; }
+  .pill-orange { background: rgba(249,115,22,0.15);  color: #fdba74; }
+  .pill-purple { background: rgba(168,85,247,0.15);  color: #d8b4fe; }
+
+  /* INTERVIEW */
+  .interview-q {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-yellow);
+    border-radius: 8px; padding: 14px 18px; margin: 10px 0;
+  }
+  .interview-q .q-text { color: var(--accent-yellow); font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .interview-q .a-text { color: var(--text-muted); font-size: 13px; }
+
+  .mistake-box {
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-left: 3px solid #ef4444;
+    border-radius: 8px; padding: 14px 18px; margin: 10px 0;
+  }
+  .mistake-box strong { color: #f87171; }
+
+  .tip-box {
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-left: 3px solid var(--accent-green);
+    border-radius: 8px; padding: 14px 18px; margin: 10px 0;
+  }
+  .tip-box strong { color: var(--accent-green); }
+
+  /* QUIZ */
+  .quiz-card {
+    background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.08));
+    border: 1px solid rgba(168,85,247,0.2);
+    border-radius: 12px; padding: 22px 26px; margin-top: 20px;
+  }
+  .quiz-q { font-weight: 700; font-size: 15px; margin-bottom: 14px; color: var(--text); }
+  .quiz-options { list-style: none; }
+  .quiz-options li {
+    padding: 10px 16px; border-radius: 8px;
+    border: 1px solid var(--border); margin-bottom: 8px;
+    font-size: 13px; cursor: pointer; transition: all 0.2s;
+  }
+  .quiz-options li:hover { border-color: var(--accent-purple); background: rgba(168,85,247,0.08); }
+  .quiz-options li.correct { border-color: var(--accent-green); background: rgba(16,185,129,0.1); color: #6ee7b7; }
+  .quiz-reveal {
+    margin-top: 14px; padding: 12px 16px; border-radius: 8px;
+    background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+    font-size: 13px; color: var(--text-muted); display: none;
+  }
+  .quiz-reveal.visible { display: block; }
+  .reveal-btn {
+    margin-top: 12px; padding: 9px 20px; border-radius: 8px;
+    background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.3);
+    color: #d8b4fe; font-family: 'Sora', sans-serif; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .reveal-btn:hover { background: rgba(168,85,247,0.35); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* DIVIDERS */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* STEP LIST */
+  .steps { counter-reset: step-counter; list-style: none; }
+  .steps li {
+    counter-increment: step-counter;
+    position: relative; padding: 10px 0 10px 46px; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before {
+    content: counter(step-counter);
+    position: absolute; left: 0; top: 10px;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3);
+    color: var(--accent-blue); font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* HIGHLIGHT TEXT */
+  .hl-blue   { color: var(--accent-blue); font-weight: 600; }
+  .hl-green  { color: var(--accent-green); font-weight: 600; }
+  .hl-yellow { color: var(--accent-yellow); font-weight: 600; }
+  .hl-cyan   { color: var(--accent-cyan); font-weight: 600; }
+  .hl-orange { color: var(--accent-orange); font-weight: 600; }
+  .hl-pink   { color: var(--accent-pink); font-weight: 600; }
+
+  /* PATTERN CARDS */
+  .pattern-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .pattern-header {
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pattern-num {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+  }
+  .pattern-body { padding: 20px; }
+  .pattern-why {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13px;
+  }
+  .pattern-why strong { color: var(--accent-yellow); }
+
+  ul.bullet { padding-left: 20px; }
+  ul.bullet li { margin-bottom: 6px; font-size: 14px; color: var(--text-muted); }
+  ul.bullet li strong { color: var(--text); }
+
+  p { margin-bottom: 10px; font-size: 14px; color: var(--text-muted); }
+  p strong { color: var(--text); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="header-badge">📊 SQL for Data Engineers</div>
+  <h1>Oracle SQL Mastery<br>for Data Engineers</h1>
+  <p>Interview-first, beginner-friendly breakdown of Subqueries, CTEs, and FAANG-level query patterns — built for Azure + Databricks engineers.</p>
+  <div class="header-tags">
+    <span class="tag tag-oracle">Oracle SQL</span>
+    <span class="tag tag-faang">FAANG Patterns</span>
+    <span class="tag tag-sql">Data Engineering</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Tab 1 — CTEs & Subqueries</div>
+    <ul class="sidebar-nav">
+      <li><a href="#prereq">📋 Prerequisites</a></li>
+      <li><a href="#subquery">🔍 Subqueries</a></li>
+      <li><a href="#cte">📦 CTEs (WITH)</a></li>
+      <li><a href="#vs">⚖️ Subquery vs CTE</a></li>
+      <li><a href="#syntax">💻 Syntax Guide</a></li>
+      <li><a href="#banking">🏦 Banking Example</a></li>
+      <li><a href="#interview1">🎤 Interview Prep</a></li>
+    </ul>
+    <div class="sidebar-label nav-group">Tab 2 — FAANG Patterns</div>
+    <ul class="sidebar-nav">
+      <li><a href="#p1">Pattern 1: Ranking</a></li>
+      <li><a href="#p2">Pattern 2: Running Total</a></li>
+      <li><a href="#p3">Pattern 3: Gaps & Islands</a></li>
+      <li><a href="#p4">Pattern 4: Self Join</a></li>
+      <li><a href="#p5">Pattern 5: Pivot</a></li>
+      <li><a href="#p6">Pattern 6: Top-N per Group</a></li>
+      <li><a href="#p7">Pattern 7: Recursive CTE</a></li>
+      <li><a href="#interview2">🎤 Interview Prep</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab1', this)">📋 Tab 1 — Subqueries &amp; CTEs</button>
+      <button class="tab-btn" onclick="switchTab('tab2', this)">🎯 Tab 2 — FAANG Patterns</button>
+    </div>
+
+    <!-- ══════════════════ TAB 1 ══════════════════ -->
+    <div id="tab1" class="tab-content active">
+
+      <!-- PREREQUISITES -->
+      <div class="section" id="prereq">
+        <div class="section-header">
+          <div class="section-icon icon-orange">📋</div>
+          <h2>Prerequisites — What You Must Know First</h2>
+        </div>
+
+        <p>Before we touch CTEs or Subqueries, make sure these building blocks are solid. Every advanced SQL pattern is built on top of these.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title ct-orange">Basic SELECT</div>
+            <pre><code><span class="kw">SELECT</span> column1, column2
+<span class="kw">FROM</span>   <span class="tbl">table_name</span>
+<span class="kw">WHERE</span>  condition;</code></pre>
+            <p style="margin-top:8px;">Every query starts here. <strong>SELECT</strong> picks columns, <strong>FROM</strong> picks the table, <strong>WHERE</strong> filters rows.</p>
+          </div>
+          <div class="card">
+            <div class="card-title ct-green">Aggregations</div>
+            <pre><code><span class="kw">SELECT</span> <span class="tbl">dept_id</span>,
+       <span class="fn">COUNT</span>(*) <span class="kw">AS</span> emp_count,
+       <span class="fn">SUM</span>(salary) <span class="kw">AS</span> total_sal
+<span class="kw">FROM</span>   <span class="tbl">employees</span>
+<span class="kw">GROUP BY</span> <span class="tbl">dept_id</span>;</code></pre>
+            <p style="margin-top:8px;"><strong>GROUP BY</strong> collapses rows into groups. Aggregate functions work on each group.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-cyan">JOINs — The Most Important Pre-req</div>
+          <table class="data-table">
+            <thead>
+              <tr><th>JOIN Type</th><th>What it returns</th><th>When to use</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill pill-blue">INNER JOIN</span></td>
+                <td>Only matching rows from both tables</td>
+                <td>You need data from both tables</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-green">LEFT JOIN</span></td>
+                <td>All rows from left + matching from right (NULL if no match)</td>
+                <td>Keep all rows from left table, optional right side</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-yellow">FULL OUTER JOIN</span></td>
+                <td>All rows from both, NULLs where no match</td>
+                <td>Find data present in one but not the other</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-orange">CROSS JOIN</span></td>
+                <td>Every row × every row (cartesian product)</td>
+                <td>Generating combinations (rare, expensive)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-blue">ORDER OF SQL CLAUSES (Execution Order)</div>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> Think of SQL as a kitchen recipe — you don't serve before you cook. SQL processes clauses in a specific order too.
+          </div>
+          <div class="flow">
+            <div class="flow-step">1. FROM</div><div class="flow-arrow">→</div>
+            <div class="flow-step">2. JOIN</div><div class="flow-arrow">→</div>
+            <div class="flow-step">3. WHERE</div><div class="flow-arrow">→</div>
+            <div class="flow-step">4. GROUP BY</div><div class="flow-arrow">→</div>
+            <div class="flow-step">5. HAVING</div><div class="flow-arrow">→</div>
+            <div class="flow-step">6. SELECT</div><div class="flow-arrow">→</div>
+            <div class="flow-step">7. ORDER BY</div>
+          </div>
+          <p><strong>Why this matters:</strong> You <em>cannot</em> use a column alias from SELECT inside WHERE. The WHERE runs before SELECT!</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-purple">NULL handling in Oracle</div>
+          <pre><code><span class="cm">-- NVL replaces NULL with a default value</span>
+<span class="kw">SELECT</span> <span class="fn">NVL</span>(commission, <span class="num">0</span>) <span class="kw">FROM</span> <span class="tbl">employees</span>;
+
+<span class="cm">-- NVL2: if not null → val1, if null → val2</span>
+<span class="kw">SELECT</span> <span class="fn">NVL2</span>(commission, <span class="str">'Has Comm'</span>, <span class="str">'No Comm'</span>) <span class="kw">FROM</span> <span class="tbl">employees</span>;
+
+<span class="cm">-- COALESCE returns first non-NULL</span>
+<span class="kw">SELECT</span> <span class="fn">COALESCE</span>(phone, email, <span class="str">'N/A'</span>) <span class="kw">FROM</span> <span class="tbl">customers</span>;
+
+<span class="cm">-- NULL comparisons MUST use IS NULL, not = NULL</span>
+<span class="kw">WHERE</span> commission <span class="kw">IS NULL</span></code></pre>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SUBQUERIES -->
+      <div class="section" id="subquery">
+        <div class="section-header">
+          <div class="section-icon icon-blue">🔍</div>
+          <h2>Subqueries — Query inside a Query</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-blue">🔷 Concept Snapshot</div>
+          <p>A <strong>subquery</strong> (also called an inner query or nested query) is a <strong>SELECT statement placed inside another SQL statement</strong>. It runs first, and its result is used by the outer query.</p>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> Like asking a colleague "Tell me which employees earn above average" — first you calculate the average (inner query), then you use that number to filter (outer query). You answer a smaller question first, then use that answer.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-cyan">Types of Subqueries</div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Type</th><th>Where it appears</th><th>Returns</th><th>Example use</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill pill-blue">Scalar</span></td>
+                <td>SELECT or WHERE clause</td>
+                <td>1 row, 1 column</td>
+                <td>Fetch max salary to compare</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-green">Row</span></td>
+                <td>WHERE clause</td>
+                <td>1 row, multiple columns</td>
+                <td>Compare multiple columns at once</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-yellow">Table (Inline View)</span></td>
+                <td>FROM clause</td>
+                <td>Multiple rows and columns</td>
+                <td>Pre-aggregate then join</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-orange">Correlated</span></td>
+                <td>WHERE clause</td>
+                <td>Depends on outer row</td>
+                <td>Find Nth highest per group</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-green">1. Scalar Subquery — returns one value</div>
+          <pre><code><span class="cm">-- Find all employees who earn above the company average</span>
+<span class="kw">SELECT</span> employee_id, first_name, salary
+<span class="kw">FROM</span>   <span class="tbl">employees</span>
+<span class="kw">WHERE</span>  salary <span class="op">&gt;</span> (
+           <span class="kw">SELECT</span> <span class="fn">AVG</span>(salary)
+           <span class="kw">FROM</span>   <span class="tbl">employees</span>      <span class="cm">-- ← inner query runs first</span>
+       );
+<span class="cm">-- Inner query returns ONE number, e.g. 65000
+-- Outer query uses that number in WHERE</span></code></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-yellow">2. Inline View (Table Subquery in FROM)</div>
+          <pre><code><span class="cm">-- Find departments where average salary > 70000</span>
+<span class="kw">SELECT</span> dept_name, avg_sal
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> d.department_name  <span class="kw">AS</span> dept_name,
+           <span class="fn">AVG</span>(e.salary)       <span class="kw">AS</span> avg_sal
+    <span class="kw">FROM</span>   <span class="tbl">employees</span>   e
+    <span class="kw">JOIN</span>   <span class="tbl">departments</span> d <span class="kw">ON</span> e.department_id <span class="op">=</span> d.department_id
+    <span class="kw">GROUP BY</span> d.department_name
+) dept_summary                    <span class="cm">-- ← give the subquery an alias</span>
+<span class="kw">WHERE</span> avg_sal <span class="op">&gt;</span> <span class="num">70000</span>;</code></pre>
+          <p>The subquery in FROM creates a <em>temporary table</em> for the outer query to use. This is called an <span class="hl-yellow">Inline View</span>.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-orange">3. Correlated Subquery — references outer query</div>
+          <pre><code><span class="cm">-- Find employees who earn MORE than the average of their OWN department</span>
+<span class="kw">SELECT</span> e1.employee_id, e1.first_name,
+       e1.department_id, e1.salary
+<span class="kw">FROM</span>   <span class="tbl">employees</span> e1
+<span class="kw">WHERE</span>  e1.salary <span class="op">&gt;</span> (
+           <span class="kw">SELECT</span> <span class="fn">AVG</span>(e2.salary)
+           <span class="kw">FROM</span>   <span class="tbl">employees</span> e2
+           <span class="kw">WHERE</span>  e2.department_id <span class="op">=</span> e1.department_id  <span class="cm">-- ← ties to outer row</span>
+       );
+
+<span class="cm">-- How it works:
+--  For each outer row (e1), the inner query runs fresh
+--  using e1.department_id. This is why it's "correlated" —
+--  the inner query depends on the current outer row.</span></code></pre>
+          <div class="mistake-box">
+            <strong>⚠️ Watch Out:</strong> Correlated subqueries run <em>once per outer row</em> — very slow on large tables. Use Window Functions instead when performance matters.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-pink">4. Subquery with IN / EXISTS</div>
+          <pre><code><span class="cm">-- IN: Match against a list returned by subquery</span>
+<span class="kw">SELECT</span> first_name, department_id
+<span class="kw">FROM</span>   <span class="tbl">employees</span>
+<span class="kw">WHERE</span>  department_id <span class="kw">IN</span> (
+           <span class="kw">SELECT</span> department_id
+           <span class="kw">FROM</span>   <span class="tbl">departments</span>
+           <span class="kw">WHERE</span>  location_id <span class="op">=</span> <span class="num">1700</span>
+       );
+
+<span class="cm">-- EXISTS: Check if subquery returns any rows (TRUE/FALSE)</span>
+<span class="kw">SELECT</span> d.department_name
+<span class="kw">FROM</span>   <span class="tbl">departments</span> d
+<span class="kw">WHERE</span>  <span class="kw">EXISTS</span> (
+           <span class="kw">SELECT</span> <span class="num">1</span>                     <span class="cm">-- SELECT 1 is a convention</span>
+           <span class="kw">FROM</span>   <span class="tbl">employees</span> e
+           <span class="kw">WHERE</span>  e.department_id <span class="op">=</span> d.department_id
+       );
+<span class="cm">-- EXISTS stops as soon as one match is found → faster than IN
+-- Use EXISTS when checking "does any related record exist?"</span></code></pre>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- CTEs -->
+      <div class="section" id="cte">
+        <div class="section-header">
+          <div class="section-icon icon-cyan">📦</div>
+          <h2>CTEs (Common Table Expressions) — WITH clause</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-cyan">🔷 Concept Snapshot</div>
+          <p>A <strong>CTE</strong> is a <em>named temporary result set</em> defined at the top of your query using the <strong>WITH</strong> keyword. It exists only during the execution of that query.</p>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> Think of CTE as a <strong>sticky note</strong> you write before solving a complex math problem. You jot down intermediate results on sticky notes, then refer to them while solving the main problem. Each sticky note = one CTE block.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-blue">CTE Syntax — Step by Step</div>
+          <pre><code><span class="cm">-- STRUCTURE of a CTE</span>
+<span class="kw">WITH</span> cte_name <span class="kw">AS</span> (          <span class="cm">-- Step 1: name your CTE</span>
+    <span class="kw">SELECT</span> ...               <span class="cm">-- Step 2: write the inner query</span>
+    <span class="kw">FROM</span>   ...
+    <span class="kw">WHERE</span>  ...
+)
+<span class="kw">SELECT</span> *                     <span class="cm">-- Step 3: use the CTE like a table</span>
+<span class="kw">FROM</span>   cte_name;
+
+<span class="cm">-- MULTIPLE CTEs (chain them with comma)</span>
+<span class="kw">WITH</span>
+  cte_one <span class="kw">AS</span> (
+      <span class="kw">SELECT</span> ... <span class="kw">FROM</span> <span class="tbl">table1</span>
+  ),
+  cte_two <span class="kw">AS</span> (              <span class="cm">-- cte_two can reference cte_one</span>
+      <span class="kw">SELECT</span> ... <span class="kw">FROM</span> cte_one
+  )
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> cte_two;</code></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-green">Full Working Example</div>
+          <pre><code><span class="cm">-- Find employees who earn above their department average</span>
+<span class="cm">-- Using CTE (clean, readable)</span>
+
+<span class="kw">WITH</span> dept_avg <span class="kw">AS</span> (
+    <span class="cm">-- CTE: calculate avg salary per department</span>
+    <span class="kw">SELECT</span> department_id,
+           <span class="fn">AVG</span>(salary) <span class="kw">AS</span> avg_salary
+    <span class="kw">FROM</span>   <span class="tbl">employees</span>
+    <span class="kw">GROUP BY</span> department_id
+)
+<span class="cm">-- Main query: join employees with their dept average</span>
+<span class="kw">SELECT</span> e.employee_id,
+       e.first_name,
+       e.salary,
+       da.avg_salary,
+       e.salary <span class="op">-</span> da.avg_salary <span class="kw">AS</span> diff_from_avg
+<span class="kw">FROM</span>   <span class="tbl">employees</span> e
+<span class="kw">JOIN</span>   dept_avg da <span class="kw">ON</span> e.department_id <span class="op">=</span> da.department_id
+<span class="kw">WHERE</span>  e.salary <span class="op">&gt;</span> da.avg_salary
+<span class="kw">ORDER BY</span> diff_from_avg <span class="kw">DESC</span>;</code></pre>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- COMPARISON -->
+      <div class="section" id="vs">
+        <div class="section-header">
+          <div class="section-icon icon-yellow">⚖️</div>
+          <h2>Subquery vs CTE — When to Use Which</h2>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>Dimension</th><th>Subquery</th><th>CTE</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Readability</td>
+              <td>❌ Hard to read when nested deeply</td>
+              <td>✅ Named blocks — reads like English</td>
+            </tr>
+            <tr>
+              <td>Reusability in same query</td>
+              <td>❌ Must repeat if used multiple times</td>
+              <td>✅ Define once, reference many times</td>
+            </tr>
+            <tr>
+              <td>Debugging</td>
+              <td>❌ Hard to isolate each step</td>
+              <td>✅ Run each CTE block independently</td>
+            </tr>
+            <tr>
+              <td>Performance in Oracle</td>
+              <td>✅ Optimizer usually inlines subqueries</td>
+              <td>✅ Oracle can materialize CTEs for heavy queries</td>
+            </tr>
+            <tr>
+              <td>Recursion</td>
+              <td>❌ Not supported</td>
+              <td>✅ Recursive CTEs supported</td>
+            </tr>
+            <tr>
+              <td>Scope</td>
+              <td>Local to that one place in query</td>
+              <td>Available to entire query below WITH</td>
+            </tr>
+            <tr>
+              <td>Best for</td>
+              <td>Simple one-time filters or lookups</td>
+              <td>Multi-step logic, readability, recursion</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>💡 Pro Tip:</strong> In Databricks / Spark SQL and Oracle both, <strong>CTEs are the preferred style</strong> for production queries. They make code review, debugging, and maintenance much easier. Use subqueries only for truly simple, one-off lookups.
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SYNTAX CHEAT SHEET -->
+      <div class="section" id="syntax">
+        <div class="section-header">
+          <div class="section-icon icon-purple">💻</div>
+          <h2>Oracle SQL Syntax to Memorize</h2>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title ct-purple">Subquery Placement Cheat Sheet</div>
+            <pre><code><span class="cm">-- In SELECT (scalar)</span>
+<span class="kw">SELECT</span> name,
+  (<span class="kw">SELECT</span> <span class="fn">MAX</span>(sal) <span class="kw">FROM</span> <span class="tbl">emp</span>) max_sal
+<span class="kw">FROM</span> <span class="tbl">emp</span>;
+
+<span class="cm">-- In WHERE (filter)</span>
+<span class="kw">WHERE</span> dept_id <span class="kw">IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">dept</span>)
+
+<span class="cm">-- In FROM (inline view)</span>
+<span class="kw">FROM</span> (<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>) sub
+
+<span class="cm">-- In HAVING</span>
+<span class="kw">HAVING</span> <span class="fn">SUM</span>(amt) <span class="op">&gt;</span>
+  (<span class="kw">SELECT</span> <span class="fn">AVG</span>(amt) <span class="kw">FROM</span> <span class="tbl">orders</span>)</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title ct-cyan">CTE Patterns Cheat Sheet</div>
+            <pre><code><span class="cm">-- Single CTE</span>
+<span class="kw">WITH</span> cte <span class="kw">AS</span> (...)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> cte;
+
+<span class="cm">-- Chained CTEs</span>
+<span class="kw">WITH</span>
+  a <span class="kw">AS</span> (...),
+  b <span class="kw">AS</span> (<span class="kw">SELECT</span> * <span class="kw">FROM</span> a ...)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> b;
+
+<span class="cm">-- CTE with DELETE/UPDATE (Oracle)</span>
+<span class="kw">WITH</span> to_del <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> status <span class="op">=</span> <span class="str">'CANCEL'</span>
+)
+<span class="kw">DELETE FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> to_del);</code></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-orange">Oracle-Specific Things to Remember</div>
+          <table class="data-table">
+            <thead><tr><th>Oracle Quirk</th><th>What it means</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="pill pill-orange">DUAL table</span></td>
+                <td>1-row dummy table for expressions</td>
+                <td><code>SELECT SYSDATE FROM DUAL</code></td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-blue">ROWNUM</span></td>
+                <td>Row number BEFORE ORDER BY (legacy)</td>
+                <td>Wrap in subquery to use properly</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-yellow">FETCH FIRST</span></td>
+                <td>Modern TOP-N syntax (Oracle 12c+)</td>
+                <td><code>FETCH FIRST 10 ROWS ONLY</code></td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-green">CONNECT BY</span></td>
+                <td>Hierarchical queries (tree traversal)</td>
+                <td>Org chart, category trees</td>
+              </tr>
+              <tr>
+                <td><span class="pill pill-pink">PIVOT / UNPIVOT</span></td>
+                <td>Rotate rows to columns or vice versa</td>
+                <td>Monthly report columns</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- BANKING EXAMPLE -->
+      <div class="section" id="banking">
+        <div class="section-header">
+          <div class="section-icon icon-green">🏦</div>
+          <h2>Real-World Banking Example</h2>
+        </div>
+        <div class="card">
+          <div class="card-title ct-green">Scenario: Flag High-Risk Customers</div>
+          <p><strong>Business requirement:</strong> Find customers whose total transaction amount in the last 30 days exceeds ₹5,00,000 AND who have more than 2 failed login attempts. (Fraud screening pipeline.)</p>
+          <pre><code><span class="cm">-- Using CTEs: clean, step-by-step, auditable</span>
+
+<span class="kw">WITH</span>
+
+<span class="cm">-- Step 1: Aggregate last 30 days transactions per customer</span>
+recent_txns <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>   customer_id,
+             <span class="fn">SUM</span>(amount)   <span class="kw">AS</span> total_amount,
+             <span class="fn">COUNT</span>(*)      <span class="kw">AS</span> txn_count
+    <span class="kw">FROM</span>     <span class="tbl">transactions</span>
+    <span class="kw">WHERE</span>    txn_date <span class="op">&gt;=</span> <span class="fn">SYSDATE</span> <span class="op">-</span> <span class="num">30</span>
+    <span class="kw">GROUP BY</span> customer_id
+),
+
+<span class="cm">-- Step 2: Find customers with failed logins > 2</span>
+failed_logins <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>   customer_id,
+             <span class="fn">COUNT</span>(*) <span class="kw">AS</span> fail_count
+    <span class="kw">FROM</span>     <span class="tbl">login_attempts</span>
+    <span class="kw">WHERE</span>    status     <span class="op">=</span> <span class="str">'FAILED'</span>
+    <span class="kw">AND</span>      attempt_dt <span class="op">&gt;=</span> <span class="fn">SYSDATE</span> <span class="op">-</span> <span class="num">30</span>
+    <span class="kw">GROUP BY</span> customer_id
+    <span class="kw">HAVING</span>   <span class="fn">COUNT</span>(*) <span class="op">&gt;</span> <span class="num">2</span>
+),
+
+<span class="cm">-- Step 3: High-value customers (amount > 500000)</span>
+high_value <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> customer_id, total_amount, txn_count
+    <span class="kw">FROM</span>   recent_txns
+    <span class="kw">WHERE</span>  total_amount <span class="op">&gt;</span> <span class="num">500000</span>
+)
+
+<span class="cm">-- Final query: join all CTEs, get customer info</span>
+<span class="kw">SELECT</span>  c.customer_id,
+        c.customer_name,
+        c.mobile,
+        hv.total_amount,
+        hv.txn_count,
+        fl.fail_count,
+        <span class="str">'HIGH_RISK'</span>      <span class="kw">AS</span> risk_flag,
+        <span class="fn">SYSDATE</span>          <span class="kw">AS</span> flagged_on
+<span class="kw">FROM</span>    <span class="tbl">customers</span>   c
+<span class="kw">JOIN</span>    high_value  hv <span class="kw">ON</span> c.customer_id <span class="op">=</span> hv.customer_id
+<span class="kw">JOIN</span>    failed_logins fl <span class="kw">ON</span> c.customer_id <span class="op">=</span> fl.customer_id
+<span class="kw">ORDER BY</span> hv.total_amount <span class="kw">DESC</span>;</code></pre>
+          <div class="tip-box">
+            <strong>💡 Why CTEs here?</strong> Each step is independent and testable. You can run just the <code>recent_txns</code> CTE to validate it before building the whole query. In production Databricks pipelines, each CTE maps to a logical transformation step.
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- INTERVIEW 1 -->
+      <div class="section" id="interview1">
+        <div class="section-header">
+          <div class="section-icon icon-yellow">🎤</div>
+          <h2>Interview Insights — CTEs & Subqueries</h2>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q1: "What's the difference between a CTE and a subquery?"</div>
+          <div class="a-text">✅ A CTE is a named, reusable temporary result set defined using the WITH clause that makes complex queries modular and readable. A subquery is an unnamed inline query nested inside another query. CTEs can reference each other in a chain, support recursion, and are easier to debug. Subqueries are better for simple, one-time lookups. In production data pipelines — like a Databricks fraud detection job — we prefer CTEs for multi-step logic because they're easier to maintain and test.</div>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q2: "When would you use EXISTS instead of IN?"</div>
+          <div class="a-text">✅ EXISTS is preferred when the subquery may return large result sets or when you just need to check existence rather than match values. EXISTS short-circuits — it stops once the first matching row is found. IN materializes the entire subquery result first and then does the comparison. EXISTS also handles NULLs better; if the subquery returns NULLs, IN can behave unexpectedly. For correlated existence checks on large tables, EXISTS is almost always the right choice.</div>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q3: "Can a CTE replace a subquery in all cases?"</div>
+          <div class="a-text">✅ Mostly yes, but not always. CTEs can only be referenced in the same query block and don't persist beyond it. Scalar subqueries in the SELECT list can't always be directly replaced by a CTE without a JOIN. Also, in Oracle, the optimizer may choose different execution plans for a CTE vs. a subquery. CTEs are not stored objects — use views or materialized views if you need persistence across queries.</div>
+        </div>
+
+        <div class="mistake-box">
+          <strong>🚨 Common Mistakes:</strong>
+          <ul class="bullet" style="margin-top:8px;">
+            <li>Saying "CTE is faster than subquery" — <strong>not always true</strong>. Performance depends on the query plan, not the syntax.</li>
+            <li>Using <code>ROWNUM &lt; 10</code> without wrapping in a subquery — ROWNUM filters before ORDER BY in Oracle.</li>
+            <li>Treating CTE as a stored procedure — CTEs are <strong>not persistent</strong>, they live only during query execution.</li>
+          </ul>
+        </div>
+
+        <div class="quiz-card">
+          <div class="quiz-q">🧠 Quiz: What will the following Oracle query return?<br>
+          <code style="font-size:12px; color:#94a3b8;">SELECT * FROM employees WHERE salary &gt; (SELECT AVG(salary) FROM employees WHERE department_id = 10) AND department_id != 10</code></div>
+          <ul class="quiz-options" id="q1-opts">
+            <li onclick="checkQ1(this, false)">A) Employees in department 10 who earn above dept 10 avg</li>
+            <li onclick="checkQ1(this, true)">B) Employees NOT in dept 10 who earn above dept 10 avg</li>
+            <li onclick="checkQ1(this, false)">C) All employees earning above company average</li>
+            <li onclick="checkQ1(this, false)">D) Employees in dept 10 only</li>
+          </ul>
+          <button class="reveal-btn" onclick="document.getElementById('q1-ans').classList.toggle('visible')">Reveal Answer</button>
+          <div class="quiz-reveal" id="q1-ans">
+            ✅ <strong>Answer: B</strong><br>
+            The inner query calculates the average salary only for department 10. The outer WHERE then filters employees who earn MORE than that average AND are NOT in department 10. The two conditions work independently — the scalar subquery computes dept-10 avg, and the AND filter excludes dept 10 from results.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end tab1 -->
+
+    <!-- ══════════════════ TAB 2 ══════════════════ -->
+    <div id="tab2" class="tab-content">
+
+      <div class="section">
+        <div class="card" style="border-color: rgba(236,72,153,0.3); background: linear-gradient(135deg, rgba(236,72,153,0.06), rgba(168,85,247,0.06));">
+          <div class="card-title ct-pink">🎯 What are "FAANG Patterns"?</div>
+          <p>These are recurring <strong>query structures</strong> that appear again and again in data engineering interviews at companies like Facebook, Amazon, Apple, Netflix, Google — and top Indian tech/banking companies too. They're not exotic SQL — they're <strong>combinations of simple concepts used cleverly</strong>.</p>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> In chess, the basic pieces are simple. But winning requires <em>patterns</em> — the fork, pin, skewer. SQL patterns are the same: the same keywords arranged in specific structures to solve common data problems.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title ct-purple">Window Functions — The Foundation of FAANG Patterns</div>
+          <p>Before the patterns, you must understand <strong>Window Functions</strong>. They are the engine behind most FAANG-level SQL solutions.</p>
+          <pre><code><span class="cm">-- SYNTAX of a Window Function</span>
+<span class="fn">function_name</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> column1        <span class="cm">-- group rows (like GROUP BY, but doesn't collapse)</span>
+    <span class="kw">ORDER BY</span>     column2         <span class="cm">-- order within each partition</span>
+    <span class="kw">ROWS BETWEEN</span> ... <span class="kw">AND</span> ...    <span class="cm">-- optional: define the window frame</span>
+)
+
+<span class="cm">-- Key Window Functions you MUST know:</span>
+<span class="cm">-- ROW_NUMBER()  → unique rank (no ties)</span>
+<span class="cm">-- RANK()        → rank with gaps on tie</span>
+<span class="cm">-- DENSE_RANK()  → rank without gaps on tie</span>
+<span class="cm">-- LAG()         → value from previous row</span>
+<span class="cm">-- LEAD()        → value from next row</span>
+<span class="cm">-- SUM() OVER()  → running total</span>
+<span class="cm">-- NTILE(n)      → divide into n buckets</span></code></pre>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> Window functions are like looking through a <em>sliding window</em> on a train — you see the current seat AND the context around it (past and future rows), without leaving your seat. GROUP BY collapses rows; Window functions <strong>keep all rows but add calculated context</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- PATTERN 1 -->
+      <div class="pattern-card" id="p1">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(59,130,246,0.2); color:#60a5fa; border: 1px solid rgba(59,130,246,0.3);">P1</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Ranking Within a Group</div>
+            <div style="color:var(--text-muted); font-size:12px;">ROW_NUMBER / RANK / DENSE_RANK</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Find Nth highest salary, top 3 products per category, latest transaction per customer — all require ranking within a group.
+          </div>
+          <pre><code><span class="cm">-- PROBLEM: Find the 2nd highest salary in each department</span>
+
+<span class="kw">WITH</span> ranked <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        employee_id,
+        department_id,
+        salary,
+        <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> department_id    <span class="cm">-- rank WITHIN each dept</span>
+            <span class="kw">ORDER BY</span>     salary <span class="kw">DESC</span>      <span class="cm">-- highest salary first</span>
+        ) <span class="kw">AS</span> sal_rank
+    <span class="kw">FROM</span> <span class="tbl">employees</span>
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ranked
+<span class="kw">WHERE</span>  sal_rank <span class="op">=</span> <span class="num">2</span>;   <span class="cm">-- pick rank 2</span>
+
+<span class="cm">-- ROW_NUMBER vs RANK vs DENSE_RANK when salaries tie at 5000,5000:
+-- ROW_NUMBER:  1,2,3      (arbitrary tiebreak — each row unique)
+-- RANK:        1,1,3      (skip rank 2 — tied rows share 1)
+-- DENSE_RANK:  1,1,2      (no gap — tied rows share 1, next is 2)</span></code></pre>
+          <div class="tip-box">
+            <strong>💡 Interview Tip:</strong> Always clarify with the interviewer — "What should happen if two employees have the same salary?" The answer determines whether you use RANK or DENSE_RANK.
+          </div>
+        </div>
+      </div>
+
+      <!-- PATTERN 2 -->
+      <div class="pattern-card" id="p2">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(16,185,129,0.2); color:#34d399; border: 1px solid rgba(16,185,129,0.3);">P2</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Running Totals & Moving Averages</div>
+            <div style="color:var(--text-muted); font-size:12px;">SUM() OVER with frame clauses</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Cumulative sales, rolling 7-day average, YTD metrics — all need running calculations without losing row-level detail.
+          </div>
+          <pre><code><span class="cm">-- Running total of transaction amounts per customer</span>
+<span class="kw">SELECT</span>
+    customer_id,
+    txn_date,
+    amount,
+    <span class="fn">SUM</span>(amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> customer_id
+        <span class="kw">ORDER BY</span>     txn_date
+        <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+    ) <span class="kw">AS</span> running_total,
+
+    <span class="cm">-- 3-day moving average</span>
+    <span class="fn">AVG</span>(amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> customer_id
+        <span class="kw">ORDER BY</span>     txn_date
+        <span class="kw">ROWS BETWEEN</span> <span class="num">2</span> <span class="kw">PRECEDING AND CURRENT ROW</span>  <span class="cm">-- 3 rows window</span>
+    ) <span class="kw">AS</span> moving_avg_3day
+<span class="kw">FROM</span> <span class="tbl">transactions</span>
+<span class="kw">ORDER BY</span> customer_id, txn_date;
+
+<span class="cm">-- ROWS vs RANGE: use ROWS for physical row positions,
+-- RANGE for value-based windows (e.g., same date values)</span></code></pre>
+        </div>
+      </div>
+
+      <!-- PATTERN 3 -->
+      <div class="pattern-card" id="p3">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(245,158,11,0.2); color:#fbbf24; border: 1px solid rgba(245,158,11,0.3);">P3</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Gaps & Islands</div>
+            <div style="color:var(--text-muted); font-size:12px;">Consecutive sequences, detecting breaks</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Find consecutive login days, detect gaps in sequential IDs, identify unbroken streaks of activity — common in banking audit trails and user engagement analytics.
+          </div>
+          <pre><code><span class="cm">-- PROBLEM: Find streaks of consecutive login days per user</span>
+
+<span class="kw">WITH</span>
+<span class="cm">-- Step 1: For each login, calculate lag (previous login date)</span>
+daily_logins <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> DISTINCT
+        user_id,
+        <span class="fn">TRUNC</span>(login_time) <span class="kw">AS</span> login_date
+    <span class="kw">FROM</span> <span class="tbl">user_sessions</span>
+),
+
+<span class="cm">-- Step 2: Detect if current row continues the streak</span>
+with_gap_flag <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        user_id,
+        login_date,
+        <span class="fn">LAG</span>(login_date) <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> user_id
+            <span class="kw">ORDER BY</span> login_date
+        ) <span class="kw">AS</span> prev_date
+    <span class="kw">FROM</span> daily_logins
+),
+
+<span class="cm">-- Step 3: Assign group ID — new group when gap > 1 day</span>
+with_group <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        user_id,
+        login_date,
+        <span class="fn">SUM</span>(
+            <span class="kw">CASE WHEN</span> login_date <span class="op">-</span> prev_date <span class="op">&gt;</span> <span class="num">1</span>
+                        <span class="kw">OR</span> prev_date <span class="kw">IS NULL</span>
+                 <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>
+        ) <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> login_date
+        ) <span class="kw">AS</span> streak_grp
+    <span class="kw">FROM</span> with_gap_flag
+)
+
+<span class="cm">-- Step 4: Count length of each streak</span>
+<span class="kw">SELECT</span>
+    user_id,
+    <span class="fn">MIN</span>(login_date) <span class="kw">AS</span> streak_start,
+    <span class="fn">MAX</span>(login_date) <span class="kw">AS</span> streak_end,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> streak_days
+<span class="kw">FROM</span>   with_group
+<span class="kw">GROUP BY</span> user_id, streak_grp
+<span class="kw">ORDER BY</span> streak_days <span class="kw">DESC</span>;</code></pre>
+        </div>
+      </div>
+
+      <!-- PATTERN 4 -->
+      <div class="pattern-card" id="p4">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(236,72,153,0.2); color:#f9a8d4; border: 1px solid rgba(236,72,153,0.3);">P4</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Self Join — Compare Rows Within Same Table</div>
+            <div style="color:var(--text-muted); font-size:12px;">Manager-employee, before-after comparisons</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> When you need to compare a row against other rows in the same table — find employees who earn more than their manager, find duplicate records, or detect YoY growth per row.
+          </div>
+          <pre><code><span class="cm">-- PROBLEM: Find employees earning MORE than their manager</span>
+<span class="kw">SELECT</span>
+    e.employee_id,
+    e.first_name   <span class="kw">AS</span> employee_name,
+    e.salary       <span class="kw">AS</span> emp_salary,
+    m.first_name   <span class="kw">AS</span> manager_name,
+    m.salary       <span class="kw">AS</span> mgr_salary
+<span class="kw">FROM</span>   <span class="tbl">employees</span> e
+<span class="kw">JOIN</span>   <span class="tbl">employees</span> m         <span class="cm">-- same table, different alias</span>
+  <span class="kw">ON</span>   e.manager_id <span class="op">=</span> m.employee_id
+<span class="kw">WHERE</span>  e.salary <span class="op">&gt;</span> m.salary;
+
+<span class="cm">-- PROBLEM: Find duplicate emails in customers table</span>
+<span class="kw">SELECT</span> DISTINCT a.email
+<span class="kw">FROM</span>   <span class="tbl">customers</span> a
+<span class="kw">JOIN</span>   <span class="tbl">customers</span> b
+  <span class="kw">ON</span>   a.email        <span class="op">=</span> b.email
+<span class="kw">AND</span>    a.customer_id  <span class="op">!=</span> b.customer_id;  <span class="cm">-- different rows, same email</span></code></pre>
+        </div>
+      </div>
+
+      <!-- PATTERN 5 -->
+      <div class="pattern-card" id="p5">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(6,182,212,0.2); color:#67e8f9; border: 1px solid rgba(6,182,212,0.3);">P5</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">PIVOT / Conditional Aggregation</div>
+            <div style="color:var(--text-muted); font-size:12px;">Rotating rows to columns</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Monthly sales reports, crosstab analysis, turning vertical data horizontal — extremely common in BI and reporting queries.
+          </div>
+          <pre><code><span class="cm">-- METHOD 1: CASE WHEN (works everywhere, portable)</span>
+<span class="kw">SELECT</span>
+    product_id,
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> month_num <span class="op">=</span> <span class="num">1</span> <span class="kw">THEN</span> amount <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> jan_sales,
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> month_num <span class="op">=</span> <span class="num">2</span> <span class="kw">THEN</span> amount <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> feb_sales,
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> month_num <span class="op">=</span> <span class="num">3</span> <span class="kw">THEN</span> amount <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> mar_sales
+<span class="kw">FROM</span>   <span class="tbl">sales</span>
+<span class="kw">GROUP BY</span> product_id;
+
+<span class="cm">-- METHOD 2: Oracle PIVOT operator (Oracle 11g+)</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span>   <span class="tbl">sales</span>
+<span class="kw">PIVOT</span> (
+    <span class="fn">SUM</span>(amount)
+    <span class="kw">FOR</span> month_num <span class="kw">IN</span> (<span class="num">1</span> <span class="kw">AS</span> jan, <span class="num">2</span> <span class="kw">AS</span> feb, <span class="num">3</span> <span class="kw">AS</span> mar)
+);
+
+<span class="cm">-- UNPIVOT: reverse — convert columns back to rows</span>
+<span class="kw">SELECT</span> product_id, month_name, sale_amount
+<span class="kw">FROM</span>   <span class="tbl">sales_wide</span>
+<span class="kw">UNPIVOT</span> (sale_amount <span class="kw">FOR</span> month_name <span class="kw">IN</span> (jan, feb, mar));</code></pre>
+        </div>
+      </div>
+
+      <!-- PATTERN 6 -->
+      <div class="pattern-card" id="p6">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(249,115,22,0.2); color:#fdba74; border: 1px solid rgba(249,115,22,0.3);">P6</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Top-N Per Group (Most Common FAANG Question)</div>
+            <div style="color:var(--text-muted); font-size:12px;">Latest record per ID, top products per category</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Get the <em>latest transaction per account</em>, <em>top 3 selling products per category</em>, <em>most recent address per customer</em> — this is one of the most frequently asked SQL patterns in any interview.
+          </div>
+          <pre><code><span class="cm">-- PROBLEM: Get the latest transaction for each account</span>
+
+<span class="kw">WITH</span> ranked_txns <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        account_id,
+        txn_id,
+        amount,
+        txn_date,
+        <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> account_id      <span class="cm">-- group per account</span>
+            <span class="kw">ORDER BY</span>     txn_date <span class="kw">DESC</span>  <span class="cm">-- latest first</span>
+        ) <span class="kw">AS</span> rn
+    <span class="kw">FROM</span> <span class="tbl">transactions</span>
+)
+<span class="kw">SELECT</span> account_id, txn_id, amount, txn_date
+<span class="kw">FROM</span>   ranked_txns
+<span class="kw">WHERE</span>  rn <span class="op">=</span> <span class="num">1</span>;   <span class="cm">-- only the latest (rank 1)</span>
+
+<span class="cm">-- For Top 3: WHERE rn &lt;= 3</span>
+<span class="cm">-- For bottom 1: ORDER BY txn_date ASC and WHERE rn = 1</span></code></pre>
+          <div class="tip-box">
+            <strong>💡 The Golden Rule:</strong> CTE + ROW_NUMBER() + WHERE rn = N is the universal template for Top-N per group. Memorize this pattern cold.
+          </div>
+        </div>
+      </div>
+
+      <!-- PATTERN 7 -->
+      <div class="pattern-card" id="p7">
+        <div class="pattern-header">
+          <div class="pattern-num" style="background: rgba(168,85,247,0.2); color:#d8b4fe; border: 1px solid rgba(168,85,247,0.3);">P7</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Recursive CTE — Hierarchical Data</div>
+            <div style="color:var(--text-muted); font-size:12px;">Org charts, category trees, bill of materials</div>
+          </div>
+        </div>
+        <div class="pattern-body">
+          <div class="pattern-why">
+            <strong>🤔 Why this pattern?</strong> Some data is naturally hierarchical — org charts (employee → manager), product categories (parent → child), geographic hierarchies (country → state → city). Recursive CTEs traverse these trees without needing application code.
+          </div>
+          <pre><code><span class="cm">-- PROBLEM: Find all employees under a given manager (full org tree)</span>
+<span class="cm">-- Table: employees(employee_id, name, manager_id)</span>
+
+<span class="kw">WITH RECURSIVE</span> org_tree <span class="kw">AS</span> (     <span class="cm">-- In Oracle: just WITH (implicit recursive)</span>
+
+    <span class="cm">-- ANCHOR: start with the top manager (CEO / root)</span>
+    <span class="kw">SELECT</span> employee_id, name, manager_id,
+           <span class="num">1</span> <span class="kw">AS</span> level_num,
+           name <span class="kw">AS</span> path
+    <span class="kw">FROM</span>   <span class="tbl">employees</span>
+    <span class="kw">WHERE</span>  manager_id <span class="kw">IS NULL</span>          <span class="cm">-- root node (no manager)</span>
+
+    <span class="kw">UNION ALL</span>
+
+    <span class="cm">-- RECURSIVE: join each employee with their manager (already in CTE)</span>
+    <span class="kw">SELECT</span> e.employee_id, e.name, e.manager_id,
+           ot.level_num <span class="op">+</span> <span class="num">1</span>,
+           ot.path <span class="op">||</span> <span class="str">' → '</span> <span class="op">||</span> e.name
+    <span class="kw">FROM</span>   <span class="tbl">employees</span> e
+    <span class="kw">JOIN</span>   org_tree   ot <span class="kw">ON</span> e.manager_id <span class="op">=</span> ot.employee_id
+)
+<span class="kw">SELECT</span> level_num, name, path
+<span class="kw">FROM</span>   org_tree
+<span class="kw">ORDER BY</span> level_num, name;
+
+<span class="cm">-- Oracle alternative: CONNECT BY (Oracle-specific, simpler syntax)
+SELECT  employee_id, name,
+        LEVEL,
+        SYS_CONNECT_BY_PATH(name, ' → ') AS hierarchy
+FROM    employees
+START WITH  manager_id IS NULL         -- root
+CONNECT BY  PRIOR employee_id = manager_id  -- parent-child link
+ORDER BY LEVEL;</span></code></pre>
+          <div class="analogy-box">
+            <strong>Analogy:</strong> Recursive CTE is like peeling an onion — each recursion peels one layer (one level of the hierarchy) until there are no more layers left.
+          </div>
+        </div>
+      </div>
+
+      <!-- PATTERN TABLE SUMMARY -->
+      <div class="section">
+        <div class="card">
+          <div class="card-title ct-pink">FAANG Pattern Quick Reference Card</div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Pattern</th><th>Key SQL</th><th>Typical Problem Statement</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="pill pill-blue">Ranking</span></td><td>DENSE_RANK() OVER PARTITION BY</td><td>"Find 2nd highest salary per dept"</td></tr>
+              <tr><td><span class="pill pill-green">Running Total</span></td><td>SUM() OVER (ORDER BY + frame)</td><td>"Show cumulative sales per month"</td></tr>
+              <tr><td><span class="pill pill-yellow">Gaps & Islands</span></td><td>LAG() + SUM() OVER</td><td>"Find consecutive login streaks"</td></tr>
+              <tr><td><span class="pill pill-pink">Self Join</span></td><td>table AS a JOIN table AS b</td><td>"Employees earning more than manager"</td></tr>
+              <tr><td><span class="pill pill-cyan">Pivot</span></td><td>CASE WHEN or Oracle PIVOT</td><td>"Monthly sales as columns"</td></tr>
+              <tr><td><span class="pill pill-orange">Top-N Per Group</span></td><td>ROW_NUMBER() WHERE rn = N</td><td>"Latest transaction per account"</td></tr>
+              <tr><td><span class="pill pill-purple">Recursive</span></td><td>WITH RECURSIVE or CONNECT BY</td><td>"Print org hierarchy"</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- INTERVIEW 2 -->
+      <div class="section" id="interview2">
+        <div class="section-header">
+          <div class="section-icon icon-yellow">🎤</div>
+          <h2>Interview Insights — FAANG Patterns</h2>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q1: "How would you find the top 3 products by sales for each category?"</div>
+          <div class="a-text">✅ I'd use the Top-N per Group pattern: first write a CTE that applies ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sales DESC) to rank products within each category. Then in the outer query, filter WHERE rn &lt;= 3. If ties need to be preserved equally, I'd use DENSE_RANK instead of ROW_NUMBER, since ROW_NUMBER breaks ties arbitrarily.</div>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q2: "What's the difference between RANK and DENSE_RANK? Give a scenario where the choice matters."</div>
+          <div class="a-text">✅ Both rank rows within a partition, but differ on tied values. RANK skips the next rank after a tie (1,1,3) while DENSE_RANK doesn't (1,1,2). Practical scenario: if I'm finding the "2nd highest salary" using DENSE_RANK and two people share rank 1, rank 2 is the true second-highest value. With RANK, rank 2 would be skipped and there might be no results if I filter WHERE rank = 2. For finding "Nth unique value," always use DENSE_RANK.</div>
+        </div>
+
+        <div class="interview-q">
+          <div class="q-text">Q3 (Trick): "Can you write a query to delete duplicate rows, keeping only the most recent?"</div>
+          <div class="a-text">✅ Yes — use ROW_NUMBER() to rank duplicates within the group (same key columns, ORDER BY created_date DESC), then delete all rows WHERE rn > 1. In Oracle: DELETE FROM table WHERE rowid IN (SELECT rowid FROM (SELECT rowid, ROW_NUMBER() OVER (PARTITION BY dup_key ORDER BY created_date DESC) rn FROM table) WHERE rn > 1).</div>
+        </div>
+
+        <div class="mistake-box">
+          <strong>🚨 Common Mistakes in FAANG Interviews:</strong>
+          <ul class="bullet" style="margin-top:8px;">
+            <li>Using <strong>GROUP BY</strong> when you should use <strong>PARTITION BY</strong> — GROUP BY collapses rows, PARTITION BY doesn't.</li>
+            <li>Forgetting to wrap window functions in a CTE before filtering on them — you <strong>cannot</strong> use window function alias in WHERE of the same query.</li>
+            <li>Using <strong>ROWNUM</strong> directly without a subquery for pagination — ROWNUM runs before ORDER BY in Oracle.</li>
+            <li>Not handling NULLs in LAG/LEAD — use the optional default value parameter: <code>LAG(col, 1, 0)</code></li>
+          </ul>
+        </div>
+
+        <div class="tip-box">
+          <strong>💡 Pro Tips for SQL Interviews:</strong>
+          <ul class="bullet" style="margin-top: 8px;">
+            <li>Always <strong>think aloud</strong> — explain your approach before writing. Interviewers value structured thinking over fast typing.</li>
+            <li>Start with the simplest possible version, then optimize. Say: "First let me solve it with a subquery, then refactor to a CTE."</li>
+            <li>Ask about edge cases: NULLs, ties, empty groups — it shows production thinking, not just textbook knowledge.</li>
+          </ul>
+        </div>
+
+        <div class="quiz-card">
+          <div class="quiz-q">🧠 Quiz: A table has (user_id, login_date). How many CTEs do you need to find streaks of consecutive login days?</div>
+          <ul class="quiz-options">
+            <li onclick="this.style.borderColor='#ef4444'; this.style.background='rgba(239,68,68,0.1)'">A) 1 — just use GROUP BY on login_date</li>
+            <li onclick="this.style.borderColor='#ef4444'; this.style.background='rgba(239,68,68,0.1)'">B) 0 — a single window function handles it directly</li>
+            <li id="p2-correct" onclick="document.getElementById('p2-correct').style.borderColor='#10b981'; document.getElementById('p2-correct').style.background='rgba(16,185,129,0.1)'; document.getElementById('p2-correct').style.color='#6ee7b7'">C) 3 — dedup dates, detect gaps with LAG, assign group IDs, then count</li>
+            <li onclick="this.style.borderColor='#ef4444'; this.style.background='rgba(239,68,68,0.1)'">D) You need a stored procedure, not CTEs</li>
+          </ul>
+          <button class="reveal-btn" onclick="document.getElementById('q2-ans').classList.toggle('visible')">Reveal Answer</button>
+          <div class="quiz-reveal" id="q2-ans">
+            ✅ <strong>Answer: C</strong><br>
+            The Gaps & Islands pattern typically needs 3 steps: (1) deduplicate to one row per user per day, (2) use LAG() to detect gaps in dates, (3) use a running SUM to assign a group ID to each streak, and then GROUP BY user + streak_group to count the length. This is a classic multi-CTE pattern.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end tab2 -->
+
+  </main>
+</div><!-- end layout -->
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function checkQ1(el, isCorrect) {
+  document.querySelectorAll('#q1-opts li').forEach(li => {
+    li.style.borderColor = '';
+    li.style.background = '';
+    li.style.color = '';
+  });
+  if (isCorrect) {
+    el.style.borderColor = '#10b981';
+    el.style.background = 'rgba(16,185,129,0.1)';
+    el.style.color = '#6ee7b7';
+  } else {
+    el.style.borderColor = '#ef4444';
+    el.style.background = 'rgba(239,68,68,0.1)';
+    el.style.color = '#fca5a5';
+  }
+}
+
+// Sidebar active link
+window.addEventListener('scroll', () => {
+  const sections = document.querySelectorAll('[id]');
+  const links = document.querySelectorAll('.sidebar-nav a');
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  links.forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
