@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python for Data Engineers — Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1628;
+    --bg3: #141c35;
+    --card: #111827;
+    --border: #1e2d4a;
+    --text: #e2e8f0;
+    --muted: #8898aa;
+    --blue: #38bdf8;
+    --blue2: #0ea5e9;
+    --cyan: #22d3ee;
+    --green: #34d399;
+    --green2: #10b981;
+    --yellow: #fbbf24;
+    --orange: #fb923c;
+    --pink: #f472b6;
+    --purple: #a78bfa;
+    --red: #f87171;
+    --accent: #38bdf8;
+    --code-bg: #0d1117;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1f3d 50%, #0a1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 24px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% -20%, rgba(56,189,248,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  header .badge {
+    display: inline-block;
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  header h1 span { color: var(--cyan); }
+  header p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 640px;
+    margin: 0 auto 28px;
+  }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .tag {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── NAV / TOC ── */
+  .toc-wrap {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    overflow-x: auto;
+  }
+  .toc {
+    display: flex; gap: 4px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 10px 16px;
+  }
+  .toc a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .toc a:hover { background: rgba(56,189,248,.15); color: var(--blue); }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── CHAPTER HEADER ── */
+  .chapter {
+    margin-top: 60px;
+    border-left: 4px solid var(--blue);
+    padding-left: 20px;
+  }
+  .chapter-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--blue);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .chapter h2 {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: #fff;
+    margin-top: 6px;
+  }
+  .chapter p.desc {
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 14px;
+    max-width: 700px;
+  }
+
+  /* ── SECTION CARDS ── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-top: 24px;
+  }
+  .section h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section h3 .icon {
+    background: rgba(34,211,238,0.1);
+    border: 1px solid rgba(34,211,238,0.25);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .section h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--yellow);
+    margin: 20px 0 8px;
+  }
+  .section p { color: var(--text); margin-bottom: 10px; line-height: 1.75; }
+  .section ul, .section ol { padding-left: 22px; color: var(--text); }
+  .section li { margin-bottom: 6px; line-height: 1.7; }
+
+  /* ── CONCEPT SNAPSHOT ── */
+  .snapshot {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(34,211,238,0.05));
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+  }
+  .snapshot .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 6px;
+  }
+  .snapshot p { color: #cbd5e1; margin: 0; font-size: 14px; }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid #1e2a40;
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    margin: 14px 0;
+    position: relative;
+  }
+  pre .lang-tag {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 10px; color: #4a5568;
+    font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .kw { color: #f472b6; }
+  .fn { color: #38bdf8; }
+  .st { color: #34d399; }
+  .cm { color: #4a5568; font-style: italic; }
+  .nu { color: #fb923c; }
+  .cl { color: #a78bfa; }
+  .va { color: #e2e8f0; }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: rgba(56,189,248,0.1); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--cyan);
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .5px;
+  }
+  td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #1a253b;
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td code, th code {
+    background: rgba(56,189,248,0.1);
+    color: var(--blue);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout .ico { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+  .callout-blue  { background: rgba(56,189,248,0.08); border-left: 3px solid var(--blue); }
+  .callout-green { background: rgba(52,211,153,0.08); border-left: 3px solid var(--green); }
+  .callout-yellow{ background: rgba(251,191,36,0.08); border-left: 3px solid var(--yellow); }
+  .callout-red   { background: rgba(248,113,113,0.08); border-left: 3px solid var(--red); }
+  .callout-purple{ background: rgba(167,139,250,0.08); border-left: 3px solid var(--purple); }
+  .callout p, .callout li { color: var(--text); margin: 0 0 4px; font-size: 13.5px; }
+  .callout strong { color: #fff; }
+
+  /* ── PATTERN MEMORY BOX ── */
+  .pattern-box {
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .pattern-box .ptitle {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--yellow); margin-bottom: 8px;
+  }
+  .pattern-box pre {
+    background: transparent; border: none;
+    padding: 0; margin: 4px 0; font-size: 14px;
+    color: var(--yellow);
+  }
+
+  /* ── INTERVIEW BOX ── */
+  .interview-box {
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .interview-box h4 { color: var(--purple); margin-bottom: 14px; }
+  .q-item { margin-bottom: 16px; }
+  .q-item .q { font-weight: 600; color: #c4b5fd; margin-bottom: 6px; }
+  .q-item .a { color: var(--text); font-size: 13.5px; padding-left: 14px; border-left: 2px solid rgba(167,139,250,0.3); }
+  .mistake-box {
+    background: rgba(248,113,113,0.06);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 8px; padding: 14px 18px; margin-top: 12px;
+  }
+  .mistake-box .mtitle { font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ── QUIZ ── */
+  .quiz-box {
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 12px; padding: 22px; margin-top: 24px;
+  }
+  .quiz-box .qtitle { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green2); margin-bottom: 12px; }
+  .quiz-box .question { font-weight: 600; color: #fff; margin-bottom: 14px; font-size: 15px; }
+  .quiz-opts { list-style: none; padding: 0; }
+  .quiz-opts li {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;
+    cursor: pointer; transition: all .2s; font-size: 13.5px;
+  }
+  .quiz-opts li:hover { border-color: var(--green2); background: rgba(16,185,129,0.08); }
+  .quiz-opts li .opt-lbl { color: var(--green2); font-weight: 700; margin-right: 10px; font-family: 'JetBrains Mono', monospace; }
+  .quiz-answer {
+    background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 8px; padding: 14px 18px; margin-top: 12px;
+    display: none;
+  }
+  .quiz-answer.show { display: block; }
+  .quiz-answer .ans-title { font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .show-ans-btn {
+    background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35);
+    color: var(--green); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700; padding: 8px 20px;
+    border-radius: 6px; cursor: pointer; margin-top: 10px; letter-spacing: 1px;
+    text-transform: uppercase; transition: all .2s;
+  }
+  .show-ans-btn:hover { background: rgba(16,185,129,0.25); }
+
+  /* ── PROD EXAMPLE ── */
+  .prod-box {
+    background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(34,211,238,0.03));
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 12px; padding: 22px; margin-top: 20px;
+  }
+  .prod-box .ptitle {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--green); margin-bottom: 14px;
+  }
+  .flow-line {
+    display: flex; flex-wrap: wrap; gap: 0; align-items: center;
+    margin: 14px 0; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  }
+  .flow-item {
+    background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
+    color: var(--blue); padding: 6px 12px; border-radius: 6px;
+  }
+  .flow-arr { color: var(--muted); margin: 0 6px; font-size: 16px; }
+
+  /* ── PRO TIPS ── */
+  .pro-tips {
+    background: rgba(251,191,36,0.05);
+    border: 1px solid rgba(251,191,36,0.18);
+    border-radius: 10px; padding: 18px 22px; margin-top: 20px;
+  }
+  .pro-tips .ptitle {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--yellow); margin-bottom: 12px;
+  }
+  .pro-tips li { color: var(--text); margin-bottom: 8px; font-size: 13.5px; }
+
+  /* ── DIAGRAM BOX ── */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 14px 0;
+    overflow-x: auto;
+  }
+  .diagram .d-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    border-bottom: 1px solid var(--border); padding-bottom: 8px;
+  }
+
+  /* ── INLINE CODE ── */
+  code {
+    background: rgba(56,189,248,0.1);
+    color: var(--blue);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+  .mini-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .mini-card .mc-title { font-weight: 700; color: var(--cyan); margin-bottom: 8px; font-size: 14px; }
+  .mini-card p, .mini-card li { font-size: 13px; color: var(--muted); }
+
+  /* ── CHAPTER DIVIDER ── */
+  .ch-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 50px 0 0;
+    color: var(--border);
+  }
+  .ch-divider::before, .ch-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .ch-divider span {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: #2a3a52; font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+  }
+
+  /* ── MEMORY AID ── */
+  .memory-aid {
+    background: rgba(244,114,182,0.06);
+    border: 1px solid rgba(244,114,182,0.2);
+    border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+  }
+  .memory-aid .mtitle { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--pink); margin-bottom: 8px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1e2d4a; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ HEADER ════════════════ -->
+<header>
+  <div class="badge">📘 Data Engineering Series</div>
+  <h1>Python for <span>Data Engineers</span><br>— Complete Interview Guide</h1>
+  <p>From core Python data structures to production-grade PySpark pipelines. Interview-first, production-aware, Databricks + Azure focused.</p>
+  <div class="tag-row">
+    <span class="tag">Python 3.x</span>
+    <span class="tag">PySpark</span>
+    <span class="tag">Azure Databricks</span>
+    <span class="tag">ADLS Gen2</span>
+    <span class="tag">Delta Lake</span>
+    <span class="tag">Data Engineering</span>
+  </div>
+</header>
+
+<!-- ════════════════ TOC ════════════════ -->
+<nav class="toc-wrap" aria-label="Table of Contents">
+  <div class="toc">
+    <a href="#prereq">0 · Prerequisites</a>
+    <a href="#ch1">1 · Lists</a>
+    <a href="#ch2">2 · Tuples</a>
+    <a href="#ch3">3 · Sets</a>
+    <a href="#ch4">4 · Dicts</a>
+    <a href="#ch5">5 · Functions & Loops</a>
+    <a href="#ch6">6 · OOP & Classes</a>
+    <a href="#ch7">7 · Spark Context</a>
+    <a href="#ch8">8 · Interview Q&amp;A</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ════════════════ PREREQUISITES ════════════════ -->
+<div id="prereq">
+  <div class="ch-divider"><span>prerequisite</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 0</div>
+    <h2>📌 Prerequisites — What You Need to Know First</h2>
+    <p class="desc">Before diving into data structures, understand what Python actually is and why Data Engineers choose it.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">🐍</span> What is Python (for a Data Engineer)?</h3>
+    <div class="snapshot">
+      <div class="label">🔷 Concept Snapshot</div>
+      <p>Python is an <strong>interpreted, dynamically-typed, high-level language</strong>. For Data Engineers, it's the glue that connects raw data sources → transformation logic → cloud storage → reporting.</p>
+    </div>
+
+    <h4>Why Python dominates Data Engineering</h4>
+    <div class="grid-2">
+      <div class="mini-card">
+        <div class="mc-title">🧰 Batteries Included</div>
+        <p>Built-in libraries: <code>os</code>, <code>json</code>, <code>datetime</code>, <code>re</code>, <code>csv</code> — everything you need for file/data work without installing anything.</p>
+      </div>
+      <div class="mini-card">
+        <div class="mc-title">⚡ PySpark Native</div>
+        <p>Databricks uses Python as the primary interface to Apache Spark. Your transformation logic runs in the JVM via <strong>Py4J bridge</strong>.</p>
+      </div>
+      <div class="mini-card">
+        <div class="mc-title">🔗 Azure SDK</div>
+        <p><code>azure-storage-blob</code>, <code>azure-identity</code>, <code>azure-keyvault</code> — Python SDKs for every Azure service used in data pipelines.</p>
+      </div>
+      <div class="mini-card">
+        <div class="mc-title">📦 Ecosystem</div>
+        <p><code>pandas</code>, <code>delta</code>, <code>pydantic</code>, <code>great_expectations</code> — industry-standard data quality and processing libraries.</p>
+      </div>
+    </div>
+
+    <h4>Python Execution Model — Key Terms</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Meaning</th><th>DE Relevance</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Interpreted</strong></td><td>Code runs line-by-line via CPython interpreter</td><td>Easy to debug pipelines; no compile step</td></tr>
+          <tr><td><strong>Dynamically typed</strong></td><td>Variable types resolved at runtime</td><td>Flexible schema handling; careful with <code>None</code> values in pipelines</td></tr>
+          <tr><td><strong>GIL</strong></td><td>Global Interpreter Lock — only one thread runs Python bytecode at a time</td><td>Why PySpark uses <strong>JVM executors</strong>, not Python threads, for true parallelism</td></tr>
+          <tr><td><strong>Mutable vs Immutable</strong></td><td>Objects that can/cannot be changed after creation</td><td>Core concept for all data structures below</td></tr>
+          <tr><td><strong>Iterable</strong></td><td>Any object you can loop over</td><td>DataFrames, lists, tuples, files are all iterable</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-blue">
+      <div class="ico">💡</div>
+      <div>
+        <strong>Py4J Bridge (Important for DE interviews):</strong>
+        <p>When you write PySpark code, your Python objects are serialized and sent to the JVM (Spark's execution engine) via Py4J. This is why <em>"Python is slow but PySpark is fast"</em> — the heavy computation happens in Java, not Python.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CH1: LISTS ════════════════ -->
+<div id="ch1">
+  <div class="ch-divider"><span>chapter 1</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 1</div>
+    <h2>📋 Lists — The Workhorse of Python</h2>
+    <p class="desc">Ordered, mutable, allows duplicates. Used everywhere in pipelines — column names, file paths, batch records.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">📖</span> What is a List?</h3>
+    <div class="snapshot">
+      <div class="label">🔷 Concept Snapshot</div>
+      <p><strong>Analogy:</strong> A shopping cart. You can add items, remove items, change their order, and have duplicates. Each item has a position (index).</p>
+    </div>
+
+    <h4>Declaration Pattern — How to Remember</h4>
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Memory Pattern</div>
+      <pre>list_name = [ item1, item2, item3 ]
+              ↑                          ↑
+           SQUARE BRACKETS — like a QUEUE / SHELF</pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Creating Lists ──────────────────────────────────────</span>
+<span class="va">empty_list</span>     = []
+<span class="va">columns</span>        = [<span class="st">"customer_id"</span>, <span class="st">"amount"</span>, <span class="st">"status"</span>]   <span class="cm"># strings</span>
+<span class="va">file_counts</span>    = [<span class="nu">100</span>, <span class="nu">200</span>, <span class="nu">300</span>]                      <span class="cm"># ints</span>
+<span class="va">mixed</span>          = [<span class="st">"txn_001"</span>, <span class="nu">9999.99</span>, <span class="kw">True</span>, <span class="kw">None</span>]     <span class="cm"># mixed types</span>
+<span class="va">nested</span>         = [[<span class="nu">1</span>, <span class="nu">2</span>], [<span class="nu">3</span>, <span class="nu">4</span>]]                     <span class="cm"># 2D — like a table</span>
+
+<span class="cm"># ── Indexing ─────────────────────────────────────────────</span>
+<span class="va">col</span> = columns[<span class="nu">0</span>]       <span class="cm"># "customer_id"   ← zero-indexed</span>
+<span class="va">last</span> = columns[-<span class="nu">1</span>]    <span class="cm"># "status"        ← -1 = last item</span>
+
+<span class="cm"># ── Slicing: list[start : stop : step] ──────────────────</span>
+<span class="va">first_two</span> = columns[<span class="nu">0</span>:<span class="nu">2</span>]   <span class="cm"># ["customer_id", "amount"]</span>
+<span class="va">reversed_</span> = columns[::<span class="nu">-1</span>]  <span class="cm"># reverse the list</span></pre>
+
+    <h4>Core Operations — DE Use Cases</h4>
+    <pre><span class="lang-tag">python</span><span class="va">pipeline_stages</span> = [<span class="st">"ingest"</span>, <span class="st">"validate"</span>, <span class="st">"transform"</span>]
+
+<span class="cm"># ── Modify ───────────────────────────────────────────────</span>
+pipeline_stages.<span class="fn">append</span>(<span class="st">"load"</span>)        <span class="cm"># add to end</span>
+pipeline_stages.<span class="fn">insert</span>(<span class="nu">1</span>, <span class="st">"decrypt"</span>) <span class="cm"># insert at index 1</span>
+pipeline_stages.<span class="fn">remove</span>(<span class="st">"decrypt"</span>)    <span class="cm"># remove first match</span>
+pipeline_stages.<span class="fn">pop</span>(<span class="nu">0</span>)              <span class="cm"># remove by index, returns item</span>
+
+<span class="cm"># ── Query ────────────────────────────────────────────────</span>
+<span class="fn">len</span>(pipeline_stages)                 <span class="cm"># count of stages</span>
+<span class="st">"load"</span> <span class="kw">in</span> pipeline_stages            <span class="cm"># True/False membership</span>
+pipeline_stages.<span class="fn">index</span>(<span class="st">"load"</span>)       <span class="cm"># position of element</span>
+pipeline_stages.<span class="fn">count</span>(<span class="st">"load"</span>)       <span class="cm"># how many times it appears</span>
+
+<span class="cm"># ── Sort / Order ─────────────────────────────────────────</span>
+pipeline_stages.<span class="fn">sort</span>()              <span class="cm"># in-place sort (mutates)</span>
+<span class="fn">sorted</span>(pipeline_stages)             <span class="cm"># returns NEW sorted list</span>
+pipeline_stages.<span class="fn">reverse</span>()          <span class="cm"># reverse in-place</span>
+
+<span class="cm"># ── Combine ──────────────────────────────────────────────</span>
+<span class="va">batch_a</span> = [<span class="st">"file1"</span>, <span class="st">"file2"</span>]
+<span class="va">batch_b</span> = [<span class="st">"file3"</span>, <span class="st">"file4"</span>]
+<span class="va">all_files</span> = batch_a + batch_b       <span class="cm"># concatenate</span>
+<span class="va">repeated</span>  = batch_a * <span class="nu">3</span>            <span class="cm"># ["file1","file2","file1","file2","file1","file2"]</span></pre>
+
+    <h4>List Comprehension — DE Superpower</h4>
+    <div class="memory-aid">
+      <div class="mtitle">🧠 Comprehension Formula</div>
+      <p style="font-family:'JetBrains Mono',monospace; color:var(--pink); font-size:14px;">
+        [ <strong style="color:var(--cyan)">expression</strong> &nbsp;<span style="color:var(--yellow)">for</span> <strong style="color:var(--green)">item</strong> <span style="color:var(--yellow)">in</span> <strong style="color:var(--orange)">iterable</strong> &nbsp;<span style="color:var(--yellow)">if</span> <strong style="color:var(--red)">condition</strong> ]
+      </p>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Read as: "Give me <em>expression</em> for each <em>item</em> in <em>iterable</em>, only if <em>condition</em> is true"</p>
+    </div>
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Real DE scenarios ────────────────────────────────────</span>
+<span class="va">raw_cols</span> = [<span class="st">"  Customer_ID  "</span>, <span class="st">" Amount "</span>, <span class="st">"  Status"</span>]
+
+<span class="cm"># Clean column names: strip whitespace + lowercase</span>
+<span class="va">clean_cols</span> = [<span class="va">c</span>.<span class="fn">strip</span>().<span class="fn">lower</span>() <span class="kw">for</span> <span class="va">c</span> <span class="kw">in</span> raw_cols]
+<span class="cm"># → ['customer_id', 'amount', 'status']</span>
+
+<span class="cm"># Filter only ADLS parquet paths</span>
+<span class="va">all_paths</span> = [<span class="st">"abfss://raw/orders.parquet"</span>, <span class="st">"abfss://raw/readme.txt"</span>, <span class="st">"abfss://raw/txn.parquet"</span>]
+<span class="va">parquet_files</span> = [<span class="va">p</span> <span class="kw">for</span> <span class="va">p</span> <span class="kw">in</span> all_paths <span class="kw">if</span> <span class="va">p</span>.<span class="fn">endswith</span>(<span class="st">".parquet"</span>)]
+
+<span class="cm"># Create column-alias pairs for Spark select()</span>
+<span class="va">aliases</span> = [(<span class="va">col</span>, <span class="va">col</span>.<span class="fn">replace</span>(<span class="st">"_"</span>, <span class="st">""</span>)) <span class="kw">for</span> <span class="va">col</span> <span class="kw">in</span> clean_cols]
+<span class="cm"># → [('customer_id', 'customerid'), ('amount', 'amount'), ...]</span>
+
+<span class="cm"># Flatten a list of lists (e.g., schema fields from multiple tables)</span>
+<span class="va">tables</span> = [[<span class="st">"id"</span>, <span class="st">"name"</span>], [<span class="st">"amount"</span>, <span class="st">"date"</span>]]
+<span class="va">all_fields</span> = [<span class="va">f</span> <span class="kw">for</span> <span class="va">tbl</span> <span class="kw">in</span> tables <span class="kw">for</span> <span class="va">f</span> <span class="kw">in</span> tbl]</pre>
+
+    <div class="prod-box">
+      <div class="ptitle">🏦 Banking Production Example — Column Validation</div>
+      <div class="flow-line">
+        <div class="flow-item">ADLS Raw Parquet</div><div class="flow-arr">→</div>
+        <div class="flow-item">Read Schema</div><div class="flow-arr">→</div>
+        <div class="flow-item">List Validation</div><div class="flow-arr">→</div>
+        <div class="flow-item">Raise Alert / Proceed</div>
+      </div>
+      <pre><span class="lang-tag">python</span><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+<span class="va">spark</span> = SparkSession.<span class="fn">builder</span>.<span class="fn">getOrCreate</span>()
+
+<span class="cm"># Expected columns for banking transaction table</span>
+<span class="va">required_cols</span> = [<span class="st">"txn_id"</span>, <span class="st">"account_number"</span>, <span class="st">"amount"</span>, <span class="st">"currency"</span>, <span class="st">"status"</span>]
+
+<span class="cm"># Read raw file from ADLS</span>
+<span class="va">df</span> = spark.<span class="fn">read</span>.<span class="fn">parquet</span>(<span class="st">"abfss://raw@datalake.dfs.core.windows.net/transactions/"</span>)
+<span class="va">actual_cols</span> = <span class="va">df</span>.<span class="fn">columns</span>                      <span class="cm"># list of column names</span>
+
+<span class="cm"># Find missing columns using list operations</span>
+<span class="va">missing</span> = [<span class="va">c</span> <span class="kw">for</span> <span class="va">c</span> <span class="kw">in</span> required_cols <span class="kw">if</span> <span class="va">c</span> <span class="kw">not in</span> actual_cols]
+
+<span class="kw">if</span> missing:
+    <span class="kw">raise</span> <span class="cl">ValueError</span>(<span class="st">f"Schema mismatch! Missing columns: </span>{missing}<span class="st">"</span>)
+<span class="kw">else</span>:
+    <span class="cm"># Select only required columns in correct order</span>
+    <span class="va">df_clean</span> = <span class="va">df</span>.<span class="fn">select</span>(required_cols)
+    <span class="va">df_clean</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">save</span>(<span class="st">"abfss://curated@datalake.dfs.core.windows.net/transactions/"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CH2: TUPLES ════════════════ -->
+<div id="ch2">
+  <div class="ch-divider"><span>chapter 2</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 2</div>
+    <h2>🔒 Tuples — Immutable, Reliable, Fast</h2>
+    <p class="desc">Ordered, immutable (cannot change), allows duplicates. Used for fixed configurations, schema definitions, function return values.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">📖</span> What is a Tuple?</h3>
+    <div class="snapshot">
+      <div class="label">🔷 Concept Snapshot</div>
+      <p><strong>Analogy:</strong> A GPS coordinate. Once set (lat, long), it never changes. If it could change, your map would break.</p>
+    </div>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Memory Pattern</div>
+      <pre>tuple_name = ( item1, item2, item3 )
+              ↑                      ↑
+        PARENTHESES — like PERMANENT RECORDS</pre>
+    </div>
+
+    <h4>List vs Tuple — Key Differences</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th>List <code>[ ]</code></th><th>Tuple <code>( )</code></th></tr></thead>
+        <tbody>
+          <tr><td>Mutable</td><td>✅ Yes</td><td>❌ No (immutable)</td></tr>
+          <tr><td>Speed</td><td>Slower</td><td>Faster (no overhead)</td></tr>
+          <tr><td>Memory</td><td>More</td><td>Less</td></tr>
+          <tr><td>Can be dict key</td><td>❌ No</td><td>✅ Yes</td></tr>
+          <tr><td>Use case</td><td>Dynamic data, changing lists</td><td>Fixed configs, schema, return values</td></tr>
+          <tr><td>Syntax</td><td><code>[1, 2, 3]</code></td><td><code>(1, 2, 3)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Creating Tuples ──────────────────────────────────────</span>
+<span class="va">empty_tuple</span>   = ()
+<span class="va">single</span>        = (<span class="st">"only"</span>,)          <span class="cm"># ← MUST have trailing comma for single item!</span>
+<span class="va">db_config</span>     = (<span class="st">"hostname"</span>, <span class="nu">1433</span>, <span class="st">"dev_db"</span>)
+
+<span class="cm"># ── Indexing (same as list) ──────────────────────────────</span>
+<span class="va">host</span> = db_config[<span class="nu">0</span>]   <span class="cm"># "hostname"</span>
+<span class="va">port</span> = db_config[<span class="nu">1</span>]   <span class="cm"># 1433</span>
+
+<span class="cm"># ── Tuple Unpacking (very DE-common!) ───────────────────</span>
+<span class="va">host</span>, <span class="va">port</span>, <span class="va">db</span> = db_config   <span class="cm"># assign each value to a variable</span>
+
+<span class="cm"># ── Named Tuple (structured, self-documenting) ──────────</span>
+<span class="kw">from</span> collections <span class="kw">import</span> namedtuple
+
+<span class="cl">FileMetadata</span> = <span class="fn">namedtuple</span>(<span class="st">"FileMetadata"</span>, [<span class="st">"path"</span>, <span class="st">"size_mb"</span>, <span class="st">"format"</span>])
+<span class="va">meta</span> = <span class="cl">FileMetadata</span>(<span class="st">"abfss://raw/orders.parquet"</span>, <span class="nu">512</span>, <span class="st">"parquet"</span>)
+<span class="fn">print</span>(<span class="va">meta</span>.path)         <span class="cm"># access by name</span>
+<span class="fn">print</span>(<span class="va">meta</span>[<span class="nu">1</span>])          <span class="cm"># access by index</span>
+
+<span class="cm"># ── Function returning multiple values (returns tuple) ──</span>
+<span class="kw">def</span> <span class="fn">get_stats</span>(<span class="va">df</span>):
+    <span class="kw">return</span> <span class="va">df</span>.<span class="fn">count</span>(), <span class="fn">len</span>(<span class="va">df</span>.<span class="fn">columns</span>)   <span class="cm"># returns (row_count, col_count)</span>
+
+<span class="va">rows</span>, <span class="va">cols</span> = <span class="fn">get_stats</span>(<span class="va">df</span>)  <span class="cm"># unpack directly!</span></pre>
+
+    <div class="callout callout-yellow">
+      <div class="ico">⚠️</div>
+      <div>
+        <strong>Common Interview Trick:</strong>
+        <p>Tuples can contain mutable objects! <code>t = ([1,2], [3,4])</code> — the tuple itself can't be reassigned, but the inner lists can be modified. This often surprises candidates.</p>
+      </div>
+    </div>
+
+    <div class="prod-box">
+      <div class="ptitle">🏦 Banking Example — ADLS Connection Config as Tuple</div>
+      <pre><span class="lang-tag">python</span><span class="cm"># Use tuple for immutable connection config — can't be accidentally overwritten</span>
+<span class="va">ADLS_CONFIG</span> = (
+    <span class="st">"abfss://raw@bankdatalake.dfs.core.windows.net"</span>,
+    <span class="st">"abfss://curated@bankdatalake.dfs.core.windows.net"</span>,
+    <span class="st">"abfss://archive@bankdatalake.dfs.core.windows.net"</span>
+)
+
+<span class="va">RAW_LAYER</span>, <span class="va">CURATED_LAYER</span>, <span class="va">ARCHIVE_LAYER</span> = ADLS_CONFIG  <span class="cm"># unpack</span>
+
+<span class="cm"># namedtuple for Spark schema field definitions</span>
+<span class="kw">from</span> collections <span class="kw">import</span> namedtuple
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructField, StringType, DoubleType, LongType
+
+<span class="cl">FieldDef</span> = <span class="fn">namedtuple</span>(<span class="st">"FieldDef"</span>, [<span class="st">"name"</span>, <span class="st">"type"</span>, <span class="st">"nullable"</span>])
+<span class="va">schema_def</span> = [
+    <span class="cl">FieldDef</span>(<span class="st">"txn_id"</span>,      <span class="cl">StringType</span>(), <span class="kw">False</span>),
+    <span class="cl">FieldDef</span>(<span class="st">"amount"</span>,      <span class="cl">DoubleType</span>(), <span class="kw">True</span>),
+    <span class="cl">FieldDef</span>(<span class="st">"account_no"</span>, <span class="cl">StringType</span>(), <span class="kw">False</span>),
+]
+
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType
+<span class="va">schema</span> = <span class="cl">StructType</span>([<span class="cl">StructField</span>(<span class="va">f</span>.name, <span class="va">f</span>.type, <span class="va">f</span>.nullable) <span class="kw">for</span> <span class="va">f</span> <span class="kw">in</span> schema_def])</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CH3: SETS ════════════════ -->
+<div id="ch3">
+  <div class="ch-divider"><span>chapter 3</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 3</div>
+    <h2>🔵 Sets — Uniqueness & Fast Membership</h2>
+    <p class="desc">Unordered, mutable, NO duplicates. Best for de-duplication, membership testing, and set-theory operations.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">📖</span> What is a Set?</h3>
+    <div class="snapshot">
+      <div class="label">🔷 Concept Snapshot</div>
+      <p><strong>Analogy:</strong> A VIP club entrance list. You're either on the list or not (no duplicates). Order doesn't matter.</p>
+    </div>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Memory Pattern</div>
+      <pre>set_name = { item1, item2, item3 }
+            ↑                     ↑
+     CURLY BRACES — like a UNIQUE CIRCLE (set in math)</pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Create ───────────────────────────────────────────────</span>
+<span class="va">empty_set</span>     = <span class="fn">set</span>()            <span class="cm"># NEVER use {} — that creates a dict!</span>
+<span class="va">currencies</span>    = {<span class="st">"INR"</span>, <span class="st">"USD"</span>, <span class="st">"EUR"</span>, <span class="st">"INR"</span>}  <span class="cm"># duplicate removed → {INR, USD, EUR}</span>
+<span class="va">valid_statuses</span>= {<span class="st">"COMPLETED"</span>, <span class="st">"PENDING"</span>, <span class="st">"FAILED"</span>}
+
+<span class="cm"># ── Modify ───────────────────────────────────────────────</span>
+currencies.<span class="fn">add</span>(<span class="st">"GBP"</span>)            <span class="cm"># add one item</span>
+currencies.<span class="fn">update</span>([<span class="st">"JPY"</span>, <span class="st">"AED"</span>]) <span class="cm"># add multiple</span>
+currencies.<span class="fn">discard</span>(<span class="st">"AED"</span>)       <span class="cm"># remove, no error if missing</span>
+currencies.<span class="fn">remove</span>(<span class="st">"JPY"</span>)        <span class="cm"># remove, raises KeyError if missing</span>
+
+<span class="cm"># ── Membership test (O(1) — MUCH faster than list.in) ───</span>
+<span class="st">"USD"</span> <span class="kw">in</span> currencies             <span class="cm"># True — instant hash lookup</span>
+
+<span class="cm"># ── Set Operations (think Venn diagrams) ─────────────────</span>
+<span class="va">expected</span> = {<span class="st">"txn_id"</span>, <span class="st">"amount"</span>, <span class="st">"status"</span>, <span class="st">"account_no"</span>}
+<span class="va">received</span> = {<span class="st">"txn_id"</span>, <span class="st">"amount"</span>, <span class="st">"currency"</span>}
+
+<span class="va">missing</span>  = expected - received          <span class="cm"># Difference:  {status, account_no}</span>
+<span class="va">extra</span>    = received - expected          <span class="cm"># Difference:  {currency}</span>
+<span class="va">common</span>   = expected &amp; received         <span class="cm"># Intersection: {txn_id, amount}</span>
+<span class="va">all_cols</span> = expected | received         <span class="cm"># Union:        all columns</span>
+<span class="va">unique</span>   = expected ^ received         <span class="cm"># Symmetric diff: columns not in both</span></pre>
+
+    <div class="prod-box">
+      <div class="ptitle">🏦 Banking Example — Duplicate Transaction Detection</div>
+      <pre><span class="lang-tag">python</span><span class="cm"># De-duplicate transaction IDs before loading to curated layer</span>
+<span class="va">df_new</span>   = spark.<span class="fn">read</span>.<span class="fn">parquet</span>(<span class="st">"abfss://raw@lake.dfs.core.windows.net/batch_today/"</span>)
+<span class="va">df_exist</span> = spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">load</span>(<span class="st">"abfss://curated@lake.dfs.core.windows.net/transactions/"</span>)
+
+<span class="cm"># Collect IDs as sets (for small batches; for large use Spark joins)</span>
+<span class="va">new_ids</span>      = <span class="fn">set</span>(<span class="va">df_new</span>.<span class="fn">select</span>(<span class="st">"txn_id"</span>).<span class="fn">rdd</span>.<span class="fn">flatMap</span>(<span class="kw">lambda</span> <span class="va">x</span>: <span class="va">x</span>).<span class="fn">collect</span>())
+<span class="va">existing_ids</span> = <span class="fn">set</span>(<span class="va">df_exist</span>.<span class="fn">select</span>(<span class="st">"txn_id"</span>).<span class="fn">rdd</span>.<span class="fn">flatMap</span>(<span class="kw">lambda</span> <span class="va">x</span>: <span class="va">x</span>).<span class="fn">collect</span>())
+
+<span class="va">duplicate_ids</span> = new_ids &amp; existing_ids
+<span class="kw">if</span> duplicate_ids:
+    <span class="fn">print</span>(<span class="st">f"⚠️ Found </span>{<span class="fn">len</span>(duplicate_ids)}<span class="st"> duplicate transactions: </span>{duplicate_ids}<span class="st">"</span>)
+    <span class="cm"># Alert via Azure Monitor / Event Hub</span>
+
+<span class="cm"># Schema validation using set difference</span>
+<span class="va">required</span> = {<span class="st">"txn_id"</span>, <span class="st">"amount"</span>, <span class="st">"status"</span>, <span class="st">"account_no"</span>, <span class="st">"currency"</span>}
+<span class="va">actual</span>   = <span class="fn">set</span>(<span class="va">df_new</span>.<span class="fn">columns</span>)
+<span class="va">missing</span>  = required - actual
+<span class="kw">if</span> missing:
+    <span class="kw">raise</span> <span class="cl">SchemaValidationError</span>(<span class="st">f"Missing columns: </span>{missing}<span class="st">"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CH4: DICT ════════════════ -->
+<div id="ch4">
+  <div class="ch-divider"><span>chapter 4</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 4</div>
+    <h2>📕 Dictionaries — The DE Configuration Backbone</h2>
+    <p class="desc">Key-value pairs, mutable, ordered (Python 3.7+), no duplicate keys. Used everywhere — configs, schema maps, column transforms, Spark options.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">📖</span> What is a Dictionary?</h3>
+    <div class="snapshot">
+      <div class="label">🔷 Concept Snapshot</div>
+      <p><strong>Analogy:</strong> A Python dictionary is like a real dictionary. You look up a word (key), and instantly get its meaning (value). Fast, labelled, and unique words.</p>
+    </div>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Memory Pattern</div>
+      <pre>dict_name = { "key" : value, "key2" : value2 }
+             ↑               ↑
+      CURLY BRACES + COLON — KEY:VALUE pairs</pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Create ───────────────────────────────────────────────</span>
+<span class="va">spark_config</span> = {
+    <span class="st">"spark.sql.shuffle.partitions"</span>: <span class="st">"200"</span>,
+    <span class="st">"spark.executor.memory"</span>:        <span class="st">"8g"</span>,
+    <span class="st">"spark.executor.cores"</span>:         <span class="st">"4"</span>,
+    <span class="st">"spark.dynamicAllocation.enabled"</span>: <span class="st">"true"</span>
+}
+
+<span class="cm"># ── Access ───────────────────────────────────────────────</span>
+<span class="va">mem</span>  = spark_config[<span class="st">"spark.executor.memory"</span>]    <span class="cm"># "8g"  → KeyError if missing</span>
+<span class="va">mem2</span> = spark_config.<span class="fn">get</span>(<span class="st">"spark.executor.memory"</span>, <span class="st">"4g"</span>)  <span class="cm"># safe default</span>
+
+<span class="cm"># ── Modify ───────────────────────────────────────────────</span>
+spark_config[<span class="st">"spark.sql.adaptive.enabled"</span>] = <span class="st">"true"</span>  <span class="cm"># add new key</span>
+spark_config[<span class="st">"spark.executor.cores"</span>]       = <span class="st">"8"</span>   <span class="cm"># update existing</span>
+<span class="kw">del</span> spark_config[<span class="st">"spark.executor.cores"</span>]             <span class="cm"># delete key</span>
+spark_config.<span class="fn">pop</span>(<span class="st">"spark.executor.memory"</span>, <span class="kw">None</span>)     <span class="cm"># pop with default</span>
+
+<span class="cm"># ── Iterate ──────────────────────────────────────────────</span>
+<span class="kw">for</span> <span class="va">key</span> <span class="kw">in</span> spark_config:              <span class="cm"># iterate keys</span>
+    <span class="fn">print</span>(<span class="va">key</span>)
+<span class="kw">for</span> <span class="va">val</span> <span class="kw">in</span> spark_config.<span class="fn">values</span>():   <span class="cm"># iterate values</span>
+    <span class="fn">print</span>(<span class="va">val</span>)
+<span class="kw">for</span> <span class="va">k</span>, <span class="va">v</span> <span class="kw">in</span> spark_config.<span class="fn">items</span>():  <span class="cm"># iterate key-value pairs</span>
+    <span class="fn">print</span>(<span class="st">f"</span>{<span class="va">k</span>}<span class="st"> = </span>{<span class="va">v</span>}<span class="st">"</span>)
+
+<span class="cm"># ── Merge two dicts (Python 3.9+) ───────────────────────</span>
+<span class="va">base_cfg</span>   = {<span class="st">"format"</span>: <span class="st">"parquet"</span>}
+<span class="va">extra_cfg</span>  = {<span class="st">"header"</span>: <span class="st">"true"</span>}
+<span class="va">full_cfg</span>   = base_cfg | extra_cfg   <span class="cm"># merge</span>
+
+<span class="cm"># ── Dict Comprehension ───────────────────────────────────</span>
+<span class="va">col_types</span> = {<span class="va">field</span>.name: <span class="fn">str</span>(<span class="va">field</span>.dataType) <span class="kw">for</span> <span class="va">field</span> <span class="kw">in</span> df.schema.fields}
+<span class="cm"># → {"txn_id": "StringType", "amount": "DoubleType", ...}</span>
+
+<span class="cm"># ── Nested Dict (pipeline config) ───────────────────────</span>
+<span class="va">pipeline_config</span> = {
+    <span class="st">"source"</span>: {
+        <span class="st">"type"</span>: <span class="st">"adls"</span>,
+        <span class="st">"path"</span>: <span class="st">"abfss://raw@datalake.dfs.core.windows.net/"</span>,
+        <span class="st">"format"</span>: <span class="st">"parquet"</span>
+    },
+    <span class="st">"target"</span>: {
+        <span class="st">"type"</span>: <span class="st">"delta"</span>,
+        <span class="st">"path"</span>: <span class="st">"abfss://curated@datalake.dfs.core.windows.net/"</span>,
+        <span class="st">"mode"</span>: <span class="st">"overwrite"</span>
+    }
+}
+<span class="va">source_path</span> = pipeline_config[<span class="st">"source"</span>][<span class="st">"path"</span>]   <span class="cm"># nested access</span></pre>
+
+    <div class="prod-box">
+      <div class="ptitle">🏦 Banking Example — Column Rename Map + Spark Apply</div>
+      <pre><span class="lang-tag">python</span><span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+<span class="cm"># Source → Target column name mapping</span>
+<span class="va">rename_map</span> = {
+    <span class="st">"Txn_ID"</span>:    <span class="st">"txn_id"</span>,
+    <span class="st">"Amt"</span>:       <span class="st">"amount"</span>,
+    <span class="st">"CustCode"</span>:  <span class="st">"customer_id"</span>,
+    <span class="st">"TxnStatus"</span>:<span class="st">"status"</span>
+}
+
+<span class="cm"># Apply rename using dict iteration + Spark withColumnRenamed</span>
+<span class="va">df_renamed</span> = <span class="va">df</span>
+<span class="kw">for</span> <span class="va">old_name</span>, <span class="va">new_name</span> <span class="kw">in</span> rename_map.<span class="fn">items</span>():
+    <span class="kw">if</span> old_name <span class="kw">in</span> <span class="va">df_renamed</span>.<span class="fn">columns</span>:
+        <span class="va">df_renamed</span> = <span class="va">df_renamed</span>.<span class="fn">withColumnRenamed</span>(old_name, new_name)
+
+<span class="cm"># Spark read options from dict — cleaner than inline params</span>
+<span class="va">read_options</span> = {
+    <span class="st">"header"</span>:             <span class="st">"true"</span>,
+    <span class="st">"inferSchema"</span>:        <span class="st">"false"</span>,
+    <span class="st">"sep"</span>:                <span class="st">","</span>,
+    <span class="st">"multiLine"</span>:          <span class="st">"true"</span>
+}
+<span class="va">df</span> = spark.<span class="fn">read</span>.<span class="fn">options</span>(**read_options).<span class="fn">csv</span>(<span class="st">"abfss://raw@lake.dfs.core.windows.net/txn.csv"</span>)</pre>
+    </div>
+
+    <h4>Collections — Advanced Dict Types for DEs</h4>
+    <pre><span class="lang-tag">python</span><span class="kw">from</span> collections <span class="kw">import</span> defaultdict, Counter, OrderedDict
+
+<span class="cm"># defaultdict — no KeyError for missing keys</span>
+<span class="va">errors_by_type</span> = <span class="fn">defaultdict</span>(<span class="fn">list</span>)
+errors_by_type[<span class="st">"null_values"</span>].<span class="fn">append</span>(<span class="st">"amount"</span>)   <span class="cm"># works without pre-init</span>
+
+<span class="cm"># Counter — frequency count (great for data profiling)</span>
+<span class="va">statuses</span> = [<span class="st">"COMPLETED"</span>, <span class="st">"FAILED"</span>, <span class="st">"COMPLETED"</span>, <span class="st">"PENDING"</span>, <span class="st">"COMPLETED"</span>]
+<span class="va">counts</span>   = <span class="fn">Counter</span>(statuses)
+<span class="cm"># → Counter({'COMPLETED': 3, 'FAILED': 1, 'PENDING': 1})</span>
+<span class="va">top2</span>     = counts.<span class="fn">most_common</span>(<span class="nu">2</span>)</pre>
+  </div>
+</div>
+
+<!-- ════════════════ CH5: FUNCTIONS & LOOPS ════════════════ -->
+<div id="ch5">
+  <div class="ch-divider"><span>chapter 5</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 5</div>
+    <h2>⚙️ Functions, Loops & Iterators</h2>
+    <p class="desc">The engine of data pipelines. Functions encapsulate logic; loops drive iteration. Together they power ETL transformations.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">🔁</span> Loops — Iterating Data</h3>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Loop Patterns to Memorize</div>
+      <pre><span style="color:var(--cyan)">for</span> item <span style="color:var(--cyan)">in</span> collection:      → iterate over items
+<span style="color:var(--cyan)">for</span> i, item <span style="color:var(--cyan)">in</span> <span style="color:var(--fn)">enumerate</span>(col): → iterate with index
+<span style="color:var(--cyan)">for</span> k, v <span style="color:var(--cyan)">in</span> dict.<span style="color:var(--fn)">items</span>():    → iterate key-value pairs
+<span style="color:var(--cyan)">while</span> condition:              → loop until false</pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── FOR loop: process multiple ADLS paths ───────────────</span>
+<span class="va">layers</span> = [<span class="st">"raw"</span>, <span class="st">"curated"</span>, <span class="st">"archive"</span>]
+<span class="kw">for</span> <span class="va">layer</span> <span class="kw">in</span> layers:
+    <span class="fn">print</span>(<span class="st">f"Processing layer: </span>{<span class="va">layer</span>}<span class="st">"</span>)
+
+<span class="cm"># ── enumerate(): index + value together ─────────────────</span>
+<span class="va">file_list</span> = [<span class="st">"orders.parquet"</span>, <span class="st">"products.parquet"</span>, <span class="st">"customers.parquet"</span>]
+<span class="kw">for</span> <span class="va">i</span>, <span class="va">fname</span> <span class="kw">in</span> <span class="fn">enumerate</span>(file_list, start=<span class="nu">1</span>):
+    <span class="fn">print</span>(<span class="st">f"[</span>{<span class="va">i</span>}<span class="st">] Processing: </span>{<span class="va">fname</span>}<span class="st">"</span>)
+
+<span class="cm"># ── zip(): iterate two lists in parallel ─────────────────</span>
+<span class="va">source_paths</span> = [<span class="st">"abfss://raw/orders"</span>, <span class="st">"abfss://raw/products"</span>]
+<span class="va">target_paths</span> = [<span class="st">"abfss://curated/orders"</span>, <span class="st">"abfss://curated/products"</span>]
+<span class="kw">for</span> <span class="va">src</span>, <span class="va">tgt</span> <span class="kw">in</span> <span class="fn">zip</span>(source_paths, target_paths):
+    <span class="fn">print</span>(<span class="st">f"Copy </span>{<span class="va">src</span>}<span class="st"> → </span>{<span class="va">tgt</span>}<span class="st">"</span>)
+
+<span class="cm"># ── WHILE loop: retry pattern ────────────────────────────</span>
+<span class="va">max_retries</span> = <span class="nu">3</span>
+<span class="va">attempt</span>     = <span class="nu">0</span>
+<span class="va">success</span>     = <span class="kw">False</span>
+<span class="kw">while</span> attempt &lt; max_retries <span class="kw">and not</span> success:
+    <span class="kw">try</span>:
+        df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">save</span>(<span class="va">target_path</span>)
+        <span class="va">success</span> = <span class="kw">True</span>
+    <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> <span class="va">e</span>:
+        <span class="va">attempt</span> += <span class="nu">1</span>
+        <span class="fn">print</span>(<span class="st">f"Retry </span>{<span class="va">attempt</span>}<span class="st">/</span>{<span class="va">max_retries</span>}<span class="st">: </span>{<span class="va">e</span>}<span class="st">"</span>)
+
+<span class="cm"># ── Loop control: break / continue / pass ───────────────</span>
+<span class="kw">for</span> <span class="va">col</span> <span class="kw">in</span> df.<span class="fn">columns</span>:
+    <span class="kw">if</span> col == <span class="st">"__metadata"</span>: <span class="kw">continue</span>  <span class="cm"># skip this column</span>
+    <span class="kw">if</span> col == <span class="st">"stop_here"</span>:  <span class="kw">break</span>     <span class="cm"># stop entirely</span>
+    <span class="fn">print</span>(<span class="st">f"→ </span>{<span class="va">col</span>}<span class="st">"</span>)</pre>
+
+    <h3><span class="icon">🔧</span> Functions — Reusable Pipeline Logic</h3>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Function Anatomy</div>
+      <pre><span style="color:var(--pink)">def</span> <span style="color:var(--blue)">function_name</span>(<span style="color:var(--green)">param1</span>, <span style="color:var(--green)">param2</span>=<span style="color:var(--orange)">default</span>) -> <span style="color:var(--yellow)">return_type</span>:
+    <span style="color:var(--muted)"># body</span>
+    <span style="color:var(--pink)">return</span> <span style="color:var(--text)">result</span></pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+<span class="kw">from</span> typing <span class="kw">import</span> List, Dict, Optional
+
+<span class="cm"># ── Basic function ────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">clean_column_names</span>(<span class="va">df</span>: <span class="cl">DataFrame</span>) -> <span class="cl">DataFrame</span>:
+    <span class="st">"""Strip spaces + lowercase all column names."""</span>
+    <span class="kw">for</span> <span class="va">col</span> <span class="kw">in</span> df.<span class="fn">columns</span>:
+        <span class="va">df</span> = df.<span class="fn">withColumnRenamed</span>(col, col.<span class="fn">strip</span>().<span class="fn">lower</span>().<span class="fn">replace</span>(<span class="st">" "</span>, <span class="st">"_"</span>))
+    <span class="kw">return</span> df
+
+<span class="cm"># ── *args: variable positional arguments ─────────────────</span>
+<span class="kw">def</span> <span class="fn">read_and_union</span>(*<span class="va">paths</span>: str) -> <span class="cl">DataFrame</span>:
+    <span class="st">"""Union multiple DataFrames from ADLS paths."""</span>
+    <span class="va">dfs</span> = [spark.<span class="fn">read</span>.<span class="fn">parquet</span>(<span class="va">p</span>) <span class="kw">for</span> <span class="va">p</span> <span class="kw">in</span> paths]
+    <span class="kw">from</span> functools <span class="kw">import</span> reduce
+    <span class="kw">return</span> <span class="fn">reduce</span>(<span class="kw">lambda</span> <span class="va">a</span>, <span class="va">b</span>: <span class="va">a</span>.<span class="fn">union</span>(<span class="va">b</span>), dfs)
+
+<span class="cm"># ── **kwargs: variable keyword arguments ─────────────────</span>
+<span class="kw">def</span> <span class="fn">write_delta</span>(<span class="va">df</span>: <span class="cl">DataFrame</span>, <span class="va">path</span>: str, **<span class="va">options</span>) -> <span class="kw">None</span>:
+    <span class="st">"""Write DataFrame as Delta with custom options."""</span>
+    <span class="va">writer</span> = df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>)
+    <span class="kw">for</span> <span class="va">k</span>, <span class="va">v</span> <span class="kw">in</span> options.<span class="fn">items</span>():
+        <span class="va">writer</span> = <span class="va">writer</span>.<span class="fn">option</span>(<span class="va">k</span>, <span class="va">v</span>)
+    <span class="va">writer</span>.<span class="fn">save</span>(<span class="va">path</span>)
+
+<span class="cm"># Usage:</span>
+<span class="fn">write_delta</span>(df, <span class="st">"abfss://curated@lake.dfs.core.windows.net/txn"</span>,
+            mode=<span class="st">"overwrite"</span>, overwriteSchema=<span class="st">"true"</span>)
+
+<span class="cm"># ── Lambda: one-liner anonymous functions ────────────────</span>
+<span class="va">normalize_col</span> = <span class="kw">lambda</span> <span class="va">s</span>: <span class="va">s</span>.<span class="fn">strip</span>().<span class="fn">lower</span>().<span class="fn">replace</span>(<span class="st">" "</span>, <span class="st">"_"</span>)
+
+<span class="cm"># Often used with Spark UDFs</span>
+<span class="va">from_pyspark_udf</span> = F.<span class="fn">udf</span>(<span class="kw">lambda</span> <span class="va">x</span>: <span class="va">x</span>.<span class="fn">upper</span>() <span class="kw">if</span> <span class="va">x</span> <span class="kw">else</span> <span class="kw">None</span>)
+
+<span class="cm"># ── Generator function (memory-efficient for large files) </span>
+<span class="kw">def</span> <span class="fn">batch_generator</span>(<span class="va">records</span>: list, <span class="va">batch_size</span>: int = <span class="nu">1000</span>):
+    <span class="st">"""Yield records in batches — avoids loading all into memory."""</span>
+    <span class="kw">for</span> <span class="va">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">0</span>, <span class="fn">len</span>(records), batch_size):
+        <span class="kw">yield</span> records[<span class="va">i</span>:<span class="va">i</span> + batch_size]
+
+<span class="kw">for</span> <span class="va">batch</span> <span class="kw">in</span> <span class="fn">batch_generator</span>(all_records, <span class="nu">500</span>):
+    <span class="fn">process_batch</span>(batch)</pre>
+
+    <div class="callout callout-green">
+      <div class="ico">✅</div>
+      <div>
+        <strong>DE Best Practice — Generators vs Lists:</strong>
+        <p>When reading large log files or API responses, use generators (<code>yield</code>) instead of building a full list. A generator doesn't load all data into RAM — it produces items one at a time. Critical for pipelines processing millions of records on a single driver node.</p>
+      </div>
+    </div>
+
+    <div class="prod-box">
+      <div class="ptitle">🏦 Banking Example — Parameterized ETL Function</div>
+      <pre><span class="lang-tag">python</span><span class="kw">def</span> <span class="fn">run_etl_layer</span>(
+    <span class="va">spark</span>:       SparkSession,
+    <span class="va">source_path</span>: str,
+    <span class="va">target_path</span>: str,
+    <span class="va">filters</span>:     Dict[str, str] = <span class="kw">None</span>,
+    <span class="va">write_mode</span>:  str = <span class="st">"overwrite"</span>
+) -> Dict[str, int]:
+    <span class="st">"""
+    Generic ETL function for banking pipeline layers.
+    Returns row counts before/after filtering.
+    """</span>
+    <span class="cm"># Read</span>
+    <span class="va">df</span> = spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">load</span>(source_path)
+    <span class="va">original_count</span> = df.<span class="fn">count</span>()
+
+    <span class="cm"># Apply optional filters from dict</span>
+    <span class="kw">if</span> filters:
+        <span class="kw">for</span> <span class="va">col_name</span>, <span class="va">col_value</span> <span class="kw">in</span> filters.<span class="fn">items</span>():
+            <span class="va">df</span> = df.<span class="fn">filter</span>(F.<span class="fn">col</span>(col_name) == col_value)
+
+    <span class="cm"># Standardize schema</span>
+    <span class="va">df</span> = <span class="fn">clean_column_names</span>(df)
+    <span class="va">filtered_count</span> = df.<span class="fn">count</span>()
+
+    <span class="cm"># Write</span>
+    df.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">mode</span>(write_mode).<span class="fn">save</span>(target_path)
+
+    <span class="kw">return</span> {<span class="st">"original"</span>: original_count, <span class="st">"filtered"</span>: filtered_count}
+
+<span class="cm"># Usage</span>
+<span class="va">stats</span> = <span class="fn">run_etl_layer</span>(
+    spark,
+    source_path  = <span class="st">"abfss://raw@lake.dfs.core.windows.net/transactions"</span>,
+    target_path  = <span class="st">"abfss://curated@lake.dfs.core.windows.net/transactions"</span>,
+    filters      = {<span class="st">"status"</span>: <span class="st">"COMPLETED"</span>, <span class="st">"currency"</span>: <span class="st">"INR"</span>},
+    write_mode   = <span class="st">"overwrite"</span>
+)
+<span class="fn">print</span>(<span class="st">f"Loaded </span>{stats[<span class="st">'filtered'</span>]}<span class="st"> of </span>{stats[<span class="st">'original'</span>]}<span class="st"> records"</span>)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CH6: OOP ════════════════ -->
+<div id="ch6">
+  <div class="ch-divider"><span>chapter 6</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 6</div>
+    <h2>🏗️ OOP & Classes — Production-Grade Pipeline Design</h2>
+    <p class="desc">Object-Oriented Programming groups related data (attributes) and functions (methods) into a single reusable blueprint (class). Essential for building maintainable, testable DE pipelines.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">📐</span> OOP Concepts with DE Examples</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>OOP Concept</th><th>Plain English</th><th>DE Analogy</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Class</strong></td><td>Blueprint / template</td><td>ETL pipeline template</td></tr>
+          <tr><td><strong>Object</strong></td><td>Instance of a class</td><td>A specific pipeline run</td></tr>
+          <tr><td><strong>Attribute</strong></td><td>Data stored in object</td><td>Source path, table name</td></tr>
+          <tr><td><strong>Method</strong></td><td>Function inside class</td><td><code>extract()</code>, <code>transform()</code>, <code>load()</code></td></tr>
+          <tr><td><strong>Inheritance</strong></td><td>Child class extends parent</td><td>SpecificBankETL extends BaseETL</td></tr>
+          <tr><td><strong>Encapsulation</strong></td><td>Hide internal details</td><td>Private _conn_str not exposed</td></tr>
+          <tr><td><strong>Polymorphism</strong></td><td>Same method, different behavior</td><td><code>transform()</code> differs per pipeline type</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pattern-box">
+      <div class="ptitle">🧠 Class Anatomy Pattern</div>
+      <pre><span style="color:var(--pink)">class</span> <span style="color:var(--cl)">ClassName</span>(<span style="color:var(--cl)">ParentClass</span>):
+    <span style="color:var(--cm)"># Class attribute (shared by all instances)</span>
+    <span style="color:var(--va)">class_var</span> = <span style="color:var(--st)">value</span>
+
+    <span style="color:var(--kw)">def</span> <span style="color:var(--fn)">__init__</span>(<span style="color:var(--kw)">self</span>, param1, param2):  <span style="color:var(--cm)"># Constructor</span>
+        <span style="color:var(--kw)">self</span>.param1 = param1             <span style="color:var(--cm)"># Instance attribute</span>
+
+    <span style="color:var(--kw)">def</span> <span style="color:var(--fn)">method</span>(<span style="color:var(--kw)">self</span>):                   <span style="color:var(--cm)"># Instance method</span>
+        <span style="color:var(--kw)">return</span> <span style="color:var(--kw)">self</span>.param1</pre>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession, DataFrame
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+<span class="kw">from</span> typing <span class="kw">import</span> Optional, Dict
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">import</span> logging
+
+<span class="cm"># ── BASE CLASS (Abstract) ─────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">BaseETLPipeline</span>(<span class="cl">ABC</span>):
+    <span class="st">"""Abstract base class for all ETL pipelines."""</span>
+
+    <span class="va">pipeline_version</span> = <span class="st">"2.0"</span>  <span class="cm"># class attribute</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        <span class="kw">self</span>,
+        <span class="va">spark</span>:       SparkSession,
+        <span class="va">source_path</span>: str,
+        <span class="va">target_path</span>: str,
+        <span class="va">pipeline_name</span>: str
+    ):
+        <span class="kw">self</span>.spark         = spark
+        <span class="kw">self</span>.source_path   = source_path
+        <span class="kw">self</span>.target_path   = target_path
+        <span class="kw">self</span>.pipeline_name = pipeline_name
+        <span class="kw">self</span>.logger        = <span class="fn">logging</span>.<span class="fn">getLogger</span>(<span class="kw">self</span>.__class__.__name__)
+        <span class="kw">self</span>._run_metadata = {}  <span class="cm"># private: _ prefix convention</span>
+
+    <span class="cm"># ── Abstract method (MUST be implemented by child class) ─</span>
+    <span class="kw">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">transform</span>(<span class="kw">self</span>, <span class="va">df</span>: <span class="cl">DataFrame</span>) -> <span class="cl">DataFrame</span>:
+        <span class="kw">pass</span>
+
+    <span class="cm"># ── Concrete methods (shared by all child classes) ────────</span>
+    <span class="kw">def</span> <span class="fn">extract</span>(<span class="kw">self</span>) -> <span class="cl">DataFrame</span>:
+        <span class="kw">self</span>.logger.<span class="fn">info</span>(<span class="st">f"Reading from: </span>{<span class="kw">self</span>.source_path}<span class="st">"</span>)
+        <span class="kw">return</span> <span class="kw">self</span>.spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">load</span>(<span class="kw">self</span>.source_path)
+
+    <span class="kw">def</span> <span class="fn">load</span>(<span class="kw">self</span>, <span class="va">df</span>: <span class="cl">DataFrame</span>, <span class="va">mode</span>: str = <span class="st">"overwrite"</span>) -> <span class="kw">None</span>:
+        <span class="va">df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">mode</span>(mode).<span class="fn">save</span>(<span class="kw">self</span>.target_path)
+        <span class="kw">self</span>.logger.<span class="fn">info</span>(<span class="st">f"Written to: </span>{<span class="kw">self</span>.target_path}<span class="st">"</span>)
+
+    <span class="kw">def</span> <span class="fn">run</span>(<span class="kw">self</span>) -> Dict:
+        <span class="st">"""Orchestrates the full ETL — same for all child classes."""</span>
+        <span class="va">start</span> = <span class="fn">datetime</span>.<span class="fn">now</span>()
+        <span class="kw">try</span>:
+            <span class="va">df_raw</span>    = <span class="kw">self</span>.<span class="fn">extract</span>()
+            <span class="va">df_clean</span>  = <span class="kw">self</span>.<span class="fn">transform</span>(df_raw)   <span class="cm"># polymorphic call</span>
+            <span class="kw">self</span>.<span class="fn">load</span>(df_clean)
+            <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"SUCCESS"</span>, <span class="st">"rows"</span>: df_clean.<span class="fn">count</span>()}
+        <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> <span class="va">e</span>:
+            <span class="kw">self</span>.logger.<span class="fn">error</span>(<span class="st">f"Pipeline failed: </span>{<span class="va">e</span>}<span class="st">"</span>)
+            <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"FAILED"</span>, <span class="st">"error"</span>: <span class="fn">str</span>(<span class="va">e</span>)}
+
+    <span class="cm"># ── Dunder methods ────────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">__repr__</span>(<span class="kw">self</span>) -> str:
+        <span class="kw">return</span> <span class="st">f"</span>{<span class="kw">self</span>.__class__.__name__}<span class="st">(</span>{<span class="kw">self</span>.pipeline_name}<span class="st">)"</span>
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(<span class="kw">self</span>) -> str:
+        <span class="kw">return</span> <span class="st">f"Pipeline: </span>{<span class="kw">self</span>.pipeline_name} <span class="st">v</span>{<span class="kw">self</span>.pipeline_version}<span class="st">"</span>
+
+
+<span class="cm"># ── CHILD CLASS (Concrete) ────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">BankingTransactionETL</span>(<span class="cl">BaseETLPipeline</span>):
+    <span class="st">"""Concrete ETL for banking transaction data."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="va">spark</span>, <span class="va">source_path</span>, <span class="va">target_path</span>, <span class="va">filter_status</span>: str = <span class="st">"COMPLETED"</span>):
+        <span class="kw">super</span>().<span class="fn">__init__</span>(spark, source_path, target_path, <span class="st">"BankingTransactionETL"</span>)
+        <span class="kw">self</span>.filter_status = filter_status  <span class="cm"># extra attribute</span>
+
+    <span class="kw">def</span> <span class="fn">transform</span>(<span class="kw">self</span>, <span class="va">df</span>: <span class="cl">DataFrame</span>) -> <span class="cl">DataFrame</span>:
+        <span class="st">"""Banking-specific transformations."""</span>
+        <span class="kw">return</span> (
+            df
+            .<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="st">"status"</span>) == <span class="kw">self</span>.filter_status)
+            .<span class="fn">withColumn</span>(<span class="st">"amount_inr"</span>, F.<span class="fn">col</span>(<span class="st">"amount"</span>) * F.<span class="fn">lit</span>(<span class="nu">83.5</span>))
+            .<span class="fn">withColumn</span>(<span class="st">"load_ts"</span>, F.<span class="fn">current_timestamp</span>())
+            .<span class="fn">dropDuplicates</span>([<span class="st">"txn_id"</span>])
+        )
+
+
+<span class="cm"># ── USAGE ────────────────────────────────────────────────</span>
+<span class="va">pipeline</span> = <span class="cl">BankingTransactionETL</span>(
+    spark       = spark,
+    source_path = <span class="st">"abfss://raw@datalake.dfs.core.windows.net/transactions"</span>,
+    target_path = <span class="st">"abfss://curated@datalake.dfs.core.windows.net/transactions"</span>,
+    filter_status = <span class="st">"COMPLETED"</span>
+)
+<span class="va">result</span> = pipeline.<span class="fn">run</span>()
+<span class="fn">print</span>(result)        <span class="cm"># {'status': 'SUCCESS', 'rows': 45231}</span>
+<span class="fn">print</span>(pipeline)      <span class="cm"># Pipeline: BankingTransactionETL v2.0</span></pre>
+
+    <div class="diagram">
+      <div class="d-title">OOP Inheritance Diagram</div>
+      <pre style="background:transparent;border:none;padding:0;margin:0;font-size:13px;">
+  ┌─────────────────────────────────────┐
+  │     BaseETLPipeline (Abstract)      │
+  │─────────────────────────────────────│
+  │ + pipeline_version: "2.0"           │
+  │ + spark, source_path, target_path   │
+  │─────────────────────────────────────│
+  │ + extract() → DataFrame             │  ← Concrete
+  │ + load(df)  → None                  │  ← Concrete
+  │ + run()     → Dict                  │  ← Concrete (calls transform)
+  │ + transform() → DataFrame           │  ← Abstract (must override)
+  └──────────────┬──────────────────────┘
+                 │ inherits
+        ┌────────┴────────┐
+        ▼                 ▼
+┌──────────────┐   ┌──────────────────┐
+│ BankingTxnETL│   │ FraudAlertETL    │
+│──────────────│   │──────────────────│
+│+filter_status│   │+threshold_amount │
+│──────────────│   │──────────────────│
+│+transform()  │   │+transform()      │  ← Polymorphism!
+└──────────────┘   └──────────────────┘</pre>
+    </div>
+
+    <h4>Decorators — Essential Python Feature for DE</h4>
+    <pre><span class="lang-tag">python</span><span class="kw">import</span> functools
+<span class="kw">import</span> time
+
+<span class="cm"># ── Timing decorator (profile pipeline performance) ──────</span>
+<span class="kw">def</span> <span class="fn">timer</span>(<span class="va">func</span>):
+    <span class="kw">@functools</span>.<span class="fn">wraps</span>(func)
+    <span class="kw">def</span> <span class="fn">wrapper</span>(*<span class="va">args</span>, **<span class="va">kwargs</span>):
+        <span class="va">t0</span>     = time.<span class="fn">time</span>()
+        <span class="va">result</span> = <span class="fn">func</span>(*args, **kwargs)
+        <span class="fn">print</span>(<span class="st">f"⏱ </span>{<span class="va">func</span>.__name__}<span class="st"> took </span>{<span class="fn">round</span>(<span class="fn">time</span>.<span class="fn">time</span>() - t0, <span class="nu">2</span>)}<span class="st">s"</span>)
+        <span class="kw">return</span> result
+    <span class="kw">return</span> wrapper
+
+<span class="kw">@timer</span>
+<span class="kw">def</span> <span class="fn">load_transactions</span>():
+    <span class="kw">return</span> spark.<span class="fn">read</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">load</span>(<span class="st">"abfss://raw@lake...."</span>)
+
+<span class="cm"># ── @staticmethod — utility, no self needed ───────────────</span>
+<span class="kw">class</span> <span class="cl">SchemaUtils</span>:
+    <span class="kw">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">validate_columns</span>(<span class="va">df</span>: <span class="cl">DataFrame</span>, <span class="va">required</span>: list) -> bool:
+        <span class="kw">return</span> <span class="fn">set</span>(required).<span class="fn">issubset</span>(<span class="fn">set</span>(<span class="va">df</span>.<span class="fn">columns</span>))
+
+<span class="cm"># Call without creating instance</span>
+<span class="cl">SchemaUtils</span>.<span class="fn">validate_columns</span>(df, [<span class="st">"txn_id"</span>, <span class="st">"amount"</span>])</pre>
+  </div>
+</div>
+
+<!-- ════════════════ CH7: SPARK CONTEXT ════════════════ -->
+<div id="ch7">
+  <div class="ch-divider"><span>chapter 7</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 7</div>
+    <h2>⚡ Connecting to Spark — Python in the Driver</h2>
+    <p class="desc">How all the Python concepts above connect to PySpark. The Driver runs your Python code; Executors run the heavy lifting in JVM.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="icon">🔗</span> Python Data Structures → Spark</h3>
+
+    <div class="callout callout-blue">
+      <div class="ico">🔷</div>
+      <div>
+        <strong>Key Insight (from your Spark notes):</strong>
+        <p>Your Python data structures (lists, dicts, functions) all live in the <strong>Driver JVM / Python process</strong>. When you call a Spark action (like <code>count()</code>), only the <strong>JVM executors</strong> do the actual distributed computation. Python is the orchestrator; Spark is the engine.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Python Concept</th><th>How Used in Spark / DE</th><th>Where It Runs</th></tr></thead>
+        <tbody>
+          <tr><td>List</td><td>Column names, file paths, schema field list</td><td>Driver</td></tr>
+          <tr><td>Dict</td><td>Spark read options, rename maps, configs</td><td>Driver</td></tr>
+          <tr><td>Tuple</td><td>Named schema fields, return values, immutable configs</td><td>Driver</td></tr>
+          <tr><td>Set</td><td>Schema validation, de-dup checks (small data)</td><td>Driver</td></tr>
+          <tr><td>Function</td><td>UDFs (serialized to executors), ETL stages</td><td>Driver → Executor (UDF)</td></tr>
+          <tr><td>Class</td><td>Pipeline objects, ETL templates, config managers</td><td>Driver</td></tr>
+          <tr><td>Lambda</td><td>Quick UDFs, RDD map/filter operations</td><td>Executor (via Py4J)</td></tr>
+          <tr><td>Generator</td><td>Batch writes, streaming record processing</td><td>Driver</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><span class="lang-tag">python</span><span class="cm"># ── Full pipeline tying everything together ───────────────</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession, functions <span class="kw">as</span> F
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StructField, StringType, DoubleType
+<span class="kw">from</span> typing <span class="kw">import</span> List, Dict
+
+<span class="cm"># ── Dict: Spark config ────────────────────────────────────</span>
+<span class="va">spark_conf</span> = {
+    <span class="st">"spark.sql.shuffle.partitions"</span>:      <span class="st">"50"</span>,
+    <span class="st">"spark.sql.adaptive.enabled"</span>:        <span class="st">"true"</span>,
+    <span class="st">"spark.databricks.delta.optimizeWrite.enabled"</span>: <span class="st">"true"</span>
+}
+<span class="va">builder</span> = SparkSession.<span class="fn">builder</span>.<span class="fn">appName</span>(<span class="st">"BankingETL"</span>)
+<span class="kw">for</span> <span class="va">k</span>, <span class="va">v</span> <span class="kw">in</span> spark_conf.<span class="fn">items</span>():       <span class="cm"># loop over dict</span>
+    <span class="va">builder</span> = <span class="va">builder</span>.<span class="fn">config</span>(<span class="va">k</span>, <span class="va">v</span>)
+<span class="va">spark</span> = <span class="va">builder</span>.<span class="fn">getOrCreate</span>()
+
+<span class="cm"># ── Tuple: immutable schema definition ───────────────────</span>
+<span class="va">TXN_SCHEMA</span> = <span class="cl">StructType</span>([
+    <span class="cl">StructField</span>(<span class="st">"txn_id"</span>,      <span class="cl">StringType</span>(), <span class="kw">False</span>),
+    <span class="cl">StructField</span>(<span class="st">"amount"</span>,      <span class="cl">DoubleType</span>(), <span class="kw">True</span>),
+    <span class="cl">StructField</span>(<span class="st">"currency"</span>,    <span class="cl">StringType</span>(), <span class="kw">True</span>),
+    <span class="cl">StructField</span>(<span class="st">"status"</span>,      <span class="cl">StringType</span>(), <span class="kw">True</span>),
+])
+
+<span class="cm"># ── List: required columns ───────────────────────────────</span>
+<span class="va">REQUIRED_COLS</span>: <span class="cl">List</span>[str] = [<span class="st">"txn_id"</span>, <span class="st">"amount"</span>, <span class="st">"currency"</span>, <span class="st">"status"</span>]
+
+<span class="cm"># ── Function: transformation logic ──────────────────────</span>
+<span class="kw">def</span> <span class="fn">enrich_transactions</span>(<span class="va">df</span>) -> <span class="fn">object</span>:
+    <span class="va">rename_map</span>: <span class="cl">Dict</span>[str, str] = {      <span class="cm"># dict: column mapping</span>
+        <span class="st">"txn_id"</span>:   <span class="st">"transaction_id"</span>,
+        <span class="st">"currency"</span>: <span class="st">"currency_code"</span>
+    }
+    <span class="va">valid_statuses</span> = {<span class="st">"COMPLETED"</span>, <span class="st">"PENDING"</span>}  <span class="cm"># set: membership check</span>
+
+    <span class="cm"># Schema validation using set difference</span>
+    <span class="va">missing</span> = <span class="fn">set</span>(REQUIRED_COLS) - <span class="fn">set</span>(df.<span class="fn">columns</span>)
+    <span class="kw">if</span> missing:
+        <span class="kw">raise</span> <span class="cl">ValueError</span>(<span class="st">f"Missing: </span>{missing}<span class="st">"</span>)
+
+    <span class="cm"># Filter using set membership (converted to list for Spark)</span>
+    <span class="va">df</span> = df.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="st">"status"</span>).<span class="fn">isin</span>(<span class="fn">list</span>(valid_statuses)))
+
+    <span class="cm"># Rename using dict comprehension → loop</span>
+    <span class="kw">for</span> <span class="va">old</span>, <span class="va">new</span> <span class="kw">in</span> rename_map.<span class="fn">items</span>():
+        <span class="va">df</span> = df.<span class="fn">withColumnRenamed</span>(old, new)
+
+    <span class="cm"># Select using list</span>
+    <span class="va">output_cols</span> = [<span class="st">"transaction_id"</span>, <span class="st">"amount"</span>, <span class="st">"currency_code"</span>, <span class="st">"status"</span>]
+    <span class="kw">return</span> df.<span class="fn">select</span>(output_cols)
+
+<span class="cm"># ── Read → Transform → Write ─────────────────────────────</span>
+<span class="va">df_raw</span>  = spark.<span class="fn">read</span>.<span class="fn">schema</span>(TXN_SCHEMA).<span class="fn">parquet</span>(<span class="st">"abfss://raw@lake.dfs.core.windows.net/txn/"</span>)
+<span class="va">df_out</span>  = <span class="fn">enrich_transactions</span>(df_raw)
+df_out.<span class="fn">write</span>.<span class="fn">format</span>(<span class="st">"delta"</span>).<span class="fn">mode</span>(<span class="st">"overwrite"</span>).<span class="fn">save</span>(<span class="st">"abfss://curated@lake.dfs.core.windows.net/txn/"</span>)</pre>
+  </div>
+</div>
+
+<!-- ════════════════ CH8: INTERVIEW ════════════════ -->
+<div id="ch8">
+  <div class="ch-divider"><span>chapter 8</span></div>
+  <div class="chapter">
+    <div class="chapter-num">CHAPTER 8</div>
+    <h2>🎤 Interview Insights & Quiz</h2>
+    <p class="desc">Most-asked Python DS questions in Data Engineering interviews — phrased 3 ways with model answers.</p>
+  </div>
+
+  <div class="section">
+    <div class="interview-box">
+      <h4>🎤 Interview Q&A — Python Data Structures for DE</h4>
+
+      <div class="q-item">
+        <div class="q">Q1: "What's the difference between a list and a tuple, and when would you use each in a pipeline?"</div>
+        <div class="a">Use a <strong>list</strong> when data can change — like a list of files to process that you add to dynamically. Use a <strong>tuple</strong> for fixed things — like database connection parameters, schema definitions, or function return values. Tuples are also faster and can be used as dictionary keys. In production, I use tuples for Spark schema field definitions so they can't be accidentally mutated mid-pipeline.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q">Q2: "How would you validate schema using Python data structures before writing to Delta Lake?"</div>
+        <div class="a">I'd use a <strong>set difference</strong>: <code>required = {'txn_id','amount','status'}</code>, <code>missing = required - set(df.columns)</code>. If <code>missing</code> is non-empty, I raise a <code>SchemaValidationError</code> before the write. This is O(1) lookup vs O(n) for list membership, which matters for wide schemas.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q">Q3: "Why would you wrap a Spark ETL in a class rather than writing flat functions?"</div>
+        <div class="a">Classes let you: (1) <strong>encapsulate config</strong> — source/target paths, credentials — so they don't leak into global scope; (2) use <strong>inheritance</strong> — a base ETL class handles extract/load while child classes override only the transform logic; (3) support <strong>testing</strong> — you can mock the class and test transform() in isolation. In production, each table's pipeline is a separate class inheriting from a base, making it easy to onboard new tables.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q">Q4 (Trick): "Can you mutate a tuple in Python?"</div>
+        <div class="a">The tuple itself can't be reassigned, but if it <em>contains a mutable object</em> like a list, that inner object can be modified. Example: <code>t = ([1,2], [3,4])</code> → <code>t[0].append(99)</code> works. In DE, this means tuple-stored configs can still be vulnerable if they contain mutable containers — always use immutable types (strings, ints) inside tuples for true safety.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q">Q5: "When would you use a dictionary vs a DataFrame for config in PySpark?"</div>
+        <div class="a">Dict for <strong>pipeline config / options</strong> that the driver needs (Spark read options, column rename maps, connection strings). These are small, driver-side structures. DataFrame for <strong>actual data</strong> that needs distributed processing. A common mistake is loading lookup tables into Python dicts for use in UDFs — for large lookups, a Spark broadcast join is far more efficient.</div>
+      </div>
+
+      <div class="mistake-box">
+        <div class="mtitle">🚨 Common Mistakes</div>
+        <ul>
+          <li>Using <code>{}</code> to create an empty set → it creates an empty <strong>dict</strong>. Use <code>set()</code>.</li>
+          <li>Forgetting the trailing comma for single-element tuples: <code>("only")</code> is a string, not a tuple. Use <code>("only",)</code>.</li>
+          <li>Using a list for O(n) membership checks inside UDFs — use a <strong>set or dict</strong> for O(1) lookup.</li>
+          <li>Mutating a list while iterating over it — always iterate a copy: <code>for item in list(my_list):</code></li>
+          <li>Not using <code>*args</code> / <code>**kwargs</code> for flexible pipeline functions — leads to 10-parameter function signatures.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="quiz-box">
+      <div class="qtitle">🧠 Quiz Question</div>
+      <div class="question">A Databricks pipeline reads 500,000 banking transactions daily. You need to check if each transaction's <code>currency_code</code> is in a list of 150 approved currencies. What Python data structure should you use for the lookup, and why?</div>
+      <ul class="quiz-opts">
+        <li><span class="opt-lbl">A)</span> A Python <code>list</code> — because it preserves insertion order and is easy to iterate</li>
+        <li><span class="opt-lbl">B)</span> A Python <code>set</code> — because membership lookup is O(1) via hash table vs O(n) for list</li>
+        <li><span class="opt-lbl">C)</span> A Python <code>tuple</code> — because it's immutable and slightly faster than a list</li>
+        <li><span class="opt-lbl">D)</span> A Spark DataFrame — because all data should stay in distributed storage</li>
+      </ul>
+      <button class="show-ans-btn" onclick="document.getElementById('q1-ans').classList.toggle('show');this.style.display='none'">▶ Reveal Answer</button>
+      <div class="quiz-answer" id="q1-ans">
+        <div class="ans-title">✅ Correct Answer: B) Python <code>set</code></div>
+        <p>A <code>set</code> uses a hash table internally, making membership checks O(1) — constant time regardless of size. Checking 500,000 records against a <code>list</code> of 150 items would be O(n × m) = 75 million comparisons. With a <code>set</code>, it's O(n × 1) = 500,000 lookups. For even better Spark-native performance at scale, convert it to a broadcast variable and use <code>df.filter(F.col("currency").isin(list(approved_set)))</code> — Spark broadcasts small lookup collections to all executors.</p>
+      </div>
+    </div>
+
+    <div class="pro-tips">
+      <div class="ptitle">💡 Pro Tips</div>
+      <ul>
+        <li><strong>Use dataclasses or Pydantic models</strong> instead of raw dicts for pipeline configs — you get type validation, IDE autocomplete, and clear error messages when a required field is missing. Critical for production pipelines maintained by teams.</li>
+        <li><strong>Never use Python UDFs for heavy computation</strong> — they serialize each row across the Py4J bridge. Use Spark built-in functions (<code>pyspark.sql.functions</code>) or Pandas UDFs (vectorized) whenever possible. Python UDFs are 10–100× slower.</li>
+        <li><strong>Profile your partition count</strong> after wide transformations. Your Spark notes mention <code>spark.sql.shuffle.partitions=200</code> as the default. For small daily banking batches (< 1GB), reduce this to 20–50 to avoid 200 tiny output files that kill downstream query performance.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ QUICK REF TABLE ════════════════ -->
+<div>
+  <div class="ch-divider"><span>quick reference</span></div>
+  <div class="chapter">
+    <div class="chapter-num">REFERENCE</div>
+    <h2>📊 Complete Data Structure Quick Reference</h2>
+  </div>
+  <div class="section">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Structure</th><th>Syntax</th><th>Ordered</th><th>Mutable</th><th>Duplicates</th><th>Lookup</th><th>DE Use Case</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>List</strong></td><td><code>[1, 2, 3]</code></td><td>✅</td><td>✅</td><td>✅</td><td>O(n)</td><td>Column names, file paths, schemas</td></tr>
+          <tr><td><strong>Tuple</strong></td><td><code>(1, 2, 3)</code></td><td>✅</td><td>❌</td><td>✅</td><td>O(n)</td><td>DB config, return values, field defs</td></tr>
+          <tr><td><strong>Set</strong></td><td><code>{1, 2, 3}</code></td><td>❌</td><td>✅</td><td>❌</td><td>O(1)</td><td>De-dup, schema validation, membership</td></tr>
+          <tr><td><strong>Dict</strong></td><td><code>{"k": "v"}</code></td><td>✅ (3.7+)</td><td>✅</td><td>❌ keys</td><td>O(1)</td><td>Spark options, rename maps, configs</td></tr>
+          <tr><td><strong>namedtuple</strong></td><td><code>NT("F",["a","b"])</code></td><td>✅</td><td>❌</td><td>✅</td><td>O(n)</td><td>Typed schema fields, struct-like data</td></tr>
+          <tr><td><strong>defaultdict</strong></td><td><code>defaultdict(list)</code></td><td>✅</td><td>✅</td><td>❌ keys</td><td>O(1)</td><td>Grouping errors, accumulating records</td></tr>
+          <tr><td><strong>Counter</strong></td><td><code>Counter(iterable)</code></td><td>❌</td><td>✅</td><td>✅</td><td>O(1)</td><td>Data profiling, frequency analysis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<div style="text-align:center;padding:50px 0 20px;color:#2a3a52;font-size:13px;font-family:'JetBrains Mono',monospace;border-top:1px solid #1a253b;margin-top:60px;">
+  Python for Data Engineers · Azure + Databricks Series · Interview-First Approach
+</div>
+
+</div><!-- .page -->
+
+<script>
+// Smooth scroll for TOC
+document.querySelectorAll('.toc a').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>
