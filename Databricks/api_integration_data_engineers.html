@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Integration for Data Engineers — Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2236;
+    --card: #161d2e;
+    --border: #1e2d45;
+    --accent-blue: #38bdf8;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-yellow: #f59e0b;
+    --accent-purple: #a78bfa;
+    --accent-red: #f87171;
+    --accent-orange: #fb923c;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --code-bg: #0d1117;
+    --highlight: #1e3a5f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1e38 50%, #0a1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(56,189,248,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: var(--accent-blue);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #e2e8f0 30%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+  .hero-sub {
+    color: var(--text-muted);
+    font-size: 16px;
+    max-width: 700px;
+    margin-bottom: 28px;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+  .tag {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .toc-nav {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .toc-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-right: 28px;
+    transition: color 0.2s;
+  }
+  .toc-nav a:hover { color: var(--accent-blue); }
+
+  /* ── CHAPTER HEADER ── */
+  .chapter {
+    margin: 48px 0 0;
+    scroll-margin-top: 60px;
+  }
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chapter-num {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    color: #000;
+    font-weight: 800;
+    font-size: 12px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .chapter-title { font-size: 22px; font-weight: 700; }
+  .chapter-title span { color: var(--accent-blue); }
+
+  /* ── SECTION ── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .icon { font-size: 18px; }
+
+  /* ── CONCEPT BOX ── */
+  .concept-box {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(6,182,212,0.04));
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+  }
+  .concept-box .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    margin-bottom: 6px;
+  }
+  .concept-box p { color: var(--text); font-size: 14px; }
+
+  .analogy-box {
+    background: rgba(167,139,250,0.08);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: #c4b5fd;
+  }
+  .analogy-box strong { color: var(--accent-purple); }
+
+  /* ── WHAT/WHY/HOW GRID ── */
+  .wwh-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .wwh-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .wwh-card .wwh-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .wwh-card.what .wwh-label { color: var(--accent-blue); }
+  .wwh-card.why .wwh-label { color: var(--accent-green); }
+  .wwh-card.when .wwh-label { color: var(--accent-yellow); }
+  .wwh-card.how .wwh-label { color: var(--accent-orange); }
+  .wwh-card p { font-size: 13px; color: var(--text-muted); }
+
+  /* ── CODE ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid #1e2d3d;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  pre .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #1e2d3d;
+    background: #0d1117;
+    border-radius: 10px 10px 0 0;
+  }
+  pre .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  pre .dots { display: flex; gap: 6px; }
+  pre .dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  pre .dots .r { background: #ff5f57; }
+  pre .dots .y { background: #ffbd2e; }
+  pre .dots .g { background: #28c840; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    display: block;
+    padding: 18px 20px;
+    color: #cdd9e5;
+  }
+  .kw { color: #f97583; }
+  .fn { color: #79b8ff; }
+  .str { color: #9ecbff; }
+  .cm { color: #6a737d; font-style: italic; }
+  .var { color: #b392f0; }
+  .num { color: #79b8ff; }
+  .cls { color: #ffa657; }
+  .op { color: #f97583; }
+  .tag-hl { color: #85e89d; }
+
+  /* ── INLINE CODE ── */
+  code.inline {
+    background: rgba(56,189,248,0.1);
+    color: var(--accent-blue);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: inline;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--bg3);
+    color: var(--accent-blue);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td strong { color: var(--text); }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--bg3);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .flow-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .flow-arrow { color: var(--accent-blue); font-size: 18px; }
+  .flow-box.blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+  .flow-box.green { border-color: var(--accent-green); color: var(--accent-green); }
+  .flow-box.yellow { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+  .flow-box.purple { border-color: var(--accent-purple); color: var(--accent-purple); }
+  .flow-box.orange { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+  /* ── INTERVIEW BOX ── */
+  .interview-section {
+    background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(251,146,60,0.04));
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin: 20px 0;
+  }
+  .interview-section h4 {
+    color: var(--accent-yellow);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .interview-q {
+    background: var(--bg3);
+    border-left: 3px solid var(--accent-yellow);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+  }
+  .interview-q .q-text { color: var(--text); font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .interview-q .q-ans { color: var(--text-muted); font-size: 13px; }
+  .mistake-box {
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.25);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #fca5a5;
+  }
+  .mistake-box strong { color: var(--accent-red); }
+
+  /* ── PRO TIP ── */
+  .pro-tips {
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .pro-tips h4 { color: var(--accent-green); font-size: 13px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .pro-tips ul { padding-left: 18px; }
+  .pro-tips li { margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
+
+  /* ── QUIZ ── */
+  .quiz-section {
+    background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(139,92,246,0.04));
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .quiz-section h4 { color: var(--accent-purple); margin-bottom: 16px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .quiz-q { font-size: 14px; color: var(--text); margin-bottom: 16px; font-weight: 600; }
+  .quiz-options { list-style: none; }
+  .quiz-options li {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .quiz-options li:hover { border-color: var(--accent-purple); color: var(--text); }
+  .quiz-answer {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #6ee7b7;
+  }
+
+  /* ── BANKING EXAMPLE ── */
+  .banking-section {
+    background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(6,182,212,0.04));
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .banking-section h4 { color: var(--accent-green); margin-bottom: 16px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .callout.info { background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.2); }
+  .callout.warn { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); }
+  .callout.danger { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); }
+  .callout.success { background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2); }
+  .callout .emoji { font-size: 18px; flex-shrink: 0; }
+  .callout p { color: var(--text-muted); }
+  .callout p strong { color: var(--text); }
+
+  /* ── STEPS ── */
+  .steps { list-style: none; margin: 16px 0; }
+  .steps li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .step-num {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #000;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+  .step-body p { font-size: 13px; color: var(--text-muted); }
+
+  /* ── PATTERN BOX ── */
+  .pattern-box {
+    background: var(--bg3);
+    border: 1px dashed rgba(167,139,250,0.4);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .pattern-box .pat-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent-purple); margin-bottom: 8px;
+  }
+  .pattern-box p { font-size: 13px; color: var(--text-muted); }
+  .pattern-box .memory-tip { color: #c4b5fd; font-style: italic; margin-top: 8px; font-size: 12px; }
+
+  ul.topic-list { padding-left: 0; list-style: none; }
+  ul.topic-list li {
+    padding: 8px 12px;
+    border-left: 2px solid var(--border);
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: border-color 0.2s;
+  }
+  ul.topic-list li:hover { border-color: var(--accent-blue); color: var(--text); }
+  ul.topic-list li strong { color: var(--text); }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+  .footer span { color: var(--accent-blue); }
+
+  @media(max-width: 600px) {
+    .hero { padding: 40px 20px 36px; }
+    .wrapper { padding: 0 16px; }
+    .section { padding: 18px; }
+    .wwh-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ HERO ══════════════════════ -->
+<div class="hero">
+  <div class="wrapper">
+    <div class="hero-badge">📡 Data Engineering Series</div>
+    <h1>API Integration<br>for Data Engineers</h1>
+    <p class="hero-sub">
+      A complete, interview-focused guide to consuming REST APIs, authenticating, handling pagination, 
+      error recovery, and building production-grade pipelines — using Python, Azure, and Databricks.
+    </p>
+    <div class="hero-tags">
+      <span class="tag">Python</span>
+      <span class="tag">REST APIs</span>
+      <span class="tag">requests</span>
+      <span class="tag">OAuth2 / Bearer</span>
+      <span class="tag">Pagination</span>
+      <span class="tag">Rate Limiting</span>
+      <span class="tag">ADLS Gen2</span>
+      <span class="tag">Azure Key Vault</span>
+      <span class="tag">Databricks</span>
+      <span class="tag">Delta Lake</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TOC ══════════════════════ -->
+<nav class="toc-nav">
+  <a href="#ch0">Prerequisites</a>
+  <a href="#ch1">HTTP Basics</a>
+  <a href="#ch2">requests Library</a>
+  <a href="#ch3">Authentication</a>
+  <a href="#ch4">Pagination</a>
+  <a href="#ch5">Error Handling</a>
+  <a href="#ch6">Rate Limiting</a>
+  <a href="#ch7">Full Pipeline</a>
+  <a href="#ch8">Azure + Databricks</a>
+  <a href="#ch9">Spark Connection</a>
+  <a href="#ch10">Interview</a>
+</nav>
+
+<div class="wrapper">
+
+<!-- ══════════════════════ CHAPTER 0: PREREQUISITES ══════════════════════ -->
+<section class="chapter" id="ch0">
+  <div class="chapter-header">
+    <div class="chapter-num">0</div>
+    <h2 class="chapter-title"><span>Prerequisites</span> — What You Must Know First</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> Why Does a Data Engineer Need APIs?</div>
+    <div class="concept-box">
+      <div class="label">Core Concept</div>
+      <p>APIs (Application Programming Interfaces) are the <strong>primary way external systems expose data</strong>. 
+      As a Data Engineer, you will routinely <strong>pull data from APIs</strong> (bank transactions, payment gateways, 
+      CRM systems, weather feeds, market data) and <strong>land it into ADLS / Delta Lake</strong> for further processing.</p>
+    </div>
+    <div class="analogy-box">
+      <strong>Analogy:</strong> An API is like a <em>waiter at a restaurant</em>. You (the client) tell the waiter (API) 
+      what you want. The waiter goes to the kitchen (server/database) and brings back what you asked for. 
+      You never enter the kitchen directly.
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-title" style="font-size:13px;">📦 Python Basics Needed</div>
+        <ul class="topic-list">
+          <li><strong>Variables, Loops, Functions</strong> — Core Python</li>
+          <li><strong>Dictionaries & Lists</strong> — APIs return JSON = Python dicts</li>
+          <li><strong>f-strings</strong> — Build dynamic URLs</li>
+          <li><strong>try/except</strong> — Handle API failures gracefully</li>
+          <li><strong>pip install</strong> — Install <code class="inline">requests</code> library</li>
+          <li><strong>Virtual environments</strong> — Isolate dependencies</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title" style="font-size:13px;">🌐 Network Concepts Needed</div>
+        <ul class="topic-list">
+          <li><strong>Client-Server model</strong> — Browser (client) requests a page (server)</li>
+          <li><strong>HTTP vs HTTPS</strong> — Secure vs insecure transport</li>
+          <li><strong>URL structure</strong> — Scheme, host, path, query params</li>
+          <li><strong>HTTP Status Codes</strong> — 200 OK, 404 Not Found, 429 Rate limited</li>
+          <li><strong>Headers</strong> — Metadata sent with every request</li>
+          <li><strong>JSON</strong> — The data format APIs return</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔤</span> URL Anatomy — Breaking It Down Word by Word</div>
+    <div style="background:var(--code-bg); border:1px solid #1e2d3d; border-radius:10px; padding:20px; font-family:'JetBrains Mono',monospace; font-size:13px; overflow-x:auto; margin:12px 0;">
+      <span style="color:#f97583;">https</span><span style="color:#cdd9e5;">://</span><span style="color:#ffa657;">api.bank.com</span><span style="color:#79b8ff;">/v2/transactions</span><span style="color:#85e89d;">?status=completed&limit=100</span>
+      <br><br>
+      <span style="color:#f97583;">↑ scheme</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ffa657;">↑ host/domain</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#79b8ff;">↑ path/endpoint</span>&nbsp;&nbsp;&nbsp;<span style="color:#85e89d;">↑ query params</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Part</th><th>Example</th><th>What it means</th></tr>
+        <tr><td><strong>Scheme</strong></td><td><code class="inline">https://</code></td><td>Protocol — always use HTTPS in production (encrypted)</td></tr>
+        <tr><td><strong>Host</strong></td><td><code class="inline">api.bank.com</code></td><td>The server you're talking to</td></tr>
+        <tr><td><strong>Path</strong></td><td><code class="inline">/v2/transactions</code></td><td>Specific resource/endpoint on that server</td></tr>
+        <tr><td><strong>Query Params</strong></td><td><code class="inline">?status=completed&limit=100</code></td><td>Filters/options — starts with <code class="inline">?</code>, separated by <code class="inline">&</code></td></tr>
+        <tr><td><strong>Fragment</strong></td><td><code class="inline">#section1</code></td><td>Browser-only, APIs don't use this</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📋</span> JSON — The Language of APIs</div>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+      JSON (JavaScript Object Notation) is the data format used by almost every REST API. 
+      In Python, JSON maps directly to <strong>dictionaries</strong> and <strong>lists</strong>.
+    </p>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">JSON → Python Dict Mapping</span>
+      </div>
+      <code><span class="cm"># What the API returns (JSON string)</span>
+{
+  <span class="str">"transaction_id"</span>: <span class="str">"TXN001"</span>,
+  <span class="str">"amount"</span>: <span class="num">5000.00</span>,
+  <span class="str">"status"</span>: <span class="str">"completed"</span>,
+  <span class="str">"customer"</span>: {
+    <span class="str">"id"</span>: <span class="str">"C123"</span>,
+    <span class="str">"name"</span>: <span class="str">"Ravi Kumar"</span>
+  },
+  <span class="str">"tags"</span>: [<span class="str">"retail"</span>, <span class="str">"debit"</span>]
+}
+
+<span class="cm"># In Python after response.json(), it becomes:</span>
+<span class="var">data</span> = {
+  <span class="str">"transaction_id"</span>: <span class="str">"TXN001"</span>,     <span class="cm"># str</span>
+  <span class="str">"amount"</span>: <span class="num">5000.00</span>,              <span class="cm"># float</span>
+  <span class="str">"customer"</span>: {<span class="str">"id"</span>: <span class="str">"C123"</span>},     <span class="cm"># nested dict</span>
+  <span class="str">"tags"</span>: [<span class="str">"retail"</span>, <span class="str">"debit"</span>]      <span class="cm"># list</span>
+}
+<span class="var">data</span>[<span class="str">"transaction_id"</span>]          <span class="cm"># → "TXN001"</span>
+<span class="var">data</span>[<span class="str">"customer"</span>][<span class="str">"name"</span>]        <span class="cm"># → "Ravi Kumar"</span>
+<span class="var">data</span>[<span class="str">"tags"</span>][<span class="num">0</span>]                 <span class="cm"># → "retail"</span></code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 1: HTTP BASICS ══════════════════════ -->
+<section class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-num">1</div>
+    <h2 class="chapter-title"><span>HTTP Basics</span> — The Protocol Behind Every API Call</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> HTTP Methods (Verbs)</div>
+    <div class="concept-box">
+      <div class="label">Simple Rule</div>
+      <p><strong>As a Data Engineer</strong>, you mostly use <strong>GET</strong> (fetch data) and sometimes <strong>POST</strong> (send filters/trigger jobs). 
+      Understanding all methods helps you debug APIs and pass interviews.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Method</th><th>Meaning</th><th>DE Usage</th><th>Body?</th></tr>
+        <tr><td><strong style="color:#10b981;">GET</strong></td><td>Read/Fetch data</td><td>⭐ Most common — fetch transactions, reports</td><td>No</td></tr>
+        <tr><td><strong style="color:#38bdf8;">POST</strong></td><td>Create / Send data</td><td>Send payload to trigger a report, push data</td><td>Yes</td></tr>
+        <tr><td><strong style="color:#f59e0b;">PUT</strong></td><td>Update (replace)</td><td>Rarely used in ingestion</td><td>Yes</td></tr>
+        <tr><td><strong style="color:#f87171;">DELETE</strong></td><td>Remove</td><td>Rarely used in ingestion</td><td>Optional</td></tr>
+        <tr><td><strong style="color:#a78bfa;">PATCH</strong></td><td>Partial update</td><td>Occasionally for CDC updates</td><td>Yes</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📊</span> HTTP Status Codes — What Every DE Must Know</div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Code</th><th>Category</th><th>Meaning</th><th>Action in Pipeline</th></tr>
+        <tr><td><strong style="color:#10b981;">200</strong></td><td>2xx Success</td><td>OK — data returned</td><td>Parse and save ✅</td></tr>
+        <tr><td><strong style="color:#10b981;">201</strong></td><td>2xx Success</td><td>Created</td><td>Resource was created ✅</td></tr>
+        <tr><td><strong style="color:#10b981;">204</strong></td><td>2xx Success</td><td>No Content</td><td>Success but no data to parse</td></tr>
+        <tr><td><strong style="color:#f59e0b;">301/302</strong></td><td>3xx Redirect</td><td>URL has moved</td><td>requests handles automatically</td></tr>
+        <tr><td><strong style="color:#f87171;">400</strong></td><td>4xx Client Error</td><td>Bad Request — check your params</td><td>Fix request, don't retry 🐛</td></tr>
+        <tr><td><strong style="color:#f87171;">401</strong></td><td>4xx Client Error</td><td>Unauthorized — token missing/wrong</td><td>Re-authenticate 🔑</td></tr>
+        <tr><td><strong style="color:#f87171;">403</strong></td><td>4xx Client Error</td><td>Forbidden — no permission</td><td>Check scopes/permissions 🚫</td></tr>
+        <tr><td><strong style="color:#f87171;">404</strong></td><td>4xx Client Error</td><td>Not Found</td><td>Check endpoint URL 🔍</td></tr>
+        <tr><td><strong style="color:#fb923c;">429</strong></td><td>4xx Client Error</td><td>Too Many Requests</td><td>Sleep + retry with backoff ⏱️</td></tr>
+        <tr><td><strong style="color:#f87171;">500</strong></td><td>5xx Server Error</td><td>Internal Server Error</td><td>Retry with exponential backoff 🔄</td></tr>
+        <tr><td><strong style="color:#f87171;">503</strong></td><td>5xx Server Error</td><td>Service Unavailable</td><td>Retry later 🔄</td></tr>
+      </table>
+    </div>
+    <div class="pattern-box">
+      <div class="pat-label">🧠 Memory Pattern</div>
+      <p><strong>2xx = Success</strong> | <strong>3xx = Redirect</strong> | <strong>4xx = Your fault (client)</strong> | <strong>5xx = Their fault (server)</strong></p>
+      <p class="memory-tip">Trick: "4xx — 4 fingers pointing at YOU" (client mistake). "5xx — server is sick (5 = S for Server)"</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📬</span> Request & Response Anatomy</div>
+    <div class="grid-2">
+      <div>
+        <p style="font-size:13px; color:var(--accent-blue); font-weight:700; margin-bottom:10px;">📤 Request Structure</p>
+        <pre style="margin:0;">
+          <div class="code-header">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span class="code-lang">HTTP Request</span>
+          </div>
+          <code style="font-size:12px;"><span class="cm"># Method + URL + HTTP Version</span>
+GET /v2/transactions?limit=50 HTTP/1.1
+
+<span class="cm"># Headers (metadata)</span>
+Host: api.bank.com
+Authorization: Bearer eyJhbGci...
+Content-Type: application/json
+Accept: application/json
+
+<span class="cm"># Body (only for POST/PUT)</span>
+{
+  "from_date": "2024-01-01",
+  "account_id": "ACC123"
+}</code>
+        </pre>
+      </div>
+      <div>
+        <p style="font-size:13px; color:var(--accent-green); font-weight:700; margin-bottom:10px;">📥 Response Structure</p>
+        <pre style="margin:0;">
+          <div class="code-header">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span class="code-lang">HTTP Response</span>
+          </div>
+          <code style="font-size:12px;"><span class="cm"># Status line</span>
+HTTP/1.1 200 OK
+
+<span class="cm"># Response Headers</span>
+Content-Type: application/json
+X-RateLimit-Remaining: 97
+X-RateLimit-Reset: 1706784000
+Retry-After: 60
+
+<span class="cm"># Response Body (JSON)</span>
+{
+  "data": [...],
+  "next_page_token": "abc123",
+  "total_count": 5000
+}</code>
+        </pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 2: requests LIBRARY ══════════════════════ -->
+<section class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-num">2</div>
+    <h2 class="chapter-title">Python <span>requests</span> Library — Core API Tool</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> What is requests?</div>
+    <div class="concept-box">
+      <div class="label">One-Liner</div>
+      <p><code class="inline">requests</code> is Python's most popular HTTP library that makes calling APIs as simple as one line of code. 
+      It handles connection pooling, redirects, SSL, and JSON parsing automatically.</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Install</span>
+      </div>
+      <code>pip install requests</code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📐</span> Core Patterns — GET, POST with All Options</div>
+
+    <div class="pattern-box">
+      <div class="pat-label">🧠 GET Pattern — How to Remember</div>
+      <p><code class="inline">requests.get(url, params={}, headers={}, timeout=N)</code></p>
+      <p class="memory-tip">Mnemonic: "GET P-H-T" → <strong>P</strong>arams, <strong>H</strong>eaders, <strong>T</strong>imeout</p>
+    </div>
+
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — requests GET (Full Pattern)</span>
+      </div>
+      <code><span class="kw">import</span> requests
+
+<span class="cm"># ── Pattern: requests.get(url, params, headers, timeout) ──</span>
+
+BASE_URL = <span class="str">"https://api.bank.com/v2"</span>
+
+<span class="cm"># Step 1: Define headers (auth + content type)</span>
+<span class="var">headers</span> = {
+    <span class="str">"Authorization"</span>: <span class="str">f"Bearer <span class="var">{token}</span>"</span>,  <span class="cm"># Bearer token auth</span>
+    <span class="str">"Accept"</span>: <span class="str">"application/json"</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+}
+
+<span class="cm"># Step 2: Define query params (filters)</span>
+<span class="var">params</span> = {
+    <span class="str">"status"</span>: <span class="str">"completed"</span>,
+    <span class="str">"from_date"</span>: <span class="str">"2024-01-01"</span>,
+    <span class="str">"limit"</span>: <span class="num">100</span>
+}
+
+<span class="cm"># Step 3: Make the request</span>
+<span class="var">response</span> = requests.<span class="fn">get</span>(
+    url=<span class="str">f"<span class="var">{BASE_URL}</span>/transactions"</span>,
+    params=<span class="var">params</span>,          <span class="cm"># auto appended to URL as ?key=value</span>
+    headers=<span class="var">headers</span>,        <span class="cm"># sent in request metadata</span>
+    timeout=<span class="num">30</span>              <span class="cm"># seconds — ALWAYS set this!</span>
+)
+
+<span class="cm"># Step 4: Check status and parse</span>
+response.<span class="fn">raise_for_status</span>()    <span class="cm"># raises HTTPError if 4xx or 5xx</span>
+<span class="var">data</span> = response.<span class="fn">json</span>()          <span class="cm"># parse JSON → Python dict</span>
+<span class="var">transactions</span> = <span class="var">data</span>[<span class="str">"data"</span>]      <span class="cm"># extract the list</span>
+
+<span class="kw">print</span>(<span class="str">f"Fetched <span class="var">{len(transactions)}</span> transactions"</span>)
+
+<span class="cm"># ── Inspect response object ──</span>
+<span class="kw">print</span>(response.status_code)    <span class="cm"># 200</span>
+<span class="kw">print</span>(response.headers)        <span class="cm"># dict of response headers</span>
+<span class="kw">print</span>(response.url)            <span class="cm"># full URL that was called</span>
+<span class="kw">print</span>(response.text)           <span class="cm"># raw text response</span>
+<span class="kw">print</span>(response.<span class="fn">json</span>())         <span class="cm"># parsed JSON dict</span>
+<span class="kw">print</span>(response.elapsed)        <span class="cm"># time taken</span></code>
+    </pre>
+
+    <div class="pattern-box">
+      <div class="pat-label">🧠 POST Pattern — How to Remember</div>
+      <p><code class="inline">requests.post(url, json={}, headers={}, timeout=N)</code></p>
+      <p class="memory-tip">POST sends a <strong>body</strong> (the "package"), GET only sends a label (params in URL). Think: <strong>POST = mail a package, GET = read a label</strong></p>
+    </div>
+
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — requests POST (Full Pattern)</span>
+      </div>
+      <code><span class="cm"># POST: send a request body (JSON payload)</span>
+<span class="var">payload</span> = {
+    <span class="str">"account_id"</span>: <span class="str">"ACC-4521"</span>,
+    <span class="str">"from_date"</span>: <span class="str">"2024-01-01"</span>,
+    <span class="str">"to_date"</span>: <span class="str">"2024-12-31"</span>,
+    <span class="str">"transaction_types"</span>: [<span class="str">"debit"</span>, <span class="str">"credit"</span>]
+}
+
+<span class="var">response</span> = requests.<span class="fn">post</span>(
+    url=<span class="str">f"<span class="var">{BASE_URL}</span>/transactions/search"</span>,
+    json=<span class="var">payload</span>,           <span class="cm"># auto-sets Content-Type: application/json</span>
+    headers=<span class="var">headers</span>,
+    timeout=<span class="num">30</span>
+)
+
+response.<span class="fn">raise_for_status</span>()
+<span class="var">result</span> = response.<span class="fn">json</span>()
+
+<span class="cm"># ── json= vs data= ──</span>
+<span class="cm"># json=payload  → serializes dict to JSON, sets Content-Type automatically</span>
+<span class="cm"># data=payload  → sends as form-encoded (Content-Type: application/x-www-form-urlencoded)</span>
+<span class="cm"># Use json= for REST APIs (99% of cases)</span></code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">⚡</span> Sessions — Reuse Connections for Performance</div>
+    <div class="callout info">
+      <span class="emoji">💡</span>
+      <p><strong>Production tip:</strong> Always use <code class="inline">requests.Session()</code> when making multiple calls to the same API. 
+      It reuses the TCP connection (keep-alive), reducing latency by ~40% and avoiding re-sending headers each time.</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Session Pattern (Production Best Practice)</span>
+      </div>
+      <code><span class="kw">import</span> requests
+
+<span class="cm"># ── Session Pattern ──</span>
+<span class="cm"># Set headers ONCE, reused for every call</span>
+<span class="kw">with</span> requests.<span class="cls">Session</span>() <span class="kw">as</span> session:
+    session.headers.update({
+        <span class="str">"Authorization"</span>: <span class="str">f"Bearer <span class="var">{token}</span>"</span>,
+        <span class="str">"Accept"</span>: <span class="str">"application/json"</span>
+    })
+    session.headers.update({<span class="str">"X-Client-ID"</span>: <span class="str">"databricks-pipeline-v2"</span>})
+
+    <span class="cm"># All calls reuse the session (TCP connection pooling)</span>
+    <span class="var">r1</span> = session.<span class="fn">get</span>(<span class="str">f"<span class="var">{BASE_URL}</span>/transactions"</span>, timeout=<span class="num">30</span>)
+    <span class="var">r2</span> = session.<span class="fn">get</span>(<span class="str">f"<span class="var">{BASE_URL}</span>/accounts"</span>, timeout=<span class="num">30</span>)
+    <span class="var">r3</span> = session.<span class="fn">get</span>(<span class="str">f"<span class="var">{BASE_URL}</span>/customers"</span>, timeout=<span class="num">30</span>)
+    <span class="cm"># Connection auto-closed when 'with' block exits</span></code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 3: AUTHENTICATION ══════════════════════ -->
+<section class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-num">3</div>
+    <h2 class="chapter-title"><span>Authentication</span> — Proving Who You Are</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> Types of API Authentication</div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Auth Type</th><th>How it Works</th><th>Where Used</th><th>Security Level</th></tr>
+        <tr><td><strong>API Key</strong></td><td>Static key in header/param</td><td>Simple public APIs</td><td>⚠️ Medium</td></tr>
+        <tr><td><strong>Bearer Token</strong></td><td>Short-lived token in Authorization header</td><td>Most REST APIs</td><td>✅ High</td></tr>
+        <tr><td><strong>OAuth 2.0</strong></td><td>Exchange credentials for token (client_credentials flow)</td><td>Banking, Enterprise</td><td>✅✅ Very High</td></tr>
+        <tr><td><strong>Basic Auth</strong></td><td>Base64(username:password)</td><td>Legacy APIs only</td><td>⚠️ Low</td></tr>
+        <tr><td><strong>mTLS</strong></td><td>Mutual TLS certificates</td><td>High-security banking APIs</td><td>✅✅✅ Highest</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔑</span> API Key Authentication</div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — API Key (3 ways)</span>
+      </div>
+      <code><span class="kw">import</span> requests
+
+<span class="var">API_KEY</span> = <span class="str">"your_api_key_here"</span>  <span class="cm"># In prod: fetch from Key Vault!</span>
+
+<span class="cm"># Way 1: In header (most common)</span>
+<span class="var">response</span> = requests.<span class="fn">get</span>(
+    url=<span class="str">"https://api.bank.com/v2/transactions"</span>,
+    headers={<span class="str">"X-API-Key"</span>: <span class="var">API_KEY</span>},
+    timeout=<span class="num">30</span>
+)
+
+<span class="cm"># Way 2: As query parameter (less secure)</span>
+<span class="var">response</span> = requests.<span class="fn">get</span>(
+    url=<span class="str">"https://api.bank.com/v2/transactions"</span>,
+    params={<span class="str">"api_key"</span>: <span class="var">API_KEY</span>},  <span class="cm"># shows in URL — avoid for sensitive data</span>
+    timeout=<span class="num">30</span>
+)
+
+<span class="cm"># Way 3: As Authorization header</span>
+<span class="var">response</span> = requests.<span class="fn">get</span>(
+    url=<span class="str">"https://api.bank.com/v2/transactions"</span>,
+    headers={<span class="str">"Authorization"</span>: <span class="str">f"ApiKey <span class="var">{API_KEY}</span>"</span>},
+    timeout=<span class="num">30</span>
+)</code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🏆</span> OAuth 2.0 — Client Credentials Flow (Production Standard)</div>
+    <div class="concept-box">
+      <div class="label">Why OAuth 2.0?</div>
+      <p>OAuth 2.0 Client Credentials is the standard for <strong>machine-to-machine (M2M) authentication</strong> — 
+      perfect for data pipelines. You exchange <code class="inline">client_id + client_secret</code> for a short-lived 
+      <strong>access token</strong>. If the token is stolen, it expires quickly (minutes).</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-box blue">Your Pipeline</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box yellow">POST /token<br><small>client_id + secret</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box purple">Auth Server</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box green">access_token<br><small>(expires in 3600s)</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box orange">API Call with<br>Bearer token</div>
+    </div>
+
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — OAuth2 Client Credentials (Full Production Pattern)</span>
+      </div>
+      <code><span class="kw">import</span> requests
+<span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="cls">OAuth2TokenManager</span>:
+    <span class="str">"""Manages OAuth2 token lifecycle with auto-refresh."""</span>
+    
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, token_url, client_id, client_secret):
+        self.token_url = token_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self._token = <span class="kw">None</span>
+        self._token_expiry = <span class="num">0</span>
+    
+    <span class="kw">def</span> <span class="fn">_fetch_token</span>(self):
+        <span class="str">"""Exchange client credentials for access token."""</span>
+        <span class="var">response</span> = requests.<span class="fn">post</span>(
+            url=self.token_url,
+            data={                            <span class="cm"># OAuth uses form data, NOT json</span>
+                <span class="str">"grant_type"</span>: <span class="str">"client_credentials"</span>,
+                <span class="str">"client_id"</span>: self.client_id,
+                <span class="str">"client_secret"</span>: self.client_secret,
+                <span class="str">"scope"</span>: <span class="str">"transactions.read accounts.read"</span>
+            },
+            timeout=<span class="num">30</span>
+        )
+        response.<span class="fn">raise_for_status</span>()
+        <span class="var">token_data</span> = response.<span class="fn">json</span>()
+        
+        self._token = <span class="var">token_data</span>[<span class="str">"access_token"</span>]
+        <span class="cm"># expires_in is seconds — subtract buffer of 60s for safety</span>
+        self._token_expiry = time.<span class="fn">time</span>() + <span class="var">token_data</span>.<span class="fn">get</span>(<span class="str">"expires_in"</span>, <span class="num">3600</span>) - <span class="num">60</span>
+        <span class="kw">return</span> self._token
+    
+    <span class="kw">def</span> <span class="fn">get_token</span>(self):
+        <span class="str">"""Return valid token, refreshing if expired."""</span>
+        <span class="kw">if</span> <span class="kw">not</span> self._token <span class="kw">or</span> time.<span class="fn">time</span>() >= self._token_expiry:
+            self.<span class="fn">_fetch_token</span>()
+        <span class="kw">return</span> self._token
+
+<span class="cm"># ── Usage ──</span>
+<span class="var">token_mgr</span> = <span class="cls">OAuth2TokenManager</span>(
+    token_url=<span class="str">"https://login.bank.com/oauth2/token"</span>,
+    client_id=<span class="str">"pipeline-client-id"</span>,      <span class="cm"># from Azure Key Vault</span>
+    client_secret=<span class="str">"super-secret"</span>           <span class="cm"># from Azure Key Vault</span>
+)
+
+<span class="var">headers</span> = {<span class="str">"Authorization"</span>: <span class="str">f"Bearer <span class="var">{token_mgr.get_token()}</span>"</span>}
+<span class="var">response</span> = requests.<span class="fn">get</span>(<span class="str">"https://api.bank.com/v2/transactions"</span>,
+                         headers=<span class="var">headers</span>, timeout=<span class="num">30</span>)</code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔐</span> Azure Key Vault — Never Hardcode Secrets</div>
+    <div class="callout danger">
+      <span class="emoji">🚨</span>
+      <p><strong>NEVER hardcode API keys or secrets in notebooks or scripts.</strong> Use Azure Key Vault. 
+      Hardcoded secrets in Git repos are the #1 cause of security breaches in data pipelines.</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Fetch Secrets from Azure Key Vault (Databricks)</span>
+      </div>
+      <code><span class="cm"># In Databricks — use dbutils.secrets (backed by Key Vault)</span>
+<span class="var">client_id</span>     = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"kv-scope"</span>, key=<span class="str">"api-client-id"</span>)
+<span class="var">client_secret</span> = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"kv-scope"</span>, key=<span class="str">"api-client-secret"</span>)
+<span class="var">api_key</span>       = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"kv-scope"</span>, key=<span class="str">"bank-api-key"</span>)
+
+<span class="cm"># Outside Databricks — use azure-keyvault-secrets SDK</span>
+<span class="kw">from</span> azure.keyvault.secrets <span class="kw">import</span> <span class="cls">SecretClient</span>
+<span class="kw">from</span> azure.identity <span class="kw">import</span> <span class="cls">DefaultAzureCredential</span>
+
+<span class="var">credential</span> = <span class="cls">DefaultAzureCredential</span>()
+<span class="var">kv_client</span> = <span class="cls">SecretClient</span>(
+    vault_url=<span class="str">"https://my-keyvault.vault.azure.net/"</span>,
+    credential=<span class="var">credential</span>
+)
+
+<span class="var">api_key</span> = kv_client.<span class="fn">get_secret</span>(<span class="str">"bank-api-key"</span>).value</code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 4: PAGINATION ══════════════════════ -->
+<section class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-num">4</div>
+    <h2 class="chapter-title"><span>Pagination</span> — Fetching Large Datasets</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> Why Pagination Exists</div>
+    <div class="concept-box">
+      <div class="label">Problem → Solution</div>
+      <p>APIs <strong>never return all records at once</strong> (imagine 10 million transactions in one response — it would crash everything). 
+      Instead they return a <em>page</em> of results and tell you how to get the next page. 
+      As a DE, you must loop through all pages to get the complete dataset.</p>
+    </div>
+    <div class="analogy-box">
+      <strong>Analogy:</strong> Like reading a book — you read page 1, then page 2, etc. 
+      The API tells you "there are 200 more pages after this one".
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📄</span> Pattern 1 — Offset/Limit Pagination</div>
+    <div class="pattern-box">
+      <div class="pat-label">🧠 Memory Pattern</div>
+      <p><code class="inline">?limit=100&offset=0</code> → page 1 | <code class="inline">?limit=100&offset=100</code> → page 2</p>
+      <p class="memory-tip">Think: LIMIT = page size, OFFSET = how many records to skip</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Offset Pagination</span>
+      </div>
+      <code><span class="kw">def</span> <span class="fn">fetch_all_offset</span>(base_url, headers, page_size=<span class="num">100</span>):
+    <span class="str">"""Fetch all pages using offset pagination."""</span>
+    <span class="var">all_records</span> = []
+    <span class="var">offset</span> = <span class="num">0</span>
+
+    <span class="kw">while</span> <span class="kw">True</span>:
+        <span class="var">response</span> = requests.<span class="fn">get</span>(
+            url=base_url,
+            params={<span class="str">"limit"</span>: page_size, <span class="str">"offset"</span>: <span class="var">offset</span>},
+            headers=headers,
+            timeout=<span class="num">30</span>
+        )
+        response.<span class="fn">raise_for_status</span>()
+        <span class="var">data</span> = response.<span class="fn">json</span>()
+        
+        <span class="var">records</span> = <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"data"</span>, [])
+        <span class="kw">if</span> <span class="kw">not</span> <span class="var">records</span>:         <span class="cm"># empty page = done</span>
+            <span class="kw">break</span>
+        
+        <span class="var">all_records</span>.<span class="fn">extend</span>(<span class="var">records</span>)
+        <span class="var">offset</span> += page_size
+        
+        <span class="cm"># Safety check using total count</span>
+        <span class="var">total</span> = <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"total_count"</span>, <span class="kw">None</span>)
+        <span class="kw">if</span> <span class="var">total</span> <span class="kw">and</span> <span class="var">offset</span> >= <span class="var">total</span>:
+            <span class="kw">break</span>
+
+        <span class="kw">print</span>(<span class="str">f"Fetched <span class="var">{len(all_records)}</span>/<span class="var">{total}</span> records"</span>)
+    
+    <span class="kw">return</span> <span class="var">all_records</span></code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📄</span> Pattern 2 — Cursor / Next-Page-Token Pagination (Most Common in Modern APIs)</div>
+    <div class="pattern-box">
+      <div class="pat-label">🧠 Memory Pattern</div>
+      <p>API returns <code class="inline">next_page_token</code> or <code class="inline">cursor</code>. Send it back in next request. When null/missing → last page.</p>
+      <p class="memory-tip">Think: cursor pagination = "API hands you a bookmark" — keep using it until the bookmark is gone</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Cursor Pagination</span>
+      </div>
+      <code><span class="kw">def</span> <span class="fn">fetch_all_cursor</span>(base_url, headers, page_size=<span class="num">100</span>):
+    <span class="str">"""Fetch all pages using cursor/token pagination."""</span>
+    <span class="var">all_records</span> = []
+    <span class="var">next_token</span> = <span class="kw">None</span>
+
+    <span class="kw">while</span> <span class="kw">True</span>:
+        <span class="var">params</span> = {<span class="str">"limit"</span>: page_size}
+        <span class="kw">if</span> <span class="var">next_token</span>:
+            <span class="var">params</span>[<span class="str">"page_token"</span>] = <span class="var">next_token</span>    <span class="cm"># attach cursor</span>
+
+        <span class="var">response</span> = requests.<span class="fn">get</span>(url=base_url, params=<span class="var">params</span>,
+                                  headers=headers, timeout=<span class="num">30</span>)
+        response.<span class="fn">raise_for_status</span>()
+        <span class="var">data</span> = response.<span class="fn">json</span>()
+        
+        <span class="var">all_records</span>.<span class="fn">extend</span>(<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"data"</span>, []))
+        
+        <span class="cm"># Get next token — API-specific field names vary!</span>
+        <span class="var">next_token</span> = (
+            <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"next_page_token"</span>) <span class="kw">or</span>   <span class="cm"># common name</span>
+            <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"cursor"</span>) <span class="kw">or</span>             <span class="cm"># alt name</span>
+            <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"pagination", {}</span>).<span class="fn">get</span>(<span class="str">"next"</span>)  <span class="cm"># nested</span>
+        )
+
+        <span class="kw">if</span> <span class="kw">not</span> <span class="var">next_token</span>:   <span class="cm"># None or "" = last page</span>
+            <span class="kw">break</span>
+        
+        <span class="kw">print</span>(<span class="str">f"Page done. Total so far: <span class="var">{len(all_records)}</span>"</span>)
+    
+    <span class="kw">return</span> <span class="var">all_records</span></code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📄</span> Pattern 3 — Page Number Pagination</div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Page Number Pagination</span>
+      </div>
+      <code><span class="kw">def</span> <span class="fn">fetch_all_pages</span>(base_url, headers, page_size=<span class="num">100</span>):
+    <span class="var">all_records</span> = []
+    <span class="var">page</span> = <span class="num">1</span>
+
+    <span class="kw">while</span> <span class="kw">True</span>:
+        <span class="var">resp</span> = requests.<span class="fn">get</span>(base_url,
+                            params={<span class="str">"page"</span>: <span class="var">page</span>, <span class="str">"per_page"</span>: page_size},
+                            headers=headers, timeout=<span class="num">30</span>)
+        resp.<span class="fn">raise_for_status</span>()
+        <span class="var">data</span> = resp.<span class="fn">json</span>()
+        
+        <span class="var">records</span> = <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"results"</span>, [])
+        <span class="kw">if</span> <span class="kw">not</span> <span class="var">records</span>: <span class="kw">break</span>
+        
+        <span class="var">all_records</span>.<span class="fn">extend</span>(<span class="var">records</span>)
+        
+        <span class="cm"># Check if there's a next page</span>
+        <span class="var">has_next</span> = <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"has_next"</span>, <span class="kw">False</span>)
+        <span class="kw">if</span> <span class="kw">not</span> <span class="var">has_next</span>: <span class="kw">break</span>
+        <span class="var">page</span> += <span class="num">1</span>
+    
+    <span class="kw">return</span> <span class="var">all_records</span></code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 5: ERROR HANDLING ══════════════════════ -->
+<section class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-num">5</div>
+    <h2 class="chapter-title"><span>Error Handling</span> — Building Resilient Pipelines</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔷</span> Why Error Handling Matters in Production</div>
+    <div class="concept-box">
+      <div class="label">Production Reality</div>
+      <p>APIs <strong>fail regularly</strong> in production — network blips, server overloads, token expiry, maintenance windows. 
+      A pipeline without retry logic will <strong>silently drop data</strong> or <strong>crash at 3 AM</strong>. 
+      Robust error handling is what separates junior from senior data engineers.</p>
+    </div>
+
+    <div class="wwh-grid">
+      <div class="wwh-card what">
+        <div class="wwh-label">WHAT</div>
+        <p>Catching exceptions, checking status codes, logging failures, and deciding whether to retry or fail-fast.</p>
+      </div>
+      <div class="wwh-card why">
+        <div class="wwh-label">WHY</div>
+        <p>Network is unreliable. Servers fail. Tokens expire. Without handling, one bad API call crashes the entire pipeline.</p>
+      </div>
+      <div class="wwh-card when">
+        <div class="wwh-label">WHEN TO RETRY</div>
+        <p>5xx errors (server problem), 429 (rate limit), connection timeouts. NOT for 4xx (your bug — fix the request).</p>
+      </div>
+      <div class="wwh-card how">
+        <div class="wwh-label">HOW</div>
+        <p>try/except + raise_for_status() + exponential backoff with jitter. Use the <code class="inline">tenacity</code> library in production.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🛡️</span> Full Error Handling Pattern</div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Complete Error Handling Pattern</span>
+      </div>
+      <code><span class="kw">import</span> requests
+<span class="kw">import</span> logging
+
+<span class="var">logger</span> = logging.<span class="fn">getLogger</span>(<span class="var">__name__</span>)
+
+<span class="kw">def</span> <span class="fn">safe_api_call</span>(url, headers, params=<span class="kw">None</span>, timeout=<span class="num">30</span>):
+    <span class="str">"""
+    Makes a safe API call with complete error handling.
+    Returns (data, None) on success, (None, error_message) on failure.
+    """</span>
+    <span class="kw">try</span>:
+        <span class="var">response</span> = requests.<span class="fn">get</span>(
+            url=url, headers=headers, params=params, timeout=timeout
+        )
+        
+        <span class="cm"># ── Handle by status code ──</span>
+        <span class="kw">if</span> response.status_code == <span class="num">200</span>:
+            <span class="kw">return</span> response.<span class="fn">json</span>(), <span class="kw">None</span>
+        
+        <span class="kw">elif</span> response.status_code == <span class="num">401</span>:
+            <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">"AUTH FAILED — token expired or invalid"</span>)
+            <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="str">"Authentication failed"</span>)
+        
+        <span class="kw">elif</span> response.status_code == <span class="num">403</span>:
+            <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">"PERMISSION DENIED — check API scopes"</span>)
+            <span class="kw">raise</span> <span class="cls">PermissionError</span>(<span class="str">"Forbidden"</span>)
+        
+        <span class="kw">elif</span> response.status_code == <span class="num">404</span>:
+            <span class="var">logger</span>.<span class="fn">warning</span>(<span class="str">f"NOT FOUND: <span class="var">{url}</span>"</span>)
+            <span class="kw">return</span> <span class="kw">None</span>, <span class="str">"404 Not Found"</span>
+        
+        <span class="kw">elif</span> response.status_code == <span class="num">429</span>:
+            <span class="var">retry_after</span> = <span class="fn">int</span>(response.headers.<span class="fn">get</span>(<span class="str">"Retry-After"</span>, <span class="num">60</span>))
+            <span class="var">logger</span>.<span class="fn">warning</span>(<span class="str">f"RATE LIMITED — retry after <span class="var">{retry_after}</span>s"</span>)
+            <span class="kw">raise</span> requests.exceptions.<span class="cls">RetryError</span>(<span class="str">f"Rate limited: wait {retry_after}s"</span>)
+        
+        <span class="kw">else</span>:
+            response.<span class="fn">raise_for_status</span>()  <span class="cm"># handles all other 4xx/5xx</span>
+    
+    <span class="kw">except</span> requests.exceptions.<span class="cls">ConnectionError</span> <span class="kw">as</span> e:
+        <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">f"CONNECTION ERROR: <span class="var">{e}</span>"</span>)
+        <span class="kw">raise</span>   <span class="cm"># re-raise for retry logic to catch</span>
+    
+    <span class="kw">except</span> requests.exceptions.<span class="cls">Timeout</span> <span class="kw">as</span> e:
+        <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">f"TIMEOUT after <span class="var">{timeout}</span>s: <span class="var">{e}</span>"</span>)
+        <span class="kw">raise</span>
+    
+    <span class="kw">except</span> requests.exceptions.<span class="cls">HTTPError</span> <span class="kw">as</span> e:
+        <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">f"HTTP ERROR: <span class="var">{e.response.status_code}</span> — <span class="var">{e}</span>"</span>)
+        <span class="kw">raise</span>
+    
+    <span class="kw">except</span> requests.exceptions.<span class="cls">RequestException</span> <span class="kw">as</span> e:
+        <span class="var">logger</span>.<span class="fn">error</span>(<span class="str">f"UNEXPECTED ERROR: <span class="var">{e}</span>"</span>)
+        <span class="kw">raise</span></code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 6: RATE LIMITING ══════════════════════ -->
+<section class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-num">6</div>
+    <h2 class="chapter-title"><span>Rate Limiting</span> & Exponential Backoff</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">⏱️</span> What is Rate Limiting?</div>
+    <div class="concept-box">
+      <div class="label">Definition</div>
+      <p>APIs limit how many requests you can make per second/minute/hour to prevent abuse. 
+      When you exceed the limit, you get a <strong>429 Too Many Requests</strong> response. 
+      Your pipeline must <strong>slow down</strong> and retry intelligently.</p>
+    </div>
+    <div class="analogy-box">
+      <strong>Analogy:</strong> Like a highway toll booth — it processes X cars per minute. 
+      If you try to push through faster, you get blocked. You must wait your turn.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔄</span> Exponential Backoff with Jitter</div>
+    <div class="pattern-box">
+      <div class="pat-label">🧠 Memory Pattern</div>
+      <p>Wait = <code class="inline">base * (2^attempt) + random_jitter</code></p>
+      <p class="memory-tip">Attempt 1: wait 2s → Attempt 2: wait 4s → Attempt 3: wait 8s → Attempt 4: wait 16s
+      <br>Jitter = adds randomness so all parallel workers don't retry at the same time (thundering herd)</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Exponential Backoff + tenacity Library</span>
+      </div>
+      <code><span class="kw">import</span> time
+<span class="kw">import</span> random
+<span class="kw">import</span> requests
+
+<span class="cm"># ── Manual Implementation ──</span>
+<span class="kw">def</span> <span class="fn">retry_with_backoff</span>(url, headers, max_retries=<span class="num">5</span>):
+    <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(max_retries):
+        <span class="kw">try</span>:
+            <span class="var">response</span> = requests.<span class="fn">get</span>(url, headers=headers, timeout=<span class="num">30</span>)
+            
+            <span class="kw">if</span> response.status_code == <span class="num">429</span>:
+                <span class="var">retry_after</span> = <span class="fn">int</span>(response.headers.<span class="fn">get</span>(<span class="str">"Retry-After"</span>, <span class="num">0</span>))
+                <span class="var">wait</span> = max(retry_after, <span class="num">2</span> ** attempt + random.<span class="fn">uniform</span>(<span class="num">0</span>, <span class="num">1</span>))
+                <span class="kw">print</span>(<span class="str">f"Rate limited. Waiting {wait:.1f}s (attempt {attempt+1}/{max_retries})"</span>)
+                time.<span class="fn">sleep</span>(<span class="var">wait</span>)
+                <span class="kw">continue</span>
+            
+            <span class="kw">if</span> response.status_code >= <span class="num">500</span>:
+                <span class="var">wait</span> = <span class="num">2</span> ** attempt + random.<span class="fn">uniform</span>(<span class="num">0</span>, <span class="num">1</span>)
+                <span class="kw">print</span>(<span class="str">f"Server error {response.status_code}. Retrying in {wait:.1f}s"</span>)
+                time.<span class="fn">sleep</span>(<span class="var">wait</span>)
+                <span class="kw">continue</span>
+            
+            response.<span class="fn">raise_for_status</span>()
+            <span class="kw">return</span> response.<span class="fn">json</span>()
+        
+        <span class="kw">except</span> (requests.exceptions.<span class="cls">ConnectionError</span>, requests.exceptions.<span class="cls">Timeout</span>):
+            <span class="kw">if</span> attempt == max_retries - <span class="num">1</span>:
+                <span class="kw">raise</span>
+            <span class="var">wait</span> = <span class="num">2</span> ** attempt + random.<span class="fn">uniform</span>(<span class="num">0</span>, <span class="num">1</span>)
+            time.<span class="fn">sleep</span>(<span class="var">wait</span>)
+    
+    <span class="kw">raise</span> <span class="cls">Exception</span>(<span class="str">f"All {max_retries} retries failed for {url}"</span>)
+
+
+<span class="cm"># ── Production: Use tenacity library ──</span>
+<span class="kw">from</span> tenacity <span class="kw">import</span> (retry, stop_after_attempt, wait_exponential,
+                       retry_if_exception_type, before_sleep_log)
+<span class="kw">import</span> logging
+
+<span class="var">logger</span> = logging.<span class="fn">getLogger</span>(<span class="var">__name__</span>)
+
+<span class="tag-hl">@retry</span>(
+    stop=<span class="fn">stop_after_attempt</span>(<span class="num">5</span>),
+    wait=<span class="fn">wait_exponential</span>(multiplier=<span class="num">1</span>, min=<span class="num">2</span>, max=<span class="num">60</span>),
+    retry=<span class="fn">retry_if_exception_type</span>((
+        requests.exceptions.<span class="cls">ConnectionError</span>,
+        requests.exceptions.<span class="cls">Timeout</span>
+    )),
+    before_sleep=<span class="fn">before_sleep_log</span>(<span class="var">logger</span>, logging.WARNING)
+)
+<span class="kw">def</span> <span class="fn">fetch_with_tenacity</span>(url, headers):
+    <span class="var">response</span> = requests.<span class="fn">get</span>(url, headers=headers, timeout=<span class="num">30</span>)
+    response.<span class="fn">raise_for_status</span>()
+    <span class="kw">return</span> response.<span class="fn">json</span>()</code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🚦</span> Throttling — Proactive Rate Control</div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Throttle Requests (Stay Below Limit)</span>
+      </div>
+      <code><span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="cls">RateLimiter</span>:
+    <span class="str">"""Stay within N requests per second."""</span>
+    
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_per_second=<span class="num">5</span>):
+        self.min_interval = <span class="num">1.0</span> / max_per_second   <span class="cm"># 0.2s between calls</span>
+        self.last_call = <span class="num">0</span>
+    
+    <span class="kw">def</span> <span class="fn">wait</span>(self):
+        <span class="var">elapsed</span> = time.<span class="fn">time</span>() - self.last_call
+        <span class="var">sleep_time</span> = self.min_interval - elapsed
+        <span class="kw">if</span> <span class="var">sleep_time</span> > <span class="num">0</span>:
+            time.<span class="fn">sleep</span>(<span class="var">sleep_time</span>)
+        self.last_call = time.<span class="fn">time</span>()
+
+<span class="cm"># ── Usage: 5 requests/second max ──</span>
+<span class="var">limiter</span> = <span class="cls">RateLimiter</span>(max_per_second=<span class="num">5</span>)
+
+<span class="kw">for</span> account_id <span class="kw">in</span> account_ids:
+    <span class="var">limiter</span>.<span class="fn">wait</span>()   <span class="cm"># ensure we don't exceed rate limit</span>
+    <span class="var">data</span> = <span class="fn">fetch_transactions</span>(account_id)</code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 7: FULL PIPELINE ══════════════════════ -->
+<section class="chapter" id="ch7">
+  <div class="chapter-header">
+    <div class="chapter-num">7</div>
+    <h2 class="chapter-title"><span>Full Pipeline</span> — API → ADLS → Delta Lake</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🏗️</span> Complete Data Pipeline Pattern</div>
+    <div class="flow">
+      <div class="flow-box blue">External API<br><small>Bank / CRM</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box yellow">Python Script<br><small>Databricks</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box purple">ADLS Gen2<br><small>Raw Zone</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box orange">PySpark<br><small>Transform</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box green">Delta Lake<br><small>Curated Zone</small></div>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python — Production API Ingestion Pipeline (Databricks)</span>
+      </div>
+      <code><span class="kw">import</span> requests
+<span class="kw">import</span> json
+<span class="kw">import</span> time
+<span class="kw">import</span> logging
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, date
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StringType, DoubleType, TimestampType
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+logging.<span class="fn">basicConfig</span>(level=logging.INFO)
+<span class="var">logger</span> = logging.<span class="fn">getLogger</span>(<span class="str">"api_ingestion"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════
+# STEP 1: Fetch secrets from Azure Key Vault
+# ═══════════════════════════════════════════════</span>
+<span class="var">CLIENT_ID</span>     = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"kv-scope"</span>, key=<span class="str">"bank-api-client-id"</span>)
+<span class="var">CLIENT_SECRET</span> = dbutils.secrets.<span class="fn">get</span>(scope=<span class="str">"kv-scope"</span>, key=<span class="str">"bank-api-secret"</span>)
+<span class="var">TOKEN_URL</span>     = <span class="str">"https://login.bank.com/oauth2/token"</span>
+<span class="var">API_BASE</span>      = <span class="str">"https://api.bank.com/v2"</span>
+<span class="var">ADLS_PATH</span>     = <span class="str">"abfss://raw@bankdatalake.dfs.core.windows.net/transactions"</span>
+<span class="var">DELTA_PATH</span>    = <span class="str">"abfss://curated@bankdatalake.dfs.core.windows.net/transactions"</span>
+
+<span class="cm"># ═══════════════════════════════════════════════
+# STEP 2: Get OAuth2 token
+# ═══════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">get_access_token</span>():
+    <span class="var">resp</span> = requests.<span class="fn">post</span>(<span class="var">TOKEN_URL</span>, data={
+        <span class="str">"grant_type"</span>: <span class="str">"client_credentials"</span>,
+        <span class="str">"client_id"</span>: <span class="var">CLIENT_ID</span>,
+        <span class="str">"client_secret"</span>: <span class="var">CLIENT_SECRET</span>,
+        <span class="str">"scope"</span>: <span class="str">"transactions.read"</span>
+    }, timeout=<span class="num">30</span>)
+    resp.<span class="fn">raise_for_status</span>()
+    <span class="kw">return</span> resp.<span class="fn">json</span>()[<span class="str">"access_token"</span>]
+
+<span class="cm"># ═══════════════════════════════════════════════
+# STEP 3: Fetch paginated data with retry
+# ═══════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">fetch_transactions</span>(token, from_date, to_date):
+    <span class="var">headers</span> = {<span class="str">"Authorization"</span>: <span class="str">f"Bearer <span class="var">{token}</span>"</span>, <span class="str">"Accept"</span>: <span class="str">"application/json"</span>}
+    <span class="var">all_txns</span> = []
+    <span class="var">next_token</span> = <span class="kw">None</span>
+    
+    <span class="kw">while</span> <span class="kw">True</span>:
+        <span class="var">params</span> = {<span class="str">"from_date"</span>: from_date, <span class="str">"to_date"</span>: to_date, <span class="str">"limit"</span>: <span class="num">500</span>}
+        <span class="kw">if</span> <span class="var">next_token</span>: <span class="var">params</span>[<span class="str">"page_token"</span>] = <span class="var">next_token</span>
+        
+        <span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):
+            <span class="kw">try</span>:
+                <span class="var">resp</span> = requests.<span class="fn">get</span>(<span class="str">f"<span class="var">{API_BASE}</span>/transactions"</span>,
+                                     params=<span class="var">params</span>, headers=<span class="var">headers</span>, timeout=<span class="num">60</span>)
+                <span class="kw">if</span> <span class="var">resp</span>.status_code == <span class="num">429</span>:
+                    wait = <span class="fn">int</span>(<span class="var">resp</span>.headers.<span class="fn">get</span>(<span class="str">"Retry-After"</span>, <span class="num">2</span> ** attempt))
+                    time.<span class="fn">sleep</span>(wait); <span class="kw">continue</span>
+                <span class="var">resp</span>.<span class="fn">raise_for_status</span>()
+                <span class="kw">break</span>
+            <span class="kw">except</span> requests.exceptions.<span class="cls">RequestException</span>:
+                <span class="kw">if</span> attempt == <span class="num">4</span>: <span class="kw">raise</span>
+                time.<span class="fn">sleep</span>(<span class="num">2</span> ** attempt)
+        
+        <span class="var">data</span> = <span class="var">resp</span>.<span class="fn">json</span>()
+        <span class="var">all_txns</span>.<span class="fn">extend</span>(<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"transactions"</span>, []))
+        <span class="var">next_token</span> = <span class="var">data</span>.<span class="fn">get</span>(<span class="str">"next_page_token"</span>)
+        <span class="var">logger</span>.<span class="fn">info</span>(<span class="str">f"Fetched page, total: {len(all_txns)}"</span>)
+        <span class="kw">if</span> <span class="kw">not</span> <span class="var">next_token</span>: <span class="kw">break</span>
+    
+    <span class="kw">return</span> <span class="var">all_txns</span>
+
+<span class="cm"># ═══════════════════════════════════════════════
+# STEP 4: Save raw JSON to ADLS (landing zone)
+# ═══════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">save_raw_to_adls</span>(transactions, run_date):
+    <span class="var">raw_path</span> = <span class="str">f"<span class="var">{ADLS_PATH}</span>/dt=<span class="var">{run_date}</span>/raw.json"</span>
+    <span class="cm"># Save each record as newline-delimited JSON</span>
+    <span class="var">json_lines</span> = <span class="str">"\n"</span>.<span class="fn">join</span>([json.<span class="fn">dumps</span>(t) <span class="kw">for</span> t <span class="kw">in</span> transactions])
+    dbutils.fs.<span class="fn">put</span>(<span class="var">raw_path</span>, <span class="var">json_lines</span>, overwrite=<span class="kw">True</span>)
+    <span class="var">logger</span>.<span class="fn">info</span>(<span class="str">f"Saved {len(transactions)} records to {raw_path}"</span>)
+    <span class="kw">return</span> <span class="var">raw_path</span>
+
+<span class="cm"># ═══════════════════════════════════════════════
+# STEP 5: Transform and write to Delta Lake
+# ═══════════════════════════════════════════════</span>
+<span class="kw">def</span> <span class="fn">write_to_delta</span>(spark, raw_path):
+    <span class="var">df</span> = spark.read.<span class="fn">json</span>(<span class="var">raw_path</span>)
+    
+    <span class="cm"># Add metadata columns</span>
+    <span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_timestamp, lit
+    <span class="var">df</span> = (<span class="var">df</span>
+          .<span class="fn">withColumn</span>(<span class="str">"ingested_at"</span>, current_timestamp())
+          .<span class="fn">withColumn</span>(<span class="str">"pipeline_version"</span>, lit(<span class="str">"v2.1"</span>))
+          .<span class="fn">dropDuplicates</span>([<span class="str">"transaction_id"</span>])
+    )
+    
+    <span class="cm"># MERGE into Delta (upsert = no duplicate transactions)</span>
+    <span class="kw">if</span> DeltaTable.<span class="fn">isDeltaTable</span>(spark, <span class="var">DELTA_PATH</span>):
+        <span class="var">delta_tbl</span> = DeltaTable.<span class="fn">forPath</span>(spark, <span class="var">DELTA_PATH</span>)
+        (<span class="var">delta_tbl</span>.<span class="fn">alias</span>(<span class="str">"target"</span>)
+         .<span class="fn">merge</span>(<span class="var">df</span>.<span class="fn">alias</span>(<span class="str">"source"</span>),
+                <span class="str">"target.transaction_id = source.transaction_id"</span>)
+         .<span class="fn">whenMatchedUpdateAll</span>()
+         .<span class="fn">whenNotMatchedInsertAll</span>()
+         .<span class="fn">execute</span>())
+    <span class="kw">else</span>:
+        <span class="var">df</span>.write.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">save</span>(<span class="var">DELTA_PATH</span>)
+    
+    <span class="var">logger</span>.<span class="fn">info</span>(<span class="str">f"Delta merge complete: {df.count()} records"</span>)
+
+<span class="cm"># ═══════════════════════════════════════════════
+# MAIN EXECUTION
+# ═══════════════════════════════════════════════</span>
+<span class="var">spark</span> = SparkSession.builder.<span class="fn">appName</span>(<span class="str">"BankAPIIngestion"</span>).<span class="fn">getOrCreate</span>()
+<span class="var">run_date</span> = date.today().<span class="fn">isoformat</span>()
+
+<span class="var">token</span> = <span class="fn">get_access_token</span>()
+<span class="var">transactions</span> = <span class="fn">fetch_transactions</span>(<span class="var">token</span>, from_date=<span class="var">run_date</span>, to_date=<span class="var">run_date</span>)
+<span class="var">raw_path</span> = <span class="fn">save_raw_to_adls</span>(<span class="var">transactions</span>, <span class="var">run_date</span>)
+<span class="fn">write_to_delta</span>(<span class="var">spark</span>, <span class="var">raw_path</span>)
+
+<span class="kw">print</span>(<span class="str">f"✅ Pipeline complete: {len(transactions)} transactions ingested"</span>)</code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 8: AZURE + DATABRICKS ══════════════════════ -->
+<section class="chapter" id="ch8">
+  <div class="chapter-header">
+    <div class="chapter-num">8</div>
+    <h2 class="chapter-title"><span>Azure + Databricks</span> Integration Guide</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">☁️</span> Azure Services Used in API Pipelines</div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Service</th><th>Role in API Pipeline</th><th>Connection</th></tr>
+        <tr><td><strong>Azure Key Vault</strong></td><td>Store API keys, client secrets securely</td><td><code class="inline">dbutils.secrets.get()</code></td></tr>
+        <tr><td><strong>ADLS Gen2</strong></td><td>Land raw JSON / Parquet from API</td><td><code class="inline">abfss://</code> path</td></tr>
+        <tr><td><strong>Azure Data Factory</strong></td><td>Orchestrate / schedule the pipeline</td><td>Linked service → Databricks</td></tr>
+        <tr><td><strong>Azure Monitor</strong></td><td>Alert on pipeline failures, slow APIs</td><td>Log Analytics workspace</td></tr>
+        <tr><td><strong>Event Hubs</strong></td><td>Buffer real-time API streaming data</td><td>Structured Streaming in Spark</td></tr>
+        <tr><td><strong>Azure Functions</strong></td><td>Lightweight API polling triggers</td><td>HTTP trigger → Databricks REST API</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🔗</span> ADLS Gen2 Connection from Spark</div>
+    <div class="callout info">
+      <span class="emoji">📖</span>
+      <p><strong>Spark + ADLS Connection:</strong> As noted in your uploaded notes, when using ADLS instead of HDFS, 
+      "Spark sees ADLS as a <strong>logical file system</strong>" — Spark workers do <strong>remote reads over HTTP (ABFS driver)</strong>, 
+      not local disk reads. The ABFS driver handles authentication, byte-range requests, and network I/O.</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">Python/PySpark — ADLS Gen2 Configuration</span>
+      </div>
+      <code><span class="cm"># ── Option 1: Service Principal Auth (Production) ──</span>
+<span class="var">spark</span>.conf.<span class="fn">set</span>(
+    <span class="str">"fs.azure.account.auth.type.bankdatalake.dfs.core.windows.net"</span>,
+    <span class="str">"OAuth"</span>
+)
+<span class="var">spark</span>.conf.<span class="fn">set</span>(
+    <span class="str">"fs.azure.account.oauth.provider.type.bankdatalake.dfs.core.windows.net"</span>,
+    <span class="str">"org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"</span>
+)
+<span class="var">spark</span>.conf.<span class="fn">set</span>(
+    <span class="str">"fs.azure.account.oauth2.client.id.bankdatalake.dfs.core.windows.net"</span>,
+    dbutils.secrets.<span class="fn">get</span>(<span class="str">"kv-scope"</span>, <span class="str">"sp-client-id"</span>)
+)
+<span class="var">spark</span>.conf.<span class="fn">set</span>(
+    <span class="str">"fs.azure.account.oauth2.client.secret.bankdatalake.dfs.core.windows.net"</span>,
+    dbutils.secrets.<span class="fn">get</span>(<span class="str">"kv-scope"</span>, <span class="str">"sp-client-secret"</span>)
+)
+<span class="var">spark</span>.conf.<span class="fn">set</span>(
+    <span class="str">"fs.azure.account.oauth2.client.endpoint.bankdatalake.dfs.core.windows.net"</span>,
+    <span class="str">f"https://login.microsoftonline.com/{tenant_id}/oauth2/token"</span>
+)
+
+<span class="cm"># ── Option 2: Managed Identity (Preferred in Databricks on Azure) ──</span>
+<span class="cm"># No config needed if Databricks workspace has ADLS access via Unity Catalog</span>
+<span class="var">df</span> = spark.read.<span class="fn">json</span>(<span class="str">"abfss://raw@bankdatalake.dfs.core.windows.net/api-data/"</span>)
+
+<span class="cm"># ── Write API result to ADLS as Parquet ──</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="var">df_pandas</span> = pd.<span class="cls">DataFrame</span>(<span class="var">transactions</span>)
+<span class="var">df_spark</span> = spark.<span class="fn">createDataFrame</span>(<span class="var">df_pandas</span>)
+<span class="var">df_spark</span>.write.<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">parquet</span>(
+    <span class="str">f"abfss://raw@bankdatalake.dfs.core.windows.net/transactions/dt={run_date}"</span>
+)</code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">🏦</span> Real-World Banking Production Example</div>
+    <div class="banking-section">
+      <h4>🏦 Scenario: Daily Transaction Reconciliation Pipeline</h4>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+        A bank needs to reconcile all card transactions from a payment gateway API daily. 
+        The API returns 500K+ records per day in paginated format, requires OAuth2 auth, 
+        and has a 100 req/min rate limit.
+      </p>
+
+      <div class="flow" style="margin-bottom:20px;">
+        <div class="flow-box blue">Payment Gateway<br><small>REST API</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box yellow">ADF Trigger<br><small>6 AM daily</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box purple">Databricks<br><small>Python + PySpark</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box orange">ADLS Raw<br><small>JSON landing</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box green">Delta Lake<br><small>Curated layer</small></div>
+      </div>
+
+      <pre>
+        <div class="code-header">
+          <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <span class="code-lang">Python — Banking Reconciliation Pipeline</span>
+        </div>
+        <code><span class="kw">class</span> <span class="cls">TransactionReconciliationPipeline</span>:
+    
+    GATEWAY_API = <span class="str">"https://api.paymentgateway.com/v3"</span>
+    RATE_LIMIT_RPS = <span class="num">1.5</span>  <span class="cm"># 1.5 req/sec = 90/min (below 100/min limit)</span>
+    
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, spark):
+        self.spark = spark
+        self.token_mgr = <span class="cls">OAuth2TokenManager</span>(
+            token_url=<span class="str">f"<span class="var">{self.GATEWAY_API}</span>/auth/token"</span>,
+            client_id=dbutils.secrets.<span class="fn">get</span>(<span class="str">"kv"</span>, <span class="str">"gw-client-id"</span>),
+            client_secret=dbutils.secrets.<span class="fn">get</span>(<span class="str">"kv"</span>, <span class="str">"gw-client-secret"</span>)
+        )
+        self.limiter = <span class="cls">RateLimiter</span>(self.RATE_LIMIT_RPS)
+        self.session = requests.<span class="cls">Session</span>()
+    
+    <span class="kw">def</span> <span class="fn">run</span>(self, process_date):
+        <span class="kw">try</span>:
+            <span class="cm"># 1. Authenticate</span>
+            self.session.headers.update({
+                <span class="str">"Authorization"</span>: <span class="str">f"Bearer <span class="var">{self.token_mgr.get_token()}</span>"</span>
+            })
+            
+            <span class="cm"># 2. Fetch all transactions with pagination + rate limit</span>
+            <span class="var">transactions</span> = self.<span class="fn">_fetch_paginated</span>(process_date)
+            
+            <span class="cm"># 3. Land raw to ADLS</span>
+            <span class="var">raw_path</span> = <span class="str">f"abfss://raw@bank.dfs.core.windows.net/txn/dt={process_date}"</span>
+            self.<span class="fn">_save_raw</span>(<span class="var">transactions</span>, <span class="var">raw_path</span>)
+            
+            <span class="cm"># 4. Transform and upsert to Delta</span>
+            self.<span class="fn">_upsert_delta</span>(<span class="var">raw_path</span>)
+            
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"SUCCESS"</span>, <span class="str">"count"</span>: <span class="fn">len</span>(<span class="var">transactions</span>)}
+        
+        <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> e:
+            <span class="cm"># Log to Azure Monitor via structured logging</span>
+            <span class="kw">raise</span> <span class="cls">Exception</span>(<span class="str">f"Pipeline FAILED for {process_date}: {e}"</span>) <span class="kw">from</span> e
+    
+    <span class="kw">def</span> <span class="fn">_fetch_paginated</span>(self, date):
+        <span class="var">records</span>, <span class="var">next_token</span> = [], <span class="kw">None</span>
+        <span class="kw">while</span> <span class="kw">True</span>:
+            self.limiter.<span class="fn">wait</span>()        <span class="cm"># throttle</span>
+            <span class="var">params</span> = {<span class="str">"date"</span>: date, <span class="str">"limit"</span>: <span class="num">1000</span>}
+            <span class="kw">if</span> <span class="var">next_token</span>: <span class="var">params</span>[<span class="str">"cursor"</span>] = <span class="var">next_token</span>
+            
+            <span class="var">r</span> = self.session.<span class="fn">get</span>(
+                <span class="str">f"<span class="var">{self.GATEWAY_API}</span>/transactions"</span>,
+                params=<span class="var">params</span>, timeout=<span class="num">60</span>
+            )
+            <span class="var">r</span>.<span class="fn">raise_for_status</span>()
+            <span class="var">page</span> = <span class="var">r</span>.<span class="fn">json</span>()
+            <span class="var">records</span>.<span class="fn">extend</span>(<span class="var">page</span>[<span class="str">"transactions"</span>])
+            <span class="var">next_token</span> = <span class="var">page</span>.<span class="fn">get</span>(<span class="str">"cursor"</span>)
+            <span class="kw">if</span> <span class="kw">not</span> <span class="var">next_token</span>: <span class="kw">break</span>
+        <span class="kw">return</span> <span class="var">records</span></code>
+      </pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 9: SPARK CONNECTION ══════════════════════ -->
+<section class="chapter" id="ch9">
+  <div class="chapter-header">
+    <div class="chapter-num">9</div>
+    <h2 class="chapter-title"><span>Spark Connection</span> — API Data → DataFrames</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">⚡</span> Connecting API Results to Spark (Key Patterns)</div>
+    <div class="callout info">
+      <span class="emoji">📖</span>
+      <p><strong>Spark Architecture Reminder</strong> (from your notes): The <strong>Driver</strong> runs your code — 
+      so API calls happen in the driver (single machine). 
+      Once you have the data, <code class="inline">spark.createDataFrame()</code> distributes it to executors for parallel processing. 
+      For huge datasets, save to ADLS first, then read with Spark (avoids driver OOM).</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">PySpark — 3 Patterns for API Data</span>
+      </div>
+      <code><span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="var">spark</span> = SparkSession.builder.<span class="fn">appName</span>(<span class="str">"APIIngestion"</span>).<span class="fn">getOrCreate</span>()
+
+<span class="cm"># ═══════════════════════════════════
+# PATTERN 1: Small data → createDataFrame
+# Driver fetches → Spark distributes
+# Use for: < 1M rows (fits in driver memory)
+# ═══════════════════════════════════</span>
+<span class="var">transactions</span> = <span class="fn">fetch_transactions</span>(token)  <span class="cm"># Python list of dicts</span>
+<span class="var">df</span> = spark.<span class="fn">createDataFrame</span>(<span class="var">transactions</span>)   <span class="cm"># distribute to executors</span>
+<span class="var">df</span>.<span class="fn">write</span>.<span class="fn">format</span>(<span class="str">"delta"</span>).<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">save</span>(<span class="var">DELTA_PATH</span>)
+
+
+<span class="cm"># ═══════════════════════════════════
+# PATTERN 2: Medium data → via Pandas
+# Converts Pandas df to Spark df
+# ═══════════════════════════════════</span>
+<span class="var">df_pandas</span> = pd.<span class="cls">DataFrame</span>(<span class="var">transactions</span>)
+<span class="var">df_spark</span> = spark.<span class="fn">createDataFrame</span>(<span class="var">df_pandas</span>)
+
+
+<span class="cm"># ═══════════════════════════════════
+# PATTERN 3: Large data → ADLS first (RECOMMENDED)
+# Save raw to ADLS → Spark reads with parallelism
+# Use for: millions of rows
+# ═══════════════════════════════════</span>
+<span class="cm"># Step A: Driver saves JSON to ADLS</span>
+dbutils.fs.<span class="fn">put</span>(<span class="str">f"abfss://raw@lake.dfs.core.windows.net/txn/raw.json"</span>,
+              <span class="str">"\n"</span>.<span class="fn">join</span>([json.<span class="fn">dumps</span>(t) <span class="kw">for</span> t <span class="kw">in</span> transactions]),
+              overwrite=<span class="kw">True</span>)
+
+<span class="cm"># Step B: Spark reads with parallelism (executors read different partitions)</span>
+<span class="cm"># As per your notes: executors stream byte ranges from ADLS on demand</span>
+<span class="var">df</span> = spark.read.<span class="fn">json</span>(<span class="str">"abfss://raw@lake.dfs.core.windows.net/txn/raw.json"</span>)
+
+<span class="cm"># Spark creates partitions → executors process in parallel</span>
+<span class="cm"># Number of partitions depends on spark.sql.files.maxPartitionBytes (default 128MB)</span>
+<span class="kw">print</span>(<span class="str">f"Partitions: {df.rdd.getNumPartitions()}"</span>)   <span class="cm"># check parallelism</span>
+
+<span class="cm"># ═══════════════════════════════════
+# BONUS: Define schema explicitly (better performance)
+# ═══════════════════════════════════</span>
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> *
+
+<span class="var">schema</span> = <span class="cls">StructType</span>([
+    <span class="cls">StructField</span>(<span class="str">"transaction_id"</span>, <span class="cls">StringType</span>(), nullable=<span class="kw">False</span>),
+    <span class="cls">StructField</span>(<span class="str">"amount"</span>,         <span class="cls">DoubleType</span>(), nullable=<span class="kw">True</span>),
+    <span class="cls">StructField</span>(<span class="str">"currency"</span>,       <span class="cls">StringType</span>(), nullable=<span class="kw">True</span>),
+    <span class="cls">StructField</span>(<span class="str">"status"</span>,         <span class="cls">StringType</span>(), nullable=<span class="kw">True</span>),
+    <span class="cls">StructField</span>(<span class="str">"timestamp"</span>,      <span class="cls">TimestampType</span>(), nullable=<span class="kw">True</span>)
+])
+
+<span class="var">df</span> = spark.read.<span class="fn">schema</span>(<span class="var">schema</span>).<span class="fn">json</span>(<span class="var">raw_path</span>)
+<span class="cm"># Schema inference scans all data = slow. Explicit schema = fast!</span></code>
+    </pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📊</span> Partition Considerations for API Data (From Your Notes)</div>
+    <div class="callout success">
+      <span class="emoji">📖</span>
+      <p><strong>Connecting to Spark notes:</strong> When API data is written to ADLS and then read by Spark, 
+      Spark creates <strong>Input Partitions</strong>. As mentioned in your notes: 
+      "When job is submitted, each data partition is sent to specific executors" and 
+      "executors stream only the required byte ranges from ADLS on demand." 
+      Control partitioning with <code class="inline">spark.sql.files.maxPartitionBytes</code> or <code class="inline">df.repartition(N)</code>.</p>
+    </div>
+    <pre>
+      <div class="code-header">
+        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="code-lang">PySpark — Partition Optimization for API Data</span>
+      </div>
+      <code><span class="cm"># Check current partitions</span>
+<span class="kw">print</span>(<span class="str">f"Input partitions: {df.rdd.getNumPartitions()}"</span>)
+
+<span class="cm"># For shuffle operations (groupBy, join) — matches spark.sql.shuffle.partitions</span>
+<span class="cm"># Default is 200 (as in your notes) — tune based on data size</span>
+spark.conf.<span class="fn">set</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"50"</span>)  <span class="cm"># small data: reduce from 200</span>
+
+<span class="cm"># Repartition for better parallelism after API fetch</span>
+<span class="var">df_optimized</span> = df.<span class="fn">repartition</span>(<span class="num">8</span>)            <span class="cm"># 8 partitions = 8 cores worth of work</span>
+<span class="var">df_partitioned</span> = df.<span class="fn">repartition</span>(<span class="str">"account_id"</span>)  <span class="cm"># partition by column for co-location</span>
+
+<span class="cm"># Coalesce to reduce output files (fewer small files in ADLS)</span>
+<span class="var">df</span>.<span class="fn">coalesce</span>(<span class="num">1</span>).<span class="fn">write</span>.<span class="fn">parquet</span>(<span class="var">output_path</span>)     <span class="cm"># single output file (daily summary)</span>
+<span class="var">df</span>.<span class="fn">coalesce</span>(<span class="num">4</span>).<span class="fn">write</span>.<span class="fn">parquet</span>(<span class="var">output_path</span>)     <span class="cm"># 4 files (balance size vs parallelism)</span></code>
+    </pre>
+  </div>
+</section>
+
+<!-- ══════════════════════ CHAPTER 10: INTERVIEW ══════════════════════ -->
+<section class="chapter" id="ch10">
+  <div class="chapter-header">
+    <div class="chapter-num">10</div>
+    <h2 class="chapter-title"><span>Interview Insights</span> — Ace Every Question</h2>
+  </div>
+
+  <div class="interview-section">
+    <h4>🎤 Interview Questions & Model Answers</h4>
+
+    <div class="interview-q">
+      <div class="q-text">Q1 (Direct): "How would you ingest data from an external REST API into a data lake?"</div>
+      <div class="q-ans">✅ <strong>Model Answer:</strong> "I'd use Python's requests library in a Databricks notebook. First, fetch OAuth2 token from Azure Key Vault using dbutils.secrets. Then loop through paginated API responses using cursor-based pagination, applying exponential backoff for retries on 5xx/429 errors. Land raw JSON to ADLS Gen2 as partitioned files, then read with Spark, apply transformations, and upsert into Delta Lake using MERGE for idempotency."</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q-text">Q2 (Architecture): "The API has a 100 requests/minute limit. How do you handle this with 50,000 accounts?"</div>
+      <div class="q-ans">✅ <strong>Model Answer:</strong> "I'd implement a RateLimiter class that spaces requests to ~1.5 req/sec (well below the limit). For 50K accounts at 1.5/sec, that's ~9 hours — so I'd parallelize using Spark parallelForEach or batch the accounts and use Databricks workflows for concurrent jobs, each handling a subset of accounts. I'd also check if the API supports bulk endpoints to reduce call count."</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q-text">Q3 (Tricky): "How do you ensure no duplicate records when the same API is called multiple times?"</div>
+      <div class="q-ans">✅ <strong>Model Answer:</strong> "Use Delta Lake's MERGE (upsert) operation with <code class="inline">whenMatchedUpdateAll().whenNotMatchedInsertAll()</code> keyed on a unique transaction ID. Also deduplicate within each batch using <code class="inline">dropDuplicates(['transaction_id'])</code> before writing. For the raw landing zone, partition by date and use overwrite mode per date — rerunning the pipeline for a date replaces the partition cleanly."</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q-text">Q4 (Security): "Where do you store API credentials in production?"</div>
+      <div class="q-ans">✅ <strong>Model Answer:</strong> "Always in Azure Key Vault — never hardcoded. In Databricks, I use dbutils.secrets scopes backed by Key Vault. Credentials are rotated regularly and the service principal used for pipeline access has minimum permissions (read-only scope on the API, write-only on target storage). I also ensure secrets never appear in logs using structured logging that masks sensitive headers."</div>
+    </div>
+
+    <div class="interview-q">
+      <div class="q-text">Q5 (Debugging): "The API returns 200 but the data looks wrong. How do you debug?"</div>
+      <div class="q-ans">✅ <strong>Model Answer:</strong> "First, print <code class="inline">response.json()</code> to inspect the full structure — often the data is nested deeper than expected. Check if there's a pagination issue (last page returns empty, not 404). Verify the request URL and params are what you intended using <code class="inline">response.url</code>. Check response headers for any warnings. Compare field names exactly — APIs are case-sensitive."</div>
+    </div>
+
+    <div class="mistake-box">
+      <strong>🚨 Common Mistakes:</strong>
+      <ul style="padding-left:18px; margin-top:8px;">
+        <li>Not setting <code class="inline">timeout</code> — pipeline hangs forever on slow API</li>
+        <li>Using params in URL manually instead of using <code class="inline">params={}</code> (URL encoding errors)</li>
+        <li>Not handling empty pages in pagination — infinite loop!</li>
+        <li>Catching generic <code class="inline">Exception</code> and silently swallowing errors</li>
+        <li>Hardcoding credentials — immediate disqualification in security-focused interviews</li>
+        <li>Not using <code class="inline">raise_for_status()</code> — 4xx/5xx responses return "successfully" without it</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pro-tips">
+    <h4>💡 Production Pro Tips</h4>
+    <ul>
+      <li><strong>Schema on read vs write:</strong> Always define explicit schemas when reading API data into Spark. Auto-inferred schemas scan all data (expensive) and can change silently between runs — breaking your pipeline days later.</li>
+      <li><strong>Idempotent pipelines:</strong> Design every pipeline to be safely re-runnable. Use MERGE not INSERT, use partition overwrite not append, and always log which date/batch was processed.</li>
+      <li><strong>Circuit breaker pattern:</strong> If an API fails 5 consecutive times, stop retrying and alert. Don't let a broken API burn your rate limit budget or keep a pipeline zombie-running for hours.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-section">
+    <h4>🧠 Quiz</h4>
+    <p class="quiz-q">
+      Scenario: Your Databricks pipeline fetches daily transactions from a banking API (cursor pagination, 429 rate limiting). 
+      The pipeline has been running for 2 months. Today it fails midway through page 47 of 200 due to a network timeout. 
+      When it restarts, what is the BEST strategy?
+    </p>
+    <ul class="quiz-options">
+      <li>A) Restart from page 1 and re-fetch all 200 pages. Use INSERT mode so no data is lost.</li>
+      <li>B) Skip today's run and pick up tomorrow. The API will have today's data tomorrow too.</li>
+      <li>C) Track the last successful cursor/page token in a checkpoint file/Delta table, resume from there. Use MERGE to upsert into Delta (idempotent).</li>
+      <li>D) Increase the timeout to 10 minutes and retry the failed page immediately, ignoring all other pages.</li>
+    </ul>
+    <div class="quiz-answer">
+      ✅ <strong>Answer: C</strong> — Checkpoint the cursor so you resume from where you failed (saves 46 pages of wasted API calls). 
+      Using MERGE ensures even if pages overlap, there are no duplicate records. This is the production-standard pattern 
+      combining <em>checkpointing</em> + <em>idempotent writes</em>.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span class="icon">📋</span> Complete Topic Checklist — API Integration for DEs</div>
+    <div class="grid-2">
+      <div>
+        <ul class="topic-list">
+          <li>✅ <strong>HTTP Methods</strong> — GET, POST, PUT, DELETE</li>
+          <li>✅ <strong>Status Codes</strong> — 2xx, 4xx, 5xx</li>
+          <li>✅ <strong>URL anatomy</strong> — scheme, host, path, params</li>
+          <li>✅ <strong>JSON parsing</strong> — response.json(), nested access</li>
+          <li>✅ <strong>requests library</strong> — get, post, session</li>
+          <li>✅ <strong>Headers</strong> — Authorization, Content-Type, Accept</li>
+          <li>✅ <strong>API Key auth</strong> — header, param, bearer</li>
+          <li>✅ <strong>OAuth 2.0</strong> — client credentials flow, token refresh</li>
+          <li>✅ <strong>Azure Key Vault</strong> — dbutils.secrets, SecretClient</li>
+          <li>✅ <strong>Pagination</strong> — offset, cursor, page number</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="topic-list">
+          <li>✅ <strong>Error handling</strong> — try/except, raise_for_status</li>
+          <li>✅ <strong>Retry logic</strong> — exponential backoff, jitter</li>
+          <li>✅ <strong>Rate limiting</strong> — 429 handling, throttle</li>
+          <li>✅ <strong>Timeouts</strong> — always set, prevent hangs</li>
+          <li>✅ <strong>Session reuse</strong> — connection pooling</li>
+          <li>✅ <strong>ADLS write</strong> — raw JSON landing zone</li>
+          <li>✅ <strong>Spark createDataFrame</strong> — API data → Spark</li>
+          <li>✅ <strong>Delta MERGE</strong> — idempotent upserts</li>
+          <li>✅ <strong>Checkpointing</strong> — resume from failure</li>
+          <li>✅ <strong>Schema definition</strong> — explicit schemas in Spark</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end wrapper -->
+
+<div class="footer">
+  <p>📡 API Integration for Data Engineers — Azure + Databricks Edition</p>
+  <p style="margin-top:6px;">Built for Interview Prep | <span>Python · requests · OAuth2 · ADLS · Delta Lake · Spark</span></p>
+</div>
+
+</body>
+</html>
