@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Spark Execution Flow – Azure Databricks</title>
+<style>
+  :root{--blue:#1a73e8;--blue-light:#e8f0fe;--teal:#0f9d58;--teal-light:#e6f4ea;--amber:#f9ab00;--amber-light:#fef9e7;--coral:#d93025;--coral-light:#fce8e6;--purple:#7c4dff;--purple-light:#ede7f6;--gray:#5f6368;--gray-bg:#f8f9fa;--border:#dadce0;--text:#202124;--text-muted:#5f6368;--white:#fff;--radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;color:var(--text);background:#f0f2f5;line-height:1.7;}
+  .page{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* Chapter badge */
+  .chapter-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;}
+
+  /* Section card */
+  .card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:28px 32px;margin-bottom:28px;box-shadow:var(--shadow);}
+  .card.prereq{border-left:4px solid var(--purple);}
+  .card.info{border-left:4px solid var(--blue);}
+  .card.example{border-left:4px solid var(--teal);}
+  .card.insight{border-left:4px solid var(--amber);background:#fffde7;}
+  .card.quiz{border-left:4px solid var(--coral);background:#fff8f7;}
+  .card.warn{border-left:4px solid var(--coral);}
+
+  h1{font-size:28px;font-weight:700;color:var(--blue);margin-bottom:6px;}
+  h2{font-size:20px;font-weight:700;margin-bottom:14px;color:var(--text);}
+  h3{font-size:16px;font-weight:700;margin-bottom:10px;color:var(--text);}
+  p{margin-bottom:12px;color:var(--text);}
+  ul,ol{padding-left:22px;margin-bottom:12px;}
+  li{margin-bottom:6px;}
+  b{font-weight:600;}
+
+  .tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;margin-right:4px;}
+  .tag-blue{background:var(--blue-light);color:var(--blue);}
+  .tag-teal{background:var(--teal-light);color:var(--teal);}
+  .tag-amber{background:var(--amber-light);color:#b06000;}
+  .tag-coral{background:var(--coral-light);color:var(--coral);}
+  .tag-purple{background:var(--purple-light);color:var(--purple);}
+
+  /* Code blocks */
+  pre{background:#1e1e2e;color:#cdd6f4;border-radius:var(--radius-sm);padding:18px 20px;font-size:13px;overflow-x:auto;margin:14px 0;line-height:1.6;}
+  code{font-family:'Cascadia Code','Fira Mono',monospace;}
+  .kw{color:#cba6f7;}
+  .fn{color:#89dceb;}
+  .str{color:#a6e3a1;}
+  .cm{color:#6c7086;font-style:italic;}
+  .num{color:#fab387;}
+
+  /* Comparison table */
+  .cmp-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
+  .cmp-table th{background:var(--blue);color:#fff;padding:10px 14px;text-align:left;}
+  .cmp-table td{padding:9px 14px;border-bottom:1px solid var(--border);}
+  .cmp-table tr:nth-child(even) td{background:var(--gray-bg);}
+
+  /* Memory pattern box */
+  .memory-box{background:var(--purple-light);border:1px dashed var(--purple);border-radius:var(--radius-sm);padding:14px 18px;margin:14px 0;}
+  .memory-box h4{color:var(--purple);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+
+  /* Flow step pills */
+  .flow-row{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0;}
+  .flow-pill{background:var(--blue);color:#fff;padding:10px 20px;font-size:14px;font-weight:600;position:relative;}
+  .flow-pill:first-child{border-radius:24px 0 0 24px;}
+  .flow-pill:last-child{border-radius:0 24px 24px 0;}
+  .flow-pill::after{content:'▶';position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-size:11px;z-index:1;color:var(--blue);}
+  .flow-pill:last-child::after{display:none;}
+  .flow-pill.p2{background:#1565c0;}
+  .flow-pill.p3{background:#6a1b9a;}
+  .flow-pill.p4{background:#1b5e20;}
+
+  /* Insight bullet */
+  .insight-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;}
+  .insight-icon{font-size:18px;line-height:1.3;flex-shrink:0;}
+
+  /* Quiz buttons */
+  .quiz-option{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin:8px 0;font-size:14px;cursor:pointer;transition:all .2s;}
+  .quiz-option:hover{border-color:var(--blue);background:var(--blue-light);}
+  .quiz-option.correct{background:#e6f4ea;border-color:var(--teal);color:#1b5e20;}
+  .quiz-option.wrong{background:var(--coral-light);border-color:var(--coral);color:#b71c1c;}
+  #quiz-feedback{margin-top:12px;font-weight:600;font-size:14px;display:none;}
+
+  /* TOC */
+  .toc{background:var(--blue-light);border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:28px;}
+  .toc ol{margin-bottom:0;color:var(--blue);}
+  .toc li{margin-bottom:4px;}
+  .toc a{color:var(--blue);text-decoration:none;font-size:14px;}
+  .toc a:hover{text-decoration:underline;}
+
+  /* Diagram area */
+  .diagram-wrap{background:var(--gray-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px;margin:16px 0;overflow-x:auto;}
+  svg{display:block;max-width:100%;}
+
+  /* Two-col grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr;}.flow-row{flex-direction:column;gap:4px;}.flow-pill::after{display:none;}.flow-pill:first-child,.flow-pill:last-child,.flow-pill{border-radius:8px;}}
+
+  /* Divider */
+  .divider{border:none;border-top:1px solid var(--border);margin:32px 0;}
+  .section-anchor{scroll-margin-top:16px;}
+  .header-band{background:linear-gradient(135deg,#1a73e8,#7c4dff);color:#fff;border-radius:var(--radius);padding:32px;margin-bottom:28px;}
+  .header-band h1{color:#fff;}
+  .header-band p{color:rgba(255,255,255,.85);margin-bottom:0;}
+  .step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:700;font-size:13px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="header-band">
+    <div style="margin-bottom:8px;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.8;">Azure Databricks · Apache Spark · Interview Ready</div>
+    <h1>⚡ Spark Execution Flow</h1>
+    <p style="font-size:17px;margin-top:8px;">Application → Jobs → Stages → Tasks · A complete beginner-to-intermediate guide with banking domain examples.</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <b style="font-size:14px;color:var(--blue);">📋 Table of Contents</b>
+    <ol style="margin-top:10px;">
+      <li><a href="#prereq">Chapter 0 – Prerequisites: What You Must Know First</a></li>
+      <li><a href="#overview">Chapter 1 – Big Picture: What is Spark?</a></li>
+      <li><a href="#app">Chapter 2 – Spark Application</a></li>
+      <li><a href="#job">Chapter 3 – Jobs</a></li>
+      <li><a href="#stage">Chapter 4 – Stages</a></li>
+      <li><a href="#task">Chapter 5 – Tasks</a></li>
+      <li><a href="#full-flow">Chapter 6 – End-to-End Flow Diagram</a></li>
+      <li><a href="#azure">Chapter 7 – Spark on Azure Databricks</a></li>
+      <li><a href="#interview">Chapter 8 – Interview Insights</a></li>
+      <li><a href="#quiz">Chapter 9 – Quiz</a></li>
+    </ol>
+  </div>
+
+  <!-- ======================== CHAPTER 0 ======================== -->
+  <div class="card prereq section-anchor" id="prereq">
+    <div class="chapter-badge" style="background:var(--purple);">📖 Chapter 0 · Prerequisites</div>
+    <h2>What You Must Know First</h2>
+    <p>Before understanding Spark execution flow, you need to be comfortable with these concepts:</p>
+    <div class="grid2">
+      <div>
+        <h3>🗂️ Distributed Computing</h3>
+        <p style="font-size:14px;"><b>What:</b> Instead of one powerful machine processing all data, work is split across many machines.<br>
+        <b>Why Spark?</b> Banks process terabytes of transactions daily – one server cannot handle this. Spark splits the work.</p>
+      </div>
+      <div>
+        <h3>🧠 RDD – Resilient Distributed Dataset</h3>
+        <p style="font-size:14px;"><b>What:</b> Spark's core data structure. An RDD is an immutable, fault-tolerant collection of data split into <b>partitions</b> and distributed across cluster nodes.<br>
+        <b>Memory trick:</b> <b>R</b>esilient = recovers from failure · <b>D</b>istributed = across nodes · <b>D</b>ataset = collection of records</p>
+      </div>
+      <div>
+        <h3>📦 Partition</h3>
+        <p style="font-size:14px;"><b>What:</b> A logical chunk of data. If you have 10 million bank transactions and 10 partitions, each partition holds ~1 million records.<br>
+        <b>Key rule:</b> One <b>Task</b> processes one <b>Partition</b>. This is the atomic unit of Spark work.</p>
+      </div>
+      <div>
+        <h3>🔄 Transformations vs Actions</h3>
+        <p style="font-size:14px;"><b>Transformations</b> (lazy) → <code>filter()</code>, <code>map()</code>, <code>groupBy()</code> — builds a plan, does nothing yet.<br>
+        <b>Actions</b> (trigger execution) → <code>count()</code>, <code>show()</code>, <code>write()</code> — <b>this is when a Job is created!</b></p>
+      </div>
+    </div>
+    <div class="memory-box">
+      <h4>🧠 Memory Trick – Lazy Evaluation</h4>
+      <p style="font-size:14px;">Think of transformations like a <b>recipe</b>. Writing down steps doesn't cook food. Only when you <b>call the waiter (action)</b> does the kitchen actually start cooking. Spark waits for an action before executing any transformation.</p>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 1 ======================== -->
+  <div class="card info section-anchor" id="overview">
+    <div class="chapter-badge">🌐 Chapter 1 · Overview</div>
+    <h2>Big Picture: What is Apache Spark?</h2>
+    <p>Apache Spark is an <b>in-memory distributed data processing engine</b>. It processes data stored across many machines in parallel, making it 100x faster than traditional MapReduce for many workloads.</p>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 860 200">
+        <defs><marker id="arr0" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1a73e8" stroke-width="1.5"/></marker></defs>
+        <!-- Boxes -->
+        <rect x="20" y="70" width="140" height="60" rx="10" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1"/>
+        <text x="90" y="97" text-anchor="middle" font-size="13" font-weight="700" fill="#1a73e8">Raw Data</text>
+        <text x="90" y="116" text-anchor="middle" font-size="11" fill="#5f6368">ADLS / Delta Lake</text>
+
+        <rect x="220" y="70" width="160" height="60" rx="10" fill="#fce8e6" stroke="#d93025" stroke-width="1"/>
+        <text x="300" y="97" text-anchor="middle" font-size="13" font-weight="700" fill="#d93025">Spark Engine</text>
+        <text x="300" y="116" text-anchor="middle" font-size="11" fill="#5f6368">Distributes &amp; Processes</text>
+
+        <rect x="450" y="45" width="140" height="50" rx="10" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1"/>
+        <text x="520" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#0f9d58">Batch Output</text>
+        <text x="520" y="86" text-anchor="middle" font-size="11" fill="#5f6368">Reports, Delta Tables</text>
+
+        <rect x="450" y="110" width="140" height="50" rx="10" fill="#fff8e1" stroke="#f9ab00" stroke-width="1"/>
+        <text x="520" y="133" text-anchor="middle" font-size="12" font-weight="700" fill="#b06000">Stream Output</text>
+        <text x="520" y="151" text-anchor="middle" font-size="11" fill="#5f6368">Real-time Dashboards</text>
+
+        <rect x="660" y="70" width="170" height="60" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1"/>
+        <text x="745" y="97" text-anchor="middle" font-size="13" font-weight="700" fill="#7c4dff">Azure Databricks</text>
+        <text x="745" y="116" text-anchor="middle" font-size="11" fill="#5f6368">Managed Spark Platform</text>
+
+        <!-- arrows -->
+        <line x1="162" y1="100" x2="218" y2="100" stroke="#1a73e8" stroke-width="1.5" marker-end="url(#arr0)"/>
+        <line x1="382" y1="90" x2="448" y2="72" stroke="#1a73e8" stroke-width="1.5" marker-end="url(#arr0)"/>
+        <line x1="382" y1="110" x2="448" y2="132" stroke="#1a73e8" stroke-width="1.5" marker-end="url(#arr0)"/>
+        <line x1="592" y1="70" x2="658" y2="88" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr0)"/>
+        <line x1="592" y1="132" x2="658" y2="113" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr0)"/>
+      </svg>
+    </div>
+
+    <p><b>Banking Example:</b> A bank runs a nightly Spark job on Azure Databricks to process 50 million daily transactions — detecting fraud, calculating interest, and generating regulatory reports — all in under 30 minutes.</p>
+  </div>
+
+  <!-- ======================== CHAPTER 2 ======================== -->
+  <div class="card section-anchor" id="app">
+    <div class="chapter-badge">🚀 Chapter 2 · Spark Application</div>
+    <h2>Spark Application — The Outermost Container</h2>
+
+    <div class="flow-row">
+      <div class="flow-pill">Spark Application</div>
+      <div class="flow-pill p2">Jobs</div>
+      <div class="flow-pill p3">Stages</div>
+      <div class="flow-pill p4">Tasks</div>
+    </div>
+
+    <p>A <b>Spark Application</b> is the entire program you submit to the cluster. It lives as long as your program runs. It has two key components:</p>
+
+    <div class="grid2">
+      <div style="background:#e8f0fe;border-radius:var(--radius-sm);padding:16px;">
+        <h3 style="color:var(--blue);">👑 Driver (The Boss)</h3>
+        <ul style="font-size:14px;">
+          <li>Runs the <code>main()</code> of your application</li>
+          <li>Creates the <b>SparkContext / SparkSession</b></li>
+          <li>Builds the execution plan (DAG)</li>
+          <li>Coordinates all Executors</li>
+          <li>Collects final results</li>
+        </ul>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:0;"><b>Banking analogy:</b> The Branch Manager who assigns work to tellers.</p>
+      </div>
+      <div style="background:#e6f4ea;border-radius:var(--radius-sm);padding:16px;">
+        <h3 style="color:var(--teal);">⚙️ Executors (The Workers)</h3>
+        <ul style="font-size:14px;">
+          <li>JVM processes on each worker node</li>
+          <li>Actually run the Tasks</li>
+          <li>Each has its own <b>memory</b> and <b>CPU cores</b></li>
+          <li>Cache data in memory for fast re-use</li>
+          <li>Report status back to Driver</li>
+        </ul>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:0;"><b>Banking analogy:</b> Bank tellers who each handle a set of customer transactions.</p>
+      </div>
+    </div>
+
+    <div class="diagram-wrap" style="margin-top:18px;">
+      <svg width="100%" viewBox="0 0 860 260">
+        <defs><marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker></defs>
+        <!-- Driver -->
+        <rect x="30" y="40" width="200" height="180" rx="12" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5" stroke-dasharray="6 3"/>
+        <text x="130" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#1a73e8">Driver Node</text>
+        <rect x="50" y="80" width="160" height="36" rx="6" fill="#1a73e8"/>
+        <text x="130" y="104" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">SparkSession</text>
+        <rect x="50" y="126" width="160" height="36" rx="6" fill="#4285f4"/>
+        <text x="130" y="150" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">DAG Scheduler</text>
+        <rect x="50" y="172" width="160" height="36" rx="6" fill="#669df6"/>
+        <text x="130" y="196" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Task Scheduler</text>
+
+        <!-- Cluster Manager -->
+        <rect x="310" y="90" width="170" height="80" rx="12" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+        <text x="395" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#b06000">Cluster Manager</text>
+        <text x="395" y="145" text-anchor="middle" font-size="11" fill="#5f6368">(Databricks / YARN)</text>
+
+        <!-- Executors -->
+        <rect x="560" y="30" width="140" height="60" rx="10" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1"/>
+        <text x="630" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#0f9d58">Executor 1</text>
+        <text x="630" y="76" text-anchor="middle" font-size="11" fill="#5f6368">Cores: 4 | RAM: 16GB</text>
+
+        <rect x="560" y="110" width="140" height="60" rx="10" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1"/>
+        <text x="630" y="137" text-anchor="middle" font-size="12" font-weight="700" fill="#0f9d58">Executor 2</text>
+        <text x="630" y="156" text-anchor="middle" font-size="11" fill="#5f6368">Cores: 4 | RAM: 16GB</text>
+
+        <rect x="560" y="190" width="140" height="60" rx="10" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1"/>
+        <text x="630" y="217" text-anchor="middle" font-size="12" font-weight="700" fill="#0f9d58">Executor 3</text>
+        <text x="630" y="236" text-anchor="middle" font-size="11" fill="#5f6368">Cores: 4 | RAM: 16GB</text>
+
+        <!-- Arrows -->
+        <line x1="232" y1="130" x2="308" y2="130" stroke="#f9ab00" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="482" y1="110" x2="558" y2="62" stroke="#0f9d58" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="482" y1="130" x2="558" y2="140" stroke="#0f9d58" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="482" y1="150" x2="558" y2="218" stroke="#0f9d58" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+        <!-- Tasks label -->
+        <rect x="720" y="50" width="110" height="190" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1" stroke-dasharray="5 3"/>
+        <text x="775" y="78" text-anchor="middle" font-size="11" font-weight="700" fill="#7c4dff">Tasks run</text>
+        <text x="775" y="96" text-anchor="middle" font-size="11" fill="#7c4dff">on Executors</text>
+        <rect x="730" y="108" width="90" height="22" rx="5" fill="#7c4dff"/>
+        <text x="775" y="124" text-anchor="middle" font-size="10" fill="#fff">Task T1</text>
+        <rect x="730" y="138" width="90" height="22" rx="5" fill="#9c6dff"/>
+        <text x="775" y="154" text-anchor="middle" font-size="10" fill="#fff">Task T2</text>
+        <rect x="730" y="168" width="90" height="22" rx="5" fill="#b89aff"/>
+        <text x="775" y="184" text-anchor="middle" font-size="10" fill="#fff">Task T3</text>
+        <rect x="730" y="198" width="90" height="22" rx="5" fill="#7c4dff"/>
+        <text x="775" y="214" text-anchor="middle" font-size="10" fill="#fff">Task T4</text>
+      </svg>
+    </div>
+
+    <h3>SparkSession — Entry Point</h3>
+    <p>Every Spark application starts with creating a <code>SparkSession</code>. On Azure Databricks, it is automatically available as <code>spark</code>.</p>
+    <pre><code><span class="cm"># On Databricks – SparkSession auto-created as 'spark'</span>
+<span class="cm"># On standalone cluster or local – create it manually:</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+spark = SparkSession.builder \
+    .appName(<span class="str">"BankFraudDetection"</span>) \
+    .config(<span class="str">"spark.executor.memory"</span>, <span class="str">"8g"</span>) \
+    .config(<span class="str">"spark.executor.cores"</span>, <span class="str">"4"</span>) \
+    .getOrCreate()
+
+<span class="cm"># SparkContext is accessible via:</span>
+sc = spark.sparkContext
+print(sc.appName)  <span class="cm"># BankFraudDetection</span></code></pre>
+
+    <div class="memory-box">
+      <h4>🧠 Memory Trick – Application</h4>
+      <p style="font-size:14px;">Think of a Spark Application like a <b>Bank Branch operation for the day</b>. The <b>Driver = Branch Manager</b>, <b>Executors = Tellers</b>, <b>SparkSession = Opening the branch</b>. The branch runs all day (many jobs), then closes (application ends).</p>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 3 ======================== -->
+  <div class="card section-anchor" id="job">
+    <div class="chapter-badge" style="background:#1565c0;">💼 Chapter 3 · Jobs</div>
+    <h2>Job — Triggered by an Action</h2>
+
+    <p>Every time you call an <b>Action</b> on a DataFrame or RDD, Spark creates a <b>Job</b>. A single application can have many jobs, running sequentially or in parallel.</p>
+
+    <table class="cmp-table">
+      <tr><th>Concept</th><th>Transformation (Lazy)</th><th>Action (Triggers Job)</th></tr>
+      <tr><td>Examples</td><td><code>filter()</code>, <code>select()</code>, <code>groupBy()</code>, <code>join()</code>, <code>withColumn()</code></td><td><code>count()</code>, <code>show()</code>, <code>collect()</code>, <code>write()</code>, <code>save()</code></td></tr>
+      <tr><td>Executes?</td><td>❌ NO — just builds a plan</td><td>✅ YES — triggers a Job</td></tr>
+      <tr><td>DAG built?</td><td>✅ Yes, builds the DAG</td><td>✅ Yes, submits DAG to scheduler</td></tr>
+      <tr><td>Banking example</td><td>Filter fraudulent txns, group by account</td><td>Write fraud report to Delta Lake</td></tr>
+    </table>
+
+    <h3>Banking Example — Multiple Jobs in One Application</h3>
+    <pre><code><span class="cm"># SPARK APPLICATION: Daily Bank Reconciliation</span>
+
+<span class="cm"># Load data (no job yet)</span>
+transactions_df = spark.read.format(<span class="str">"delta"</span>) \
+    .load(<span class="str">"abfss://bronze@bankdatalake.dfs.core.windows.net/transactions"</span>)
+
+<span class="cm"># --- JOB 1 triggered by .count() ---</span>
+total_txns = transactions_df.count()  <span class="cm"># ← Action → JOB 1</span>
+print(f<span class="str">"Total transactions today: {total_txns}"</span>)
+
+<span class="cm"># --- JOB 2 triggered by .show() ---</span>
+fraud_df = transactions_df \
+    .filter(transactions_df.amount > <span class="num">100000</span>) \
+    .filter(transactions_df.is_international == <span class="str">"Y"</span>)
+
+fraud_df.show(<span class="num">10</span>)  <span class="cm"># ← Action → JOB 2</span>
+
+<span class="cm"># --- JOB 3 triggered by .write() ---</span>
+fraud_df.write.format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"append"</span>) \
+    .save(<span class="str">"abfss://gold@bankdatalake.dfs.core.windows.net/fraud_alerts"</span>)
+<span class="cm"># ← Action → JOB 3</span></code></pre>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 860 130">
+        <defs><marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker></defs>
+        <rect x="20" y="40" width="160" height="50" rx="10" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+        <text x="100" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#1a73e8">Application</text>
+        <text x="100" y="80" text-anchor="middle" font-size="11" fill="#5f6368">BankReconciliation</text>
+        <line x1="182" y1="65" x2="218" y2="65" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <rect x="220" y="25" width="160" height="40" rx="8" fill="#fce8e6" stroke="#d93025" stroke-width="1"/>
+        <text x="300" y="43" text-anchor="middle" font-size="12" font-weight="700" fill="#d93025">JOB 1</text>
+        <text x="300" y="59" text-anchor="middle" font-size="11" fill="#5f6368">count() action</text>
+        <rect x="220" y="75" width="160" height="40" rx="8" fill="#fce8e6" stroke="#d93025" stroke-width="1"/>
+        <text x="300" y="93" text-anchor="middle" font-size="12" font-weight="700" fill="#d93025">JOB 2</text>
+        <text x="300" y="109" text-anchor="middle" font-size="11" fill="#5f6368">show() action</text>
+        <line x1="182" y1="65" x2="218" y2="95" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <rect x="460" y="25" width="180" height="90" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1" stroke-dasharray="5 3"/>
+        <text x="550" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#7c4dff">JOB 3</text>
+        <text x="550" y="68" text-anchor="middle" font-size="11" fill="#5f6368">write() action</text>
+        <text x="550" y="87" text-anchor="middle" font-size="10" fill="#7c4dff">→ Delta Lake (Gold)</text>
+        <text x="550" y="104" text-anchor="middle" font-size="10" fill="#7c4dff">→ ADLS Gen2</text>
+        <line x1="382" y1="45" x2="458" y2="60" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="382" y1="95" x2="458" y2="80" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="700" y="70" font-size="11" fill="#5f6368" font-style="italic">Each Action = 1 Job</text>
+      </svg>
+    </div>
+
+    <div class="memory-box">
+      <h4>🧠 Memory Trick – Job</h4>
+      <p style="font-size:14px;"><b>"Action = Job submission"</b><br>
+      Think of an Action like pressing <b>Submit</b> on a banking form. Nothing happens until you press Submit. The moment you press it (call an action), a Job starts.</p>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 4 ======================== -->
+  <div class="card section-anchor" id="stage">
+    <div class="chapter-badge" style="background:#6a1b9a;">🎬 Chapter 4 · Stages</div>
+    <h2>Stage — Divided by Shuffle Boundaries</h2>
+
+    <p>A Job is divided into <b>Stages</b>. The key concept here is the <b>Shuffle</b>. Spark splits stages wherever data needs to be physically moved across nodes — called a shuffle.</p>
+
+    <div class="grid2">
+      <div style="background:#e6f4ea;padding:16px;border-radius:var(--radius-sm);">
+        <h3 style="color:var(--teal);">✅ Narrow Transformations</h3>
+        <p style="font-size:14px;">Each partition's output depends on <b>only one input partition</b>. No data movement across nodes. These stay in the <b>SAME Stage</b>.</p>
+        <p style="font-size:13px;color:var(--gray);">Examples: <code>filter()</code>, <code>select()</code>, <code>map()</code>, <code>withColumn()</code></p>
+        <p style="font-size:13px;color:var(--teal);">🏦 <b>Banking:</b> Filter transactions where amount &gt; 10000 (each partition filters independently)</p>
+      </div>
+      <div style="background:#fce8e6;padding:16px;border-radius:var(--radius-sm);">
+        <h3 style="color:var(--coral);">🔀 Wide Transformations (Shuffle)</h3>
+        <p style="font-size:14px;">Partition output depends on <b>multiple input partitions</b>. Data is shuffled across nodes. This creates a <b>NEW Stage</b>.</p>
+        <p style="font-size:13px;color:var(--gray);">Examples: <code>groupBy()</code>, <code>join()</code>, <code>orderBy()</code>, <code>distinct()</code>, <code>repartition()</code></p>
+        <p style="font-size:13px;color:var(--coral);">🏦 <b>Banking:</b> Group by account_id to sum all transactions (data from many partitions must come together)</p>
+      </div>
+    </div>
+
+    <div class="diagram-wrap" style="margin-top:18px;">
+      <svg width="100%" viewBox="0 0 860 310">
+        <defs>
+          <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker>
+          <marker id="arr3r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#d93025" stroke-width="1.5"/></marker>
+        </defs>
+
+        <!-- Stage 1 box -->
+        <rect x="20" y="20" width="300" height="270" rx="14" fill="#e6f4ea" stroke="#0f9d58" stroke-width="2" stroke-dasharray="7 4"/>
+        <text x="170" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#0f9d58">Stage 1 (Narrow – no shuffle)</text>
+
+        <rect x="40" y="65" width="120" height="36" rx="8" fill="#0f9d58"/>
+        <text x="100" y="89" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Partition 1</text>
+        <rect x="180" y="65" width="120" height="36" rx="8" fill="#0f9d58"/>
+        <text x="240" y="89" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Partition 2</text>
+
+        <text x="100" y="125" text-anchor="middle" font-size="11" fill="#1b5e20">↓ filter(amount&gt;10k)</text>
+        <rect x="40" y="135" width="120" height="30" rx="6" fill="#66bb6a"/>
+        <text x="100" y="155" text-anchor="middle" font-size="11" fill="#fff">Filtered P1</text>
+        <text x="240" y="125" text-anchor="middle" font-size="11" fill="#1b5e20">↓ filter(amount&gt;10k)</text>
+        <rect x="180" y="135" width="120" height="30" rx="6" fill="#66bb6a"/>
+        <text x="240" y="155" text-anchor="middle" font-size="11" fill="#fff">Filtered P2</text>
+
+        <text x="100" y="195" text-anchor="middle" font-size="11" fill="#1b5e20">↓ withColumn(risk)</text>
+        <rect x="40" y="205" width="120" height="30" rx="6" fill="#a5d6a7"/>
+        <text x="100" y="225" text-anchor="middle" font-size="11" fill="#1b5e20">With Risk P1</text>
+        <text x="240" y="195" text-anchor="middle" font-size="11" fill="#1b5e20">↓ withColumn(risk)</text>
+        <rect x="180" y="205" width="120" height="30" rx="6" fill="#a5d6a7"/>
+        <text x="240" y="225" text-anchor="middle" font-size="11" fill="#1b5e20">With Risk P2</text>
+
+        <text x="170" y="270" text-anchor="middle" font-size="11" fill="#0f9d58" font-style="italic">All inside one stage ✓</text>
+
+        <!-- Shuffle arrow -->
+        <rect x="330" y="130" width="160" height="50" rx="10" fill="#fce8e6" stroke="#d93025" stroke-width="2"/>
+        <text x="410" y="153" text-anchor="middle" font-size="13" font-weight="700" fill="#d93025">🔀 SHUFFLE</text>
+        <text x="410" y="171" text-anchor="middle" font-size="10" fill="#d93025">groupBy(account_id)</text>
+        <line x1="323" y1="155" x2="329" y2="155" stroke="#d93025" stroke-width="2" marker-end="url(#arr3r)"/>
+        <line x1="491" y1="155" x2="525" y2="155" stroke="#d93025" stroke-width="2" marker-end="url(#arr3r)"/>
+
+        <!-- Stage 2 box -->
+        <rect x="530" y="20" width="300" height="270" rx="14" fill="#e8f0fe" stroke="#1a73e8" stroke-width="2" stroke-dasharray="7 4"/>
+        <text x="680" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#1a73e8">Stage 2 (After shuffle)</text>
+
+        <rect x="550" y="65" width="120" height="36" rx="8" fill="#1a73e8"/>
+        <text x="610" y="89" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Shuffled P1</text>
+        <rect x="690" y="65" width="120" height="36" rx="8" fill="#1a73e8"/>
+        <text x="750" y="89" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Shuffled P2</text>
+
+        <text x="610" y="125" text-anchor="middle" font-size="11" fill="#0d47a1">↓ agg(sum)</text>
+        <rect x="550" y="135" width="120" height="30" rx="6" fill="#42a5f5"/>
+        <text x="610" y="155" text-anchor="middle" font-size="11" fill="#fff">Aggregated P1</text>
+        <text x="750" y="125" text-anchor="middle" font-size="11" fill="#0d47a1">↓ agg(sum)</text>
+        <rect x="690" y="135" width="120" height="30" rx="6" fill="#42a5f5"/>
+        <text x="750" y="155" text-anchor="middle" font-size="11" fill="#fff">Aggregated P2</text>
+
+        <text x="680" y="200" text-anchor="middle" font-size="11" fill="#1a73e8" font-style="italic">New stage after shuffle ✓</text>
+      </svg>
+    </div>
+
+    <h3>DAG — Directed Acyclic Graph</h3>
+    <p>Spark builds a <b>DAG (Directed Acyclic Graph)</b> of all transformations before executing. The <b>DAG Scheduler</b> then identifies shuffle boundaries and creates Stages.</p>
+    <div class="memory-box">
+      <h4>🧠 Memory Trick – Stages &amp; Shuffle</h4>
+      <p style="font-size:14px;"><b>"Shuffle = Stage boundary = Data highway crossing"</b><br>
+      Imagine bank employees in 3 floors. Work within a floor = same stage (narrow). Moving files between floors = shuffle = new stage (wide). Every time data must cross to another node, a new stage begins.</p>
+    </div>
+
+    <h3>Code Example: Stages in Banking</h3>
+    <pre><code><span class="cm"># Stage 1: Narrow transformations (filter + withColumn)</span>
+flagged = transactions_df \
+    .filter(transactions_df.amount > <span class="num">10000</span>) \              <span class="cm"># narrow</span>
+    .withColumn(<span class="str">"currency_flag"</span>,                              <span class="cm"># narrow</span>
+                F.when(transactions_df.currency != <span class="str">"INR"</span>, <span class="str">"FOREIGN"</span>)
+                 .otherwise(<span class="str">"DOMESTIC"</span>))
+
+<span class="cm"># Stage 2: Wide transformation (groupBy = SHUFFLE)</span>
+summary = flagged \
+    .groupBy(<span class="str">"account_id"</span>, <span class="str">"currency_flag"</span>) \    <span class="cm"># WIDE → new Stage</span>
+    .agg(
+        F.sum(<span class="str">"amount"</span>).alias(<span class="str">"total_amount"</span>),
+        F.count(<span class="str">"*"</span>).alias(<span class="str">"txn_count"</span>)
+    )
+
+<span class="cm"># Stage 3: Another narrow + write action</span>
+summary.filter(F.col(<span class="str">"total_amount"</span>) > <span class="num">500000</span>) \         <span class="cm"># narrow</span>
+       .write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+       .save(<span class="str">"abfss://gold@bankdatalake.dfs.core.windows.net/high_risk"</span>)
+<span class="cm"># ↑ write() = Action = triggers Job with 3 stages</span></code></pre>
+  </div>
+
+  <!-- ======================== CHAPTER 5 ======================== -->
+  <div class="card section-anchor" id="task">
+    <div class="chapter-badge" style="background:#1b5e20;">⚡ Chapter 5 · Tasks</div>
+    <h2>Task — The Smallest Unit of Work</h2>
+
+    <p>A <b>Task</b> is the actual work unit that runs on a single Executor Core. Each Task processes exactly <b>one Partition</b>.</p>
+
+    <div style="background:#e6f4ea;border-radius:var(--radius-sm);padding:16px;margin-bottom:14px;">
+      <h3 style="color:var(--teal);">🔑 Golden Rule</h3>
+      <p style="font-size:15px;"><b>1 Partition = 1 Task = 1 Executor Core</b></p>
+      <p style="font-size:14px;">If your DataFrame has 200 partitions, Spark creates 200 Tasks for that Stage. If you have 50 executor cores, they run 50 tasks in parallel, cycling through all 200.</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 860 220">
+        <defs><marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker></defs>
+
+        <!-- Stage -->
+        <rect x="10" y="10" width="200" height="200" rx="12" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1.5" stroke-dasharray="6 3"/>
+        <text x="110" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#0f9d58">Stage (200 partitions)</text>
+        <rect x="30" y="55" width="160" height="26" rx="6" fill="#0f9d58"/>
+        <text x="110" y="73" text-anchor="middle" font-size="11" fill="#fff">Partition 1 → Task 1</text>
+        <rect x="30" y="88" width="160" height="26" rx="6" fill="#2e7d32"/>
+        <text x="110" y="106" text-anchor="middle" font-size="11" fill="#fff">Partition 2 → Task 2</text>
+        <rect x="30" y="121" width="160" height="26" rx="6" fill="#0f9d58"/>
+        <text x="110" y="139" text-anchor="middle" font-size="11" fill="#fff">Partition 3 → Task 3</text>
+        <text x="110" y="165" text-anchor="middle" font-size="12" fill="#5f6368">· · · · · · · · · · ·</text>
+        <rect x="30" y="173" width="160" height="26" rx="6" fill="#4caf50"/>
+        <text x="110" y="191" text-anchor="middle" font-size="11" fill="#fff">Partition 200 → Task 200</text>
+
+        <line x1="213" y1="110" x2="248" y2="110" stroke="#888" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+        <!-- Executors with cores -->
+        <rect x="252" y="10" width="580" height="200" rx="12" fill="#f3f0ff" stroke="#7c4dff" stroke-width="1.5" stroke-dasharray="6 3"/>
+        <text x="542" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#7c4dff">Cluster – 50 Executor Cores (run tasks in parallel)</text>
+
+        <!-- Executor 1 (4 cores) -->
+        <rect x="270" y="55" width="140" height="140" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1"/>
+        <text x="340" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7c4dff">Executor 1</text>
+        <rect x="280" y="88" width="55" height="36" rx="6" fill="#7c4dff"/><text x="307" y="111" text-anchor="middle" font-size="10" fill="#fff">Core1:T1</text>
+        <rect x="345" y="88" width="55" height="36" rx="6" fill="#9c6dff"/><text x="372" y="111" text-anchor="middle" font-size="10" fill="#fff">Core2:T2</text>
+        <rect x="280" y="134" width="55" height="36" rx="6" fill="#7c4dff"/><text x="307" y="157" text-anchor="middle" font-size="10" fill="#fff">Core3:T3</text>
+        <rect x="345" y="134" width="55" height="36" rx="6" fill="#9c6dff"/><text x="372" y="157" text-anchor="middle" font-size="10" fill="#fff">Core4:T4</text>
+
+        <!-- Executor 2 -->
+        <rect x="430" y="55" width="140" height="140" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1"/>
+        <text x="500" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7c4dff">Executor 2</text>
+        <rect x="440" y="88" width="55" height="36" rx="6" fill="#7c4dff"/><text x="467" y="111" text-anchor="middle" font-size="10" fill="#fff">Core1:T5</text>
+        <rect x="505" y="88" width="55" height="36" rx="6" fill="#9c6dff"/><text x="532" y="111" text-anchor="middle" font-size="10" fill="#fff">Core2:T6</text>
+        <rect x="440" y="134" width="55" height="36" rx="6" fill="#7c4dff"/><text x="467" y="157" text-anchor="middle" font-size="10" fill="#fff">Core3:T7</text>
+        <rect x="505" y="134" width="55" height="36" rx="6" fill="#9c6dff"/><text x="532" y="157" text-anchor="middle" font-size="10" fill="#fff">Core4:T8</text>
+
+        <!-- Executor 3 (dots) -->
+        <rect x="590" y="55" width="220" height="140" rx="10" fill="#ede7f6" stroke="#7c4dff" stroke-width="1" stroke-dasharray="5 3"/>
+        <text x="700" y="135" text-anchor="middle" font-size="22" fill="#9c6dff">· · ·</text>
+        <text x="700" y="165" text-anchor="middle" font-size="11" fill="#7c4dff">50 cores total</text>
+      </svg>
+    </div>
+
+    <h3>Partitioning in Code</h3>
+    <pre><code><span class="cm"># Check current number of partitions</span>
+print(transactions_df.rdd.getNumPartitions())  <span class="cm"># e.g., 200</span>
+
+<span class="cm"># Repartition: increases partitions (involves shuffle!)</span>
+df_repartitioned = transactions_df.repartition(<span class="num">400</span>)
+
+<span class="cm"># Coalesce: reduces partitions (NO shuffle, faster)</span>
+df_coalesced = transactions_df.coalesce(<span class="num">50</span>)
+
+<span class="cm"># Best practice: align partitions to executor cores</span>
+<span class="cm"># If you have 50 cores → use multiples of 50 (200, 400…)</span>
+df_tuned = transactions_df.repartition(<span class="num">200</span>, F.col(<span class="str">"account_id"</span>))
+<span class="cm"># ↑ partitions by account_id for balanced distribution</span></code></pre>
+
+    <div class="memory-box">
+      <h4>🧠 Memory Trick – Tasks</h4>
+      <p style="font-size:14px;"><b>"Task = One Teller serving One Customer"</b><br>
+      One bank teller (Executor Core) handles one customer at a time (one Partition = one Task). More tellers = more tasks done in parallel = faster processing.</p>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 6 ======================== -->
+  <div class="card section-anchor" id="full-flow">
+    <div class="chapter-badge" style="background:#37474f;">🗺️ Chapter 6 · End-to-End Flow</div>
+    <h2>Complete Execution Flow Diagram</h2>
+    <p>Here is everything from your code to a Task running on an Executor — step by step:</p>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 860 520">
+        <defs>
+          <marker id="arr5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#555" stroke-width="1.5"/></marker>
+          <marker id="arr5b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1a73e8" stroke-width="1.5"/></marker>
+          <marker id="arr5g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0f9d58" stroke-width="1.5"/></marker>
+          <marker id="arr5p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#7c4dff" stroke-width="1.5"/></marker>
+        </defs>
+
+        <!-- Step 1: User code -->
+        <rect x="20" y="20" width="200" height="60" rx="12" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+        <text x="120" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#1a73e8">1. Your Code</text>
+        <text x="120" y="68" text-anchor="middle" font-size="11" fill="#5f6368">df.groupBy().agg().write()</text>
+
+        <line x1="120" y1="82" x2="120" y2="108" stroke="#1a73e8" stroke-width="1.5" marker-end="url(#arr5b)"/>
+
+        <!-- Step 2: SparkSession -->
+        <rect x="20" y="110" width="200" height="60" rx="12" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+        <text x="120" y="137" text-anchor="middle" font-size="13" font-weight="700" fill="#1a73e8">2. SparkSession</text>
+        <text x="120" y="158" text-anchor="middle" font-size="11" fill="#5f6368">Entry point created</text>
+
+        <line x1="120" y1="172" x2="120" y2="198" stroke="#1a73e8" stroke-width="1.5" marker-end="url(#arr5b)"/>
+
+        <!-- Step 3: Logical Plan + DAG -->
+        <rect x="20" y="200" width="200" height="60" rx="12" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+        <text x="120" y="227" text-anchor="middle" font-size="13" font-weight="700" fill="#b06000">3. Logical Plan + DAG</text>
+        <text x="120" y="248" text-anchor="middle" font-size="11" fill="#5f6368">Catalyst optimizer runs</text>
+
+        <line x1="120" y1="262" x2="120" y2="288" stroke="#555" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+        <!-- Step 4: Action triggers Job -->
+        <rect x="20" y="290" width="200" height="60" rx="12" fill="#fce8e6" stroke="#d93025" stroke-width="2"/>
+        <text x="120" y="317" text-anchor="middle" font-size="13" font-weight="700" fill="#d93025">4. ACTION → JOB</text>
+        <text x="120" y="338" text-anchor="middle" font-size="11" fill="#5f6368">.write() triggers Job</text>
+
+        <!-- Arrow right to stages -->
+        <line x1="222" y1="320" x2="298" y2="320" stroke="#d93025" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+        <!-- Step 5: DAG Scheduler → Stages -->
+        <rect x="300" y="240" width="200" height="80" rx="12" fill="#e6f4ea" stroke="#0f9d58" stroke-width="1.5"/>
+        <text x="400" y="267" text-anchor="middle" font-size="13" font-weight="700" fill="#0f9d58">5. DAG Scheduler</text>
+        <text x="400" y="287" text-anchor="middle" font-size="11" fill="#5f6368">Splits into Stages at</text>
+        <text x="400" y="305" text-anchor="middle" font-size="11" fill="#0f9d58">shuffle boundaries</text>
+
+        <!-- Stage boxes -->
+        <rect x="300" y="360" width="90" height="50" rx="8" fill="#0f9d58"/>
+        <text x="345" y="381" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">Stage 1</text>
+        <text x="345" y="398" text-anchor="middle" font-size="10" fill="#e0f2f1">Narrow</text>
+
+        <rect x="410" y="360" width="90" height="50" rx="8" fill="#1a73e8"/>
+        <text x="455" y="381" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">Stage 2</text>
+        <text x="455" y="398" text-anchor="middle" font-size="10" fill="#e3f2fd">After Shuffle</text>
+
+        <line x1="400" y1="322" x2="345" y2="358" stroke="#0f9d58" stroke-width="1.5" marker-end="url(#arr5g)"/>
+        <line x1="400" y1="322" x2="455" y2="358" stroke="#0f9d58" stroke-width="1.5" marker-end="url(#arr5g)"/>
+
+        <!-- Step 6: Task Scheduler -->
+        <rect x="560" y="240" width="180" height="80" rx="12" fill="#ede7f6" stroke="#7c4dff" stroke-width="1.5"/>
+        <text x="650" y="267" text-anchor="middle" font-size="13" font-weight="700" fill="#7c4dff">6. Task Scheduler</text>
+        <text x="650" y="287" text-anchor="middle" font-size="11" fill="#5f6368">Assigns tasks to</text>
+        <text x="650" y="305" text-anchor="middle" font-size="11" fill="#7c4dff">Executor Cores</text>
+
+        <line x1="502" y1="280" x2="558" y2="280" stroke="#7c4dff" stroke-width="1.5" marker-end="url(#arr5p)"/>
+
+        <!-- Tasks -->
+        <rect x="555" y="360" width="75" height="44" rx="8" fill="#7c4dff"/>
+        <text x="593" y="377" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">Task 1</text>
+        <text x="593" y="394" text-anchor="middle" font-size="9" fill="#e1d6ff">Partition 1</text>
+
+        <rect x="638" y="360" width="75" height="44" rx="8" fill="#9c6dff"/>
+        <text x="676" y="377" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">Task 2</text>
+        <text x="676" y="394" text-anchor="middle" font-size="9" fill="#e1d6ff">Partition 2</text>
+
+        <rect x="720" y="360" width="75" height="44" rx="8" fill="#b89aff"/>
+        <text x="758" y="377" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">Task N</text>
+        <text x="758" y="394" text-anchor="middle" font-size="9" fill="#e1d6ff">Partition N</text>
+
+        <line x1="650" y1="322" x2="593" y2="358" stroke="#7c4dff" stroke-width="1.5" marker-end="url(#arr5p)"/>
+        <line x1="650" y1="322" x2="676" y2="358" stroke="#7c4dff" stroke-width="1.5" marker-end="url(#arr5p)"/>
+        <line x1="650" y1="322" x2="758" y2="358" stroke="#7c4dff" stroke-width="1.5" marker-end="url(#arr5p)"/>
+
+        <!-- Results back -->
+        <rect x="555" y="440" width="245" height="44" rx="10" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+        <text x="678" y="461" text-anchor="middle" font-size="12" font-weight="700" fill="#b06000">7. Results → Driver → Output</text>
+        <text x="678" y="477" text-anchor="middle" font-size="10" fill="#5f6368">Written to Delta Lake / ADLS Gen2</text>
+
+        <line x1="593" y1="405" x2="650" y2="438" stroke="#f9ab00" stroke-width="1" marker-end="url(#arr5)"/>
+        <line x1="676" y1="405" x2="700" y2="438" stroke="#f9ab00" stroke-width="1" marker-end="url(#arr5)"/>
+        <line x1="758" y1="405" x2="750" y2="438" stroke="#f9ab00" stroke-width="1" marker-end="url(#arr5)"/>
+
+        <!-- Summary label at bottom -->
+        <text x="170" y="460" text-anchor="middle" font-size="13" font-weight="700" fill="#37474f">Application</text>
+        <text x="170" y="480" text-anchor="middle" font-size="11" fill="#5f6368">→ Jobs → Stages → Tasks</text>
+        <rect x="30" y="448" width="280" height="44" rx="10" fill="none" stroke="#37474f" stroke-width="1.5" stroke-dasharray="5 3"/>
+      </svg>
+    </div>
+
+    <table class="cmp-table" style="margin-top:18px;">
+      <tr><th>Level</th><th>What it is</th><th>Created by</th><th>Banking analogy</th></tr>
+      <tr><td><span class="tag tag-blue">Application</span></td><td>Entire program lifetime</td><td>SparkSession creation</td><td>Bank branch open for a day</td></tr>
+      <tr><td><span class="tag tag-coral">Job</span></td><td>Work triggered by an Action</td><td>Each Action call</td><td>Processing a batch of customer requests</td></tr>
+      <tr><td><span class="tag tag-teal">Stage</span></td><td>Group of Tasks with no shuffle between them</td><td>DAG Scheduler at shuffle boundaries</td><td>Work done within one department floor</td></tr>
+      <tr><td><span class="tag tag-purple">Task</span></td><td>One unit processing one partition</td><td>Task Scheduler per partition</td><td>One teller handling one customer's transaction</td></tr>
+    </table>
+  </div>
+
+  <!-- ======================== CHAPTER 7 ======================== -->
+  <div class="card example section-anchor" id="azure">
+    <div class="chapter-badge" style="background:var(--teal);">☁️ Chapter 7 · Azure Databricks</div>
+    <h2>Spark Execution on Azure Databricks — Banking Pipeline</h2>
+
+    <p>Azure Databricks is Microsoft Azure's managed Apache Spark platform. It handles cluster provisioning, scaling, and optimization automatically.</p>
+
+    <div class="grid2">
+      <div style="background:#e8f0fe;border-radius:var(--radius-sm);padding:14px;">
+        <h3 style="color:var(--blue);">Azure Databricks Components</h3>
+        <ul style="font-size:14px;">
+          <li><b>Workspace</b> — collaborative notebooks, jobs, clusters</li>
+          <li><b>Cluster</b> — Spark Driver + Worker nodes (Executors)</li>
+          <li><b>Job Cluster</b> — ephemeral, created per job run (cost-effective)</li>
+          <li><b>Interactive Cluster</b> — always on for development</li>
+          <li><b>Databricks Runtime</b> — optimized Spark with Delta Lake built-in</li>
+          <li><b>Unity Catalog</b> — governance &amp; data lineage</li>
+        </ul>
+      </div>
+      <div style="background:#e6f4ea;border-radius:var(--radius-sm);padding:14px;">
+        <h3 style="color:var(--teal);">ADLS Gen2 Integration</h3>
+        <ul style="font-size:14px;">
+          <li>Data stored in <b>Azure Data Lake Storage Gen2</b></li>
+          <li>Databricks reads via <code>abfss://</code> protocol</li>
+          <li>Delta Lake format on top of ADLS = ACID + versioning</li>
+          <li>Service Principal / Managed Identity for auth</li>
+          <li>Medallion Architecture: Bronze → Silver → Gold</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:18px;">Full Banking Pipeline — Azure Databricks Notebook</h3>
+    <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># Bank Transaction Risk Scoring Pipeline – Azure Databricks</span>
+<span class="cm"># SparkSession is auto-available as 'spark' in Databricks</span>
+<span class="cm"># ============================================================</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+<span class="kw">from</span> pyspark.sql.window <span class="kw">import</span> Window
+
+<span class="cm"># ── STEP 1: Read from Bronze (raw ADLS) ──────────────────────</span>
+transactions = spark.read \
+    .format(<span class="str">"delta"</span>) \
+    .load(<span class="str">"abfss://bronze@mybank.dfs.core.windows.net/transactions"</span>)
+
+customers = spark.read \
+    .format(<span class="str">"delta"</span>) \
+    .load(<span class="str">"abfss://bronze@mybank.dfs.core.windows.net/customers"</span>)
+
+<span class="cm"># ── STEP 2: Narrow Transformations → STAGE 1 ─────────────────</span>
+cleaned = transactions \
+    .filter(F.col(<span class="str">"status"</span>) == <span class="str">"COMPLETED"</span>) \         <span class="cm"># narrow</span>
+    .withColumn(<span class="str">"txn_date"</span>, F.to_date(<span class="str">"txn_timestamp"</span>)) \  <span class="cm"># narrow</span>
+    .withColumn(<span class="str">"hour"</span>, F.hour(<span class="str">"txn_timestamp"</span>))           <span class="cm"># narrow</span>
+
+<span class="cm"># ── STEP 3: Shuffle – Join with customers → NEW STAGE ────────</span>
+<span class="cm"># JOIN = Wide transformation = shuffle boundary</span>
+enriched = cleaned.join(customers, on=<span class="str">"customer_id"</span>, how=<span class="str">"left"</span>)
+
+<span class="cm"># ── STEP 4: Another Shuffle – Aggregate → NEW STAGE ──────────</span>
+window_spec = Window.partitionBy(<span class="str">"customer_id"</span>) \
+                    .orderBy(<span class="str">"txn_timestamp"</span>) \
+                    .rowsBetween(-<span class="num">29</span>, <span class="num">0</span>)
+
+risk_df = enriched \
+    .withColumn(<span class="str">"rolling_30d_total"</span>,
+                F.sum(<span class="str">"amount"</span>).over(window_spec)) \      <span class="cm"># wide</span>
+    .withColumn(<span class="str">"risk_score"</span>,
+                F.when(F.col(<span class="str">"rolling_30d_total"</span>) > <span class="num">1000000</span>, <span class="str">"HIGH"</span>)
+                 .when(F.col(<span class="str">"rolling_30d_total"</span>) > <span class="num">100000</span>, <span class="str">"MEDIUM"</span>)
+                 .otherwise(<span class="str">"LOW"</span>))                          <span class="cm"># narrow</span>
+
+<span class="cm"># ── STEP 5: ACTION triggers JOB → Write to Gold ──────────────</span>
+risk_df.write \
+    .format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"overwrite"</span>) \
+    .partitionBy(<span class="str">"txn_date"</span>) \
+    .option(<span class="str">"mergeSchema"</span>, <span class="str">"true"</span>) \
+    .save(<span class="str">"abfss://gold@mybank.dfs.core.windows.net/risk_scores"</span>)
+<span class="cm"># ↑ write() → JOB created → DAG → 3+ Stages → Tasks per partition</span>
+
+<span class="cm"># ── VIEW EXECUTION PLAN ───────────────────────────────────────</span>
+risk_df.explain(<span class="kw">True</span>)  <span class="cm"># See DAG, stages, physical plan</span></code></pre>
+
+    <div style="background:#e8f0fe;border-radius:var(--radius-sm);padding:14px;margin-top:14px;">
+      <h3 style="color:var(--blue);">🔍 View Execution in Databricks UI</h3>
+      <p style="font-size:14px;">After running a job: <b>Cluster → Spark UI → Jobs → Stages → Tasks</b>. You can see the DAG visualization, shuffle read/write sizes, task duration, and any data skew — essential for performance tuning in production.</p>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 8 ======================== -->
+  <div class="card insight section-anchor" id="interview">
+    <div class="chapter-badge" style="background:#e65100;">🎯 Chapter 8 · Interview Insights</div>
+    <h2>Interview Insights — How to Answer These Questions</h2>
+
+    <div style="margin-bottom:20px;">
+      <h3>Q1: "Explain Spark's execution model."</h3>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
+        <p style="font-size:14px;"><b>✅ Structured Answer:</b></p>
+        <p style="font-size:14px;">"When we write a Spark program on Azure Databricks, it runs as a <b>Spark Application</b> managed by a Driver node. The Driver creates a <b>SparkSession</b> and builds a logical plan called the <b>DAG</b> as we chain transformations. Nothing executes until we call an <b>Action</b> like <code>.write()</code> or <code>.count()</code> — that triggers a <b>Job</b>. The DAG Scheduler then splits each Job into <b>Stages</b>, where stage boundaries are determined by shuffle operations like joins and group-bys. Each Stage is finally broken into <b>Tasks</b>, one per partition, and those Tasks are distributed to Executor Cores across the cluster to run in parallel."</p>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <h3>Q2: "What is a shuffle and why does it matter?"</h3>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
+        <p style="font-size:14px;"><b>✅ Structured Answer:</b></p>
+        <p style="font-size:14px;">"A shuffle happens when data needs to be physically redistributed across nodes — for example during a <code>groupBy</code> or <code>join</code>. It's the most expensive operation in Spark because it involves disk I/O and network transfer. In our banking fraud pipeline, when we <code>groupBy(account_id)</code> to sum transactions, all records for the same account_id must land on the same partition — that's a shuffle. To minimize shuffles, we use techniques like broadcast joins for small tables, or partition the data by join key upfront."</p>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <h3>Q3 (Indirect): "Why is my Spark job slow?" (They mean: data skew, too few partitions, too many shuffles)</h3>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
+        <p style="font-size:14px;"><b>✅ Structured Answer:</b></p>
+        <p style="font-size:14px;">"I'd start by checking the Spark UI on Databricks — looking at task duration variance in a Stage. If some tasks take 10x longer than others, that's data skew — one partition has far more data. I'd also check if we're doing too many wide transformations that cause unnecessary shuffles, or if the number of partitions is misconfigured relative to executor cores. In production banking pipelines, we also look at shuffle read/write sizes to detect expensive joins."</p>
+      </div>
+    </div>
+
+    <div>
+      <h3>Q4: "What is the difference between repartition and coalesce?"</h3>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:8px;">
+        <p style="font-size:14px;"><b>✅ Structured Answer:</b></p>
+        <p style="font-size:14px;">"<code>repartition(N)</code> reshuffles all data across N partitions and involves a full shuffle — it can both increase and decrease partition count, and gives even distribution. <code>coalesce(N)</code> only reduces partitions by merging them without a full shuffle — it's faster but may produce uneven partition sizes. For our banking pipeline writing to Delta Lake, we use <code>coalesce()</code> before writing if we want fewer output files, but <code>repartition()</code> when we need balanced distribution for downstream processing."</p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;background:#fff3e0;border-radius:var(--radius-sm);padding:14px;">
+      <h3>⚡ Possible Indirect Questions</h3>
+      <ul style="font-size:14px;">
+        <li>"How many tasks will run if I have 200 partitions and 50 executor cores?" → <b>200 tasks, running 50 at a time (4 waves)</b></li>
+        <li>"Why does my groupBy create a new stage?" → <b>Because groupBy is a wide transformation that causes a shuffle = stage boundary</b></li>
+        <li>"What happens if I call .count() twice?" → <b>Two separate Jobs are created unless you cache/persist the DataFrame first</b></li>
+        <li>"What's the role of the Driver in failure recovery?" → <b>Driver re-submits failed tasks; if Driver fails, the whole application fails</b></li>
+        <li>"In Databricks, what manages the cluster?" → <b>Databricks Runtime + Azure Resource Manager; Cluster Manager handles resource allocation</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ======================== CHAPTER 9 QUIZ ======================== -->
+  <div class="card quiz section-anchor" id="quiz">
+    <div class="chapter-badge" style="background:var(--coral);">🧪 Chapter 9 · Quiz</div>
+    <h2>Test Your Understanding</h2>
+
+    <p style="font-size:14px;margin-bottom:20px;">You have a Spark application running on Azure Databricks with a 50-executor-core cluster. The application processes 10 million bank transactions using the following code:</p>
+
+    <pre style="margin-bottom:20px;"><code>df = spark.read.format(<span class="str">"delta"</span>).load(<span class="str">"abfss://bronze/.../transactions"</span>)
+filtered = df.filter(F.col(<span class="str">"amount"</span>) > <span class="num">5000</span>)
+joined = filtered.join(customer_df, <span class="str">"customer_id"</span>)
+result = joined.groupBy(<span class="str">"branch_id"</span>).agg(F.sum(<span class="str">"amount"</span>))
+result.write.format(<span class="str">"delta"</span>).save(<span class="str">"abfss://gold/.../summary"</span>)</code></pre>
+
+    <h3>❓ Quiz Question</h3>
+    <p style="font-size:15px;font-weight:600;margin-bottom:12px;">How many Jobs, and approximately how many Stages does this code create?</p>
+
+    <button class="quiz-option" id="opt-a" onclick="checkAnswer('a')">A) 1 Job, 1 Stage — write() is one continuous operation</button>
+    <button class="quiz-option" id="opt-b" onclick="checkAnswer('b')">B) 1 Job, 3 Stages — write() triggers 1 job; filter=Stage1, join=Stage2, groupBy+write=Stage3</button>
+    <button class="quiz-option" id="opt-c" onclick="checkAnswer('c')">C) 3 Jobs, 1 Stage each — filter, join, and groupBy are each separate jobs</button>
+    <button class="quiz-option" id="opt-d" onclick="checkAnswer('d')">D) 2 Jobs, 2 Stages — write() and read() each create a job</button>
+
+    <div id="quiz-feedback" style="margin-top:16px;padding:14px;border-radius:var(--radius-sm);font-size:14px;"></div>
+  </div>
+
+  <div style="text-align:center;color:var(--gray);font-size:13px;margin-top:32px;">
+    <p>🚀 Created for Azure Databricks engineers · Apache Spark Execution Flow · Interview Ready Guide</p>
+    <p style="margin-top:4px;">Continue learning: Spark UI, Adaptive Query Execution (AQE), Delta Lake, Data Skew Handling</p>
+  </div>
+
+</div>
+
+<script>
+const correct = 'b';
+const explanations = {
+  a: "❌ Incorrect. Even though it's one action (write), Spark creates multiple stages at shuffle boundaries. A join and a groupBy both cause shuffles, creating new stages.",
+  b: "✅ Correct! <code>write()</code> is the only Action → <b>1 Job</b>. But the job has multiple stages: Stage 1 (filter = narrow, no shuffle), Stage 2 (join = wide, shuffle boundary), Stage 3 (groupBy + agg = another shuffle → new stage, then write). So at minimum 3 stages. Great understanding!",
+  c: "❌ Incorrect. <code>filter()</code>, <code>join()</code>, and <code>groupBy()</code> are all Transformations (lazy). Jobs are only triggered by Actions. Here only <code>write()</code> is an Action → 1 Job.",
+  d: "❌ Incorrect. <code>read()</code> is not an Action — it's lazy and creates no Job. Only <code>write()</code> triggers a Job here. Also, Jobs split into Stages based on shuffles, not read/write pairs."
+};
+function checkAnswer(opt) {
+  ['a','b','c','d'].forEach(o => {
+    const el = document.getElementById('opt-'+o);
+    el.classList.remove('correct','wrong');
+    el.disabled = true;
+  });
+  document.getElementById('opt-'+opt).classList.add(opt===correct?'correct':'wrong');
+  if(opt!==correct) document.getElementById('opt-'+correct).classList.add('correct');
+  const fb = document.getElementById('quiz-feedback');
+  fb.innerHTML = explanations[opt];
+  fb.style.display = 'block';
+  fb.style.background = opt===correct?'#e6f4ea':'#fce8e6';
+  fb.style.border = '1px solid '+(opt===correct?'#0f9d58':'#d93025');
+  fb.style.color = opt===correct?'#1b5e20':'#b71c1c';
+}
+</script>
+</body>
+</html>
