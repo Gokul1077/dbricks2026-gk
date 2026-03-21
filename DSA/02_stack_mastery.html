@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack Mastery — Data Engineer's Java Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0f0d0a;
+  --bg2:      #181410;
+  --surface:  #1e1a14;
+  --surface2: #261f16;
+  --border:   #2e2518;
+  --border2:  #3d3020;
+  --amber:    #f59e0b;
+  --amber2:   #fbbf24;
+  --ember:    #ef4444;
+  --green:    #22c55e;
+  --teal:     #2dd4bf;
+  --sky:      #38bdf8;
+  --muted:    #78716c;
+  --dim:      #a8a29e;
+  --text:     #f5f0e8;
+  --code-bg:  #0a0806;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+  font-family: 'Lora', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 320px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 48px 52px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 5% 50%, rgba(245,158,11,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 95% 20%, rgba(239,68,68,0.05) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: center;
+  max-width: 1060px;
+  margin: 0 auto;
+}
+.hero-eyebrow {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px; letter-spacing:4px;
+  color:var(--amber); text-transform:uppercase;
+  margin-bottom:14px;
+}
+.hero h1 {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2.4rem,5.5vw,4rem);
+  font-weight:800; line-height:1.1;
+  margin-bottom:16px;
+}
+.hero h1 em { font-style:normal; color:var(--amber); }
+.hero-desc { color:var(--dim); max-width:520px; font-size:1rem; margin-bottom:24px; }
+.pill-row { display:flex; gap:8px; flex-wrap:wrap; }
+.pill {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; padding:5px 12px; border-radius:20px;
+  border:1px solid; cursor:default;
+}
+.pill-a { color:var(--amber); border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.07); }
+.pill-g { color:var(--green); border-color:rgba(34,197,94,.3);  background:rgba(34,197,94,.07); }
+.pill-t { color:var(--teal);  border-color:rgba(45,212,191,.3); background:rgba(45,212,191,.07); }
+/* Stack illustration in hero */
+.hero-stack {
+  display:flex; flex-direction:column; gap:4px; align-items:center;
+}
+.hs-item {
+  width:120px; height:38px;
+  border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+  transition: transform .3s;
+}
+.hs-item:hover { transform:translateX(6px); }
+.hs-label {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; color:var(--muted); letter-spacing:2px;
+  text-align:center; margin-top:6px;
+}
+.hs-top    { background:rgba(245,158,11,.15); border:1px solid rgba(245,158,11,.5);  color:var(--amber2); }
+.hs-mid1   { background:rgba(245,158,11,.09); border:1px solid rgba(245,158,11,.3);  color:var(--amber); }
+.hs-mid2   { background:rgba(245,158,11,.05); border:1px solid rgba(245,158,11,.2);  color:#92400e; }
+.hs-bot    { background:rgba(30,20,10,.8);    border:1px solid var(--border2);       color:var(--muted); }
+.hs-base {
+  width:140px; height:8px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+  border-radius:4px; margin-top:4px; opacity:.4;
+}
+
+/* ── NAV ── */
+nav.toc {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:14px 48px;
+  display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+  position:sticky; top:0; z-index:100;
+}
+.toc-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:3px; margin-right:6px; }
+nav.toc a {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--dim); text-decoration:none;
+  padding:4px 10px; border-radius:4px;
+  border:1px solid transparent; transition:all .2s;
+}
+nav.toc a:hover { color:var(--amber); border-color:var(--border2); background:var(--surface2); }
+
+/* ── LAYOUT ── */
+.wrap    { max-width:1060px; margin:0 auto; padding:0 48px; }
+.section { padding:60px 0 44px; border-bottom:1px solid var(--border); }
+.section:last-of-type { border-bottom:none; }
+
+/* ── SECTION HEADER ── */
+.sec-tag {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; color:var(--amber); letter-spacing:4px;
+  text-transform:uppercase; margin-bottom:8px;
+}
+.section h2 {
+  font-family:'Syne',sans-serif;
+  font-size:1.9rem; font-weight:800; margin-bottom:10px;
+}
+.sec-sub { color:var(--dim); font-size:.93rem; max-width:660px; margin-bottom:36px; }
+
+/* ── TERM GRID ── */
+.term-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; margin-bottom:28px; }
+.term-box {
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:8px; padding:18px;
+  position:relative; overflow:hidden;
+}
+.term-box::after {
+  content:''; position:absolute;
+  bottom:0; left:0; right:0; height:2px;
+}
+.tb-a::after { background:var(--amber); }
+.tb-g::after { background:var(--green); }
+.tb-t::after { background:var(--teal); }
+.tb-r::after { background:var(--ember); }
+.tb-s::after { background:var(--sky); }
+.term-word {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.8rem; font-weight:600; margin-bottom:6px;
+}
+.tb-a .term-word { color:var(--amber); }
+.tb-g .term-word { color:var(--green); }
+.tb-t .term-word { color:var(--teal); }
+.tb-r .term-word { color:var(--ember); }
+.tb-s .term-word { color:var(--sky); }
+.term-box p { color:var(--dim); font-size:.82rem; line-height:1.65; }
+
+/* ── CODE ── */
+.code-wrap { margin:18px 0; }
+.code-header {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-bottom:none; border-radius:8px 8px 0 0;
+  padding:10px 18px; display:flex; gap:8px; align-items:center;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted);
+}
+.dot { width:10px;height:10px;border-radius:50%; }
+.dr{background:#ef4444;}.dy{background:#fbbf24;}.dg{background:#22c55e;}
+pre {
+  background:var(--code-bg); border:1px solid var(--border2);
+  border-radius:0 0 8px 8px;
+  padding:22px 22px; overflow-x:auto; margin:0;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.8rem; line-height:1.9;
+}
+.kw  { color:#f472b6; }
+.cls { color:var(--amber2); }
+.fn  { color:#86efac; }
+.str { color:var(--teal); }
+.cmt { color:#44403c; font-style:italic; }
+.num { color:var(--ember); }
+.typ { color:#c4b5fd; }
+.op  { color:var(--amber); }
+
+/* ── DIAGRAMS ── */
+.diag {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; padding:26px; margin:18px 0; overflow-x:auto;
+}
+.diag-title {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; color:var(--muted); letter-spacing:3px;
+  text-transform:uppercase; margin-bottom:18px;
+}
+
+/* ── CARDS ── */
+.card {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; padding:22px; margin-bottom:18px;
+}
+.card-tag {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; color:var(--amber); letter-spacing:2px;
+  text-transform:uppercase; margin-bottom:8px;
+}
+.card h3 { font-family:'Syne',sans-serif; font-size:1.05rem; margin-bottom:8px; }
+.card p  { color:var(--dim); font-size:.88rem; }
+
+/* ── PATTERN CARD ── */
+.pcard {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; padding:24px; margin-bottom:26px;
+}
+.pcard-head { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.pcard-icon {
+  width:42px;height:42px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem; flex-shrink:0;
+}
+.pi-a { background:rgba(245,158,11,.12); }
+.pi-g { background:rgba(34,197,94,.12); }
+.pi-t { background:rgba(45,212,191,.12); }
+.pi-r { background:rgba(239,68,68,.12); }
+.pcard-title { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:700; }
+.ptag {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; padding:3px 8px; border-radius:3px;
+  background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25);
+  color:var(--amber); margin-left:8px;
+}
+.pcard p  { color:var(--dim); font-size:.88rem; margin-bottom:12px; }
+
+/* ── COMPLEXITY ROW ── */
+.cx-row { display:flex; gap:12px; flex-wrap:wrap; margin:10px 0 14px; }
+.cx {
+  font-family:'IBM Plex Mono',monospace; font-size:10px;
+  padding:4px 10px; border-radius:4px;
+  background:var(--surface2); border:1px solid var(--border2);
+}
+.cx .cl { color:var(--muted); margin-right:5px; }
+.cx .cv { color:var(--green); }
+.cx .cv.bad { color:var(--ember); }
+.cx .cv.ok  { color:var(--amber); }
+
+/* ── CALLOUT ── */
+.callout {
+  border-radius:8px; padding:16px 18px;
+  margin:16px 0; display:flex; gap:12px; font-size:.88rem;
+}
+.callout-icon { font-size:1.1rem; flex-shrink:0; margin-top:2px; }
+.callout.info  { background:rgba(56,189,248,.06); border:1px solid rgba(56,189,248,.2); }
+.callout.tip   { background:rgba(34,197,94,.06);  border:1px solid rgba(34,197,94,.2); }
+.callout.warn  { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.2); }
+.callout.de    { background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.2); }
+.callout p { color:var(--dim); line-height:1.7; }
+.callout strong { color:var(--text); }
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; margin:18px 0; font-size:.85rem; }
+th {
+  background:var(--surface2); padding:11px 14px;
+  text-align:left; border:1px solid var(--border2);
+  font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px;
+  color:var(--amber);
+}
+td { padding:11px 14px; border:1px solid var(--border2); color:var(--dim); }
+tr:hover td { background:var(--surface2); color:var(--text); }
+.good { color:var(--green); }
+.bad  { color:var(--ember); }
+.ok   { color:var(--amber2); }
+
+/* ── GRID ── */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+@media(max-width:680px){ .g2{grid-template-columns:1fr;} }
+
+/* ── STEP VISUAL ── */
+.steps { list-style:none; }
+.steps li {
+  display:flex; gap:14px; padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
+.steps li:last-child{border-bottom:none;}
+.snum {
+  font-family:'IBM Plex Mono',monospace; font-size:.7rem;
+  color:var(--amber); background:rgba(245,158,11,.1);
+  border:1px solid rgba(245,158,11,.25);
+  border-radius:50%; width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center; flex-shrink:0;
+}
+.scontent h4 { font-family:'Syne',sans-serif; font-size:.95rem; margin-bottom:3px; }
+.scontent p  { color:var(--dim); font-size:.84rem; }
+
+hr.soft { border:none; border-top:1px solid var(--border); margin:26px 0; }
+
+/* SCROLL */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+@media(max-width:768px){
+  .hero{padding:40px 20px;}
+  .hero-grid{grid-template-columns:1fr;}
+  .hero-stack{display:none;}
+  .wrap{padding:0 20px;}
+  nav.toc{padding:12px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-eyebrow">// Data Engineer's Study Guide — Vol. 2</div>
+      <h1>Mastering <em>Stacks</em><br>in Java</h1>
+      <p class="hero-desc">From the simplest LIFO principle to advanced patterns — deeply connected to real-world DE systems like undo logs, expression engines, and pipeline orchestration.</p>
+      <div class="pill-row">
+        <span class="pill pill-a">☕ Java</span>
+        <span class="pill pill-g">⚙ Data Engineering</span>
+        <span class="pill pill-t">📐 6 Patterns</span>
+      </div>
+    </div>
+    <div class="hero-stack">
+      <div class="hs-label">TOP ↓</div>
+      <div class="hs-item hs-top">push("D")</div>
+      <div class="hs-item hs-mid1">push("C")</div>
+      <div class="hs-item hs-mid2">push("B")</div>
+      <div class="hs-item hs-bot">push("A")</div>
+      <div class="hs-base"></div>
+      <div class="hs-label">BOTTOM</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ NAV ═══════════════════════════════ -->
+<nav class="toc">
+  <span class="toc-label">JUMP TO</span>
+  <a href="#prereq">Prerequisites</a>
+  <a href="#what">What is a Stack?</a>
+  <a href="#impl">Implementation</a>
+  <a href="#ops">Operations</a>
+  <a href="#patterns">Patterns</a>
+  <a href="#de">DE Use Cases</a>
+  <a href="#cheat">Cheat Sheet</a>
+</nav>
+
+
+<!-- ═══════════════════════ 00 — PREREQUISITES ═══════════════════════ -->
+<section class="section" id="prereq">
+<div class="wrap">
+  <div class="sec-tag">// 00 — Prerequisite Topics</div>
+  <h2>Build Your Foundation First</h2>
+  <p class="sec-sub">You need these concepts solid before stacks "click." Each term below is explained in plain English — with a Data Engineer analogy alongside every definition.</p>
+
+  <div class="term-grid">
+    <div class="term-box tb-a">
+      <div class="term-word">📦 Abstract Data Type (ADT)</div>
+      <p>An ADT defines <em>what operations exist</em> but not <em>how they're stored</em>. A Stack is an ADT — it just promises push/pop/peek. The internals can be an array or linked list.</p>
+    </div>
+    <div class="term-box tb-g">
+      <div class="term-word">🔼 LIFO Principle</div>
+      <p><strong>Last In, First Out.</strong> Whatever was pushed most recently is popped first. Think of a stack of plates — you always take from the top. Contrast with Queue (FIFO = first in, first out).</p>
+    </div>
+    <div class="term-box tb-t">
+      <div class="term-word">📐 Call Stack</div>
+      <p>Your JVM uses a built-in stack to track function calls. When method A calls B calls C — C is on top. When C returns, it's popped and execution returns to B. StackOverflowError = stack is full.</p>
+    </div>
+    <div class="term-box tb-r">
+      <div class="term-word">🔁 Recursion</div>
+      <p>A function that calls itself. Every recursive call adds a new frame to the call stack. Stacks and recursion are deeply related — any recursive algorithm can be rewritten with an explicit stack.</p>
+    </div>
+    <div class="term-box tb-s">
+      <div class="term-word">🧩 Interface vs Class</div>
+      <p>An <code>interface</code> in Java is a contract (e.g., "must have push/pop"). A <code>class</code> is the actual implementation. <code>Deque</code> is Java's stack interface; <code>ArrayDeque</code> is its fastest implementation.</p>
+    </div>
+    <div class="term-box tb-a">
+      <div class="term-word">📏 Big-O Notation</div>
+      <p><strong>O(1)</strong> = constant time (instant, regardless of size). All core stack operations — push, pop, peek — run in O(1). That's the whole reason stacks are so powerful.</p>
+    </div>
+    <div class="term-box tb-g">
+      <div class="term-word">🏗️ Dynamic Array</div>
+      <p>An array that resizes itself when full (like Java's <code>ArrayList</code>). Array-backed stacks use this underneath. Resizing is O(n) but amortized O(1) across many pushes.</p>
+    </div>
+    <div class="term-box tb-t">
+      <div class="term-word">🔗 Linked List Nodes</div>
+      <p>The other way to back a stack. Each element is a <code>Node</code> with data + a pointer to the one below. Head = top of stack. Push = add to head (O(1)). Pop = remove head (O(1)).</p>
+    </div>
+  </div>
+
+  <div class="callout de">
+    <span class="callout-icon">⚙</span>
+    <p><strong>Data Engineer parallel:</strong> Think of an <strong>undo log</strong> in a database transaction. Every operation is pushed to the log. On rollback, operations are undone in reverse order — last operation undone first. That's LIFO in production databases.</p>
+  </div>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 01 — WHAT IS A STACK ═══════════════════════ -->
+<section class="section" id="what">
+<div class="wrap">
+  <div class="sec-tag">// 01 — Foundation</div>
+  <h2>What Exactly is a Stack?</h2>
+  <p class="sec-sub">A stack is a linear data structure that follows the <strong>LIFO</strong> rule. You can only interact with the <strong>top element</strong> — you can't reach into the middle.</p>
+
+  <!-- REAL WORLD ANALOGIES -->
+  <div class="g2" style="margin-bottom:22px;">
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <div class="card-tag">🍽 Analogy 1</div>
+      <h3>Stack of Plates</h3>
+      <p>You add plates to the top. You remove from the top. You can't safely grab from the bottom without removing everything above. Same rule governs every stack in computing.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--teal);">
+      <div class="card-tag">🔙 Analogy 2</div>
+      <h3>Browser Back Button</h3>
+      <p>Every page you visit is pushed onto a history stack. Clicking "back" pops the current page and reveals the previous one. Closing a tab clears the stack. This is a doubly linked list, but the stack metaphor is exact.</p>
+    </div>
+  </div>
+
+  <!-- DIAGRAM: Stack structure -->
+  <div class="diag">
+    <div class="diag-title">▸ Stack Structure — Only the TOP is accessible</div>
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;">
+      <defs>
+        <marker id="am" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#f59e0b"/>
+        </marker>
+        <marker id="am2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#22c55e"/>
+        </marker>
+        <marker id="am3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#ef4444"/>
+        </marker>
+      </defs>
+
+      <!-- Stack box outline -->
+      <rect x="80" y="20" width="160" height="230" rx="6" fill="none" stroke="#3d3020" stroke-width="1.5" stroke-dasharray="6,3"/>
+
+      <!-- Base -->
+      <rect x="75" y="248" width="170" height="6" rx="3" fill="#f59e0b" opacity=".35"/>
+
+      <!-- Index 0 — bottom -->
+      <rect x="85" y="200" width="150" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="160" y="228" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">10</text>
+      <text x="85" y="200" dx="-30" dy="28" fill="#44403c" font-family="IBM Plex Mono" font-size="9">[0]</text>
+
+      <!-- Index 1 -->
+      <rect x="85" y="150" width="150" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="160" y="178" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">20</text>
+      <text x="85" y="150" dx="-30" dy="28" fill="#44403c" font-family="IBM Plex Mono" font-size="9">[1]</text>
+
+      <!-- Index 2 -->
+      <rect x="85" y="100" width="150" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="160" y="128" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">30</text>
+      <text x="85" y="100" dx="-30" dy="28" fill="#44403c" font-family="IBM Plex Mono" font-size="9">[2]</text>
+
+      <!-- TOP element -->
+      <rect x="85" y="36" width="150" height="44" rx="5" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="160" y="64" fill="#fbbf24" font-family="IBM Plex Mono" font-size="16" font-weight="600" text-anchor="middle">40</text>
+      <text x="85" y="36" dx="-30" dy="28" fill="#44403c" font-family="IBM Plex Mono" font-size="9">[3]</text>
+      <!-- TOP label -->
+      <text x="247" y="60" fill="#f59e0b" font-family="IBM Plex Mono" font-size="11" font-weight="600">← TOP</text>
+      <text x="247" y="73" fill="#78716c" font-family="IBM Plex Mono" font-size="9">(only access point)</text>
+
+      <!-- PUSH arrow -->
+      <line x1="370" y1="58" x2="243" y2="58" stroke="#f59e0b" stroke-width="2" marker-end="url(#am)"/>
+      <rect x="380" y="38" width="90" height="40" rx="6" fill="rgba(245,158,11,0.1)" stroke="rgba(245,158,11,0.35)"/>
+      <text x="425" y="55" fill="#fbbf24" font-family="IBM Plex Mono" font-size="12" font-weight="600" text-anchor="middle">PUSH</text>
+      <text x="425" y="70" fill="#78716c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">add to top</text>
+
+      <!-- POP arrow -->
+      <line x1="243" y1="85" x2="368" y2="85" stroke="#ef4444" stroke-width="2" marker-end="url(#am3)"/>
+      <rect x="380" y="100" width="90" height="40" rx="6" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.35)"/>
+      <text x="425" y="117" fill="#ef4444" font-family="IBM Plex Mono" font-size="12" font-weight="600" text-anchor="middle">POP</text>
+      <text x="425" y="132" fill="#78716c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">remove from top</text>
+
+      <!-- PEEK arrow -->
+      <path d="M 490 150 L 530 150 L 530 58 L 476 58" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#am2)" stroke-dasharray="5,3"/>
+      <rect x="500" y="130" width="90" height="40" rx="6" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)"/>
+      <text x="545" y="147" fill="#22c55e" font-family="IBM Plex Mono" font-size="12" font-weight="600" text-anchor="middle">PEEK</text>
+      <text x="545" y="162" fill="#78716c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">read, don't remove</text>
+
+      <!-- BOTTOM label -->
+      <text x="160" y="270" fill="#44403c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">▲ BOTTOM — inaccessible directly</text>
+
+      <!-- size label -->
+      <text x="160" y="15" fill="#78716c" font-family="IBM Plex Mono" font-size="10" text-anchor="middle">size = 4</text>
+    </svg>
+  </div>
+
+  <!-- KEY TERMS BREAKDOWN -->
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.15rem;margin:28px 0 14px;">Every Term Explained</h3>
+  <div class="term-grid">
+    <div class="term-box tb-a">
+      <div class="term-word">PUSH</div>
+      <p>Add an element to the <strong>top</strong> of the stack. This is the only way to insert. O(1) always. Like placing a new plate on top of the pile.</p>
+    </div>
+    <div class="term-box tb-r">
+      <div class="term-word">POP</div>
+      <p><strong>Remove and return</strong> the top element. Throws <code>EmptyStackException</code> if the stack is empty. O(1). You lift the top plate off.</p>
+    </div>
+    <div class="term-box tb-g">
+      <div class="term-word">PEEK / TOP</div>
+      <p><strong>Look at</strong> the top element without removing it. Like checking what's on top of the pile without touching it. O(1).</p>
+    </div>
+    <div class="term-box tb-t">
+      <div class="term-word">isEmpty</div>
+      <p>Check if the stack has zero elements. Always check before popping to avoid exceptions. O(1). Like asking "are there any plates left?"</p>
+    </div>
+    <div class="term-box tb-s">
+      <div class="term-word">size / height</div>
+      <p>Total number of elements currently in the stack. Tracked with a counter variable; O(1) to read. Also called the "height" of the stack.</p>
+    </div>
+    <div class="term-box tb-r">
+      <div class="term-word">Overflow / Underflow</div>
+      <p><strong>Overflow</strong> = pushing to a full fixed-size stack. <strong>Underflow</strong> = popping from an empty stack. Java's dynamic stack never overflows (until heap is full).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 02 — IMPLEMENTATION ═══════════════════════ -->
+<section class="section" id="impl">
+<div class="wrap">
+  <div class="sec-tag">// 02 — Implementation</div>
+  <h2>Building a Stack — Two Ways</h2>
+  <p class="sec-sub">A stack can be backed by an <strong>array</strong> or a <strong>linked list</strong>. Same behavior, different internals. Understanding both makes you dangerous in interviews.</p>
+
+  <!-- DIAGRAM: Array-backed vs LL-backed -->
+  <div class="diag">
+    <div class="diag-title">▸ Array-backed Stack vs Linked-List-backed Stack</div>
+    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;display:block;">
+      <defs>
+        <marker id="ba" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0,7 2.5,0 5" fill="#f59e0b"/>
+        </marker>
+      </defs>
+
+      <!-- ARRAY BACKED -->
+      <text x="20" y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" letter-spacing="2">ARRAY-BACKED</text>
+      <!-- cells -->
+      <rect x="20" y="30" width="58" height="48" rx="4" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="49" y="58" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">10</text>
+      <text x="49" y="90" fill="#44403c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">[0]</text>
+
+      <rect x="80" y="30" width="58" height="48" rx="4" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="109" y="58" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">20</text>
+      <text x="109" y="90" fill="#44403c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">[1]</text>
+
+      <rect x="140" y="30" width="58" height="48" rx="4" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="169" y="58" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">30</text>
+      <text x="169" y="90" fill="#44403c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">[2]</text>
+
+      <!-- TOP cell highlighted -->
+      <rect x="200" y="30" width="58" height="48" rx="4" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="229" y="58" fill="#fbbf24" font-family="IBM Plex Mono" font-size="14" font-weight="700" text-anchor="middle">40</text>
+      <text x="229" y="90" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">[3]←top</text>
+
+      <!-- empty slots -->
+      <rect x="260" y="30" width="58" height="48" rx="4" fill="#0f0d0a" stroke="#2e2518" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="289" y="58" fill="#2e2518" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">—</text>
+      <rect x="320" y="30" width="58" height="48" rx="4" fill="#0f0d0a" stroke="#2e2518" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="349" y="58" fill="#2e2518" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">—</text>
+
+      <text x="395" y="58" fill="#44403c" font-family="IBM Plex Mono" font-size="10">← reserved capacity</text>
+      <text x="395" y="75" fill="#44403c" font-family="IBM Plex Mono" font-size="10">contiguous memory</text>
+      <text x="395" y="92" fill="#22c55e" font-family="IBM Plex Mono" font-size="10">✓ cache friendly</text>
+
+      <!-- LL BACKED -->
+      <text x="20" y="130" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" letter-spacing="2">LINKED-LIST-BACKED</text>
+
+      <!-- Node boxes: each has data + next -->
+      <rect x="20" y="140" width="80" height="44" rx="5" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <line x1="60" y1="140" x2="60" y2="184" stroke="#3d3020"/>
+      <text x="40" y="166" fill="#fbbf24" font-family="IBM Plex Mono" font-size="14" font-weight="700" text-anchor="middle">40</text>
+      <text x="70" y="158" fill="#a8a29e" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">next</text>
+      <text x="70" y="170" fill="#f59e0b" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">→</text>
+      <text x="40" y="195" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">HEAD/TOP</text>
+      <line x1="100" y1="162" x2="118" y2="162" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ba)"/>
+
+      <rect x="120" y="140" width="80" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <line x1="160" y1="140" x2="160" y2="184" stroke="#3d3020"/>
+      <text x="140" y="166" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">30</text>
+      <text x="170" y="158" fill="#44403c" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">next</text>
+      <text x="170" y="170" fill="#f59e0b" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">→</text>
+      <line x1="200" y1="162" x2="218" y2="162" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ba)"/>
+
+      <rect x="220" y="140" width="80" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <line x1="260" y1="140" x2="260" y2="184" stroke="#3d3020"/>
+      <text x="240" y="166" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">20</text>
+      <text x="270" y="158" fill="#44403c" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">next</text>
+      <text x="270" y="170" fill="#f59e0b" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">→</text>
+      <line x1="300" y1="162" x2="318" y2="162" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ba)"/>
+
+      <rect x="320" y="140" width="80" height="44" rx="5" fill="#1e1a14" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="360" y="166" fill="#78716c" font-family="IBM Plex Mono" font-size="14" text-anchor="middle">10</text>
+      <text x="360" y="195" fill="#44403c" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">→ null</text>
+
+      <text x="420" y="155" fill="#44403c" font-family="IBM Plex Mono" font-size="10">scattered in memory</text>
+      <text x="420" y="170" fill="#44403c" font-family="IBM Plex Mono" font-size="10">no wasted capacity</text>
+      <text x="420" y="185" fill="#22c55e" font-family="IBM Plex Mono" font-size="10">✓ no resize needed</text>
+    </svg>
+  </div>
+
+  <!-- IMPLEMENTATION 1: Array-backed -->
+  <div class="code-wrap">
+    <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">ArrayStack.java — Array-backed implementation</span></div>
+    <pre><span class="cmt">// ── ARRAY-BACKED STACK ──────────────────────────────────────────────
+// Uses an int[] internally. Top pointer tracks the index of the top element.</span>
+
+<span class="kw">public class</span> <span class="cls">ArrayStack</span>&lt;<span class="typ">T</span>&gt; {
+
+    <span class="kw">private</span> <span class="cls">Object</span>[] data;   <span class="cmt">// internal storage</span>
+    <span class="kw">private int</span> top = <span class="num">-1</span>;    <span class="cmt">// -1 means empty; points to current top index</span>
+    <span class="kw">private int</span> capacity;
+
+    <span class="kw">public</span> <span class="fn">ArrayStack</span>(<span class="kw">int</span> capacity) {
+        <span class="kw">this</span>.capacity = capacity;
+        <span class="kw">this</span>.data = <span class="kw">new</span> <span class="cls">Object</span>[capacity];
+    }
+
+    <span class="cmt">// PUSH — O(1) amortized</span>
+    <span class="kw">public void</span> <span class="fn">push</span>(<span class="typ">T</span> item) {
+        <span class="kw">if</span> (top == capacity - <span class="num">1</span>) <span class="fn">resize</span>();  <span class="cmt">// double size when full</span>
+        data[++top] = item;                   <span class="cmt">// increment top, then store</span>
+    }
+
+    <span class="cmt">// POP — O(1) — remove and return top element</span>
+    <span class="kw">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)
+    <span class="kw">public</span> <span class="typ">T</span> <span class="fn">pop</span>() {
+        <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">throw new</span> <span class="cls">RuntimeException</span>(<span class="str">"Stack underflow!"</span>);
+        <span class="typ">T</span> item = (<span class="typ">T</span>) data[top];
+        data[top--] = <span class="kw">null</span>;   <span class="cmt">// null out to help GC, then decrement top</span>
+        <span class="kw">return</span> item;
+    }
+
+    <span class="cmt">// PEEK — O(1) — view top without removing</span>
+    <span class="kw">@SuppressWarnings</span>(<span class="str">"unchecked"</span>)
+    <span class="kw">public</span> <span class="typ">T</span> <span class="fn">peek</span>() {
+        <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">throw new</span> <span class="cls">RuntimeException</span>(<span class="str">"Stack is empty!"</span>);
+        <span class="kw">return</span> (<span class="typ">T</span>) data[top];
+    }
+
+    <span class="kw">public boolean</span> <span class="fn">isEmpty</span>() { <span class="kw">return</span> top == <span class="num">-1</span>; }
+    <span class="kw">public int</span>     <span class="fn">size</span>()    { <span class="kw">return</span> top + <span class="num">1</span>; }
+
+    <span class="kw">private void</span> <span class="fn">resize</span>() {
+        capacity *= <span class="num">2</span>;
+        data = <span class="cls">Arrays</span>.copyOf(data, capacity);  <span class="cmt">// double capacity</span>
+    }
+}
+
+<span class="cmt">// Quick test</span>
+<span class="cls">ArrayStack</span>&lt;<span class="typ">Integer</span>&gt; s = <span class="kw">new</span> <span class="cls">ArrayStack</span>&lt;&gt;(<span class="num">4</span>);
+s.<span class="fn">push</span>(<span class="num">10</span>); s.<span class="fn">push</span>(<span class="num">20</span>); s.<span class="fn">push</span>(<span class="num">30</span>);
+<span class="cls">System</span>.out.println(s.<span class="fn">peek</span>());   <span class="cmt">// 30 — not removed</span>
+<span class="cls">System</span>.out.println(s.<span class="fn">pop</span>());    <span class="cmt">// 30 — removed</span>
+<span class="cls">System</span>.out.println(s.<span class="fn">size</span>());   <span class="cmt">// 2</span></pre>
+  </div>
+
+  <!-- IMPLEMENTATION 2: Java built-in -->
+  <div class="code-wrap">
+    <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">JavaBuiltIn.java — The Recommended Production Way</span></div>
+    <pre><span class="cmt">// Java's RECOMMENDED stack: use ArrayDeque, NOT Stack class
+// Stack class is legacy (extends Vector, which is synchronized = slow)
+// ArrayDeque is ~2x faster with no sync overhead</span>
+
+<span class="kw">import</span> java.util.ArrayDeque;
+<span class="kw">import</span> java.util.Deque;
+
+<span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+
+stack.<span class="fn">push</span>(<span class="num">10</span>);    <span class="cmt">// push — adds to FRONT (which is top)</span>
+stack.<span class="fn">push</span>(<span class="num">20</span>);
+stack.<span class="fn">push</span>(<span class="num">30</span>);
+
+stack.<span class="fn">peek</span>();     <span class="cmt">// → 30  (top element, not removed)</span>
+stack.<span class="fn">pop</span>();      <span class="cmt">// → 30  (removes and returns top)</span>
+stack.<span class="fn">isEmpty</span>(); <span class="cmt">// → false</span>
+stack.<span class="fn">size</span>();     <span class="cmt">// → 2</span>
+
+<span class="cmt">// Safe pattern: always check before pop</span>
+<span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+    <span class="cls">System</span>.out.println(stack.<span class="fn">pop</span>());  <span class="cmt">// prints: 20, then 10</span>
+}
+
+<span class="cmt">// ── QUICK COMPARISON ────────────────────────────────────────────────
+// java.util.Stack   → Legacy. Synchronized. Avoid unless forced.
+// ArrayDeque        → Fast. Not thread-safe. Use this by default.
+// LinkedList        → Works but more overhead. Use ArrayDeque instead.</span></pre>
+  </div>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 03 — OPERATIONS DEEP DIVE ═══════════════════════ -->
+<section class="section" id="ops">
+<div class="wrap">
+  <div class="sec-tag">// 03 — Operations Deep Dive</div>
+  <h2>How Each Operation Works Internally</h2>
+  <p class="sec-sub">Visualizing push and pop at the pointer level so you never confuse them again.</p>
+
+  <!-- PUSH DIAGRAM -->
+  <div class="diag">
+    <div class="diag-title">▸ PUSH Operation — step by step</div>
+    <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;display:block;">
+      <defs>
+        <marker id="pa" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0,7 2.5,0 5" fill="#f59e0b"/>
+        </marker>
+      </defs>
+
+      <!-- BEFORE -->
+      <text x="10" y="16" fill="#fbbf24" font-family="IBM Plex Mono" font-size="10" font-weight="600">STATE BEFORE push(50)</text>
+      <rect x="10" y="24" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="37" y="48" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">10</text>
+      <rect x="67" y="24" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="94" y="48" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">20</text>
+      <rect x="124" y="24" width="55" height="38" rx="4" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="151" y="48" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700" text-anchor="middle">30</text>
+      <text x="151" y="75" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">top=2</text>
+      <rect x="181" y="24" width="55" height="38" rx="4" fill="#0a0806" stroke="#2e2518" stroke-dasharray="4,3"/>
+      <text x="208" y="48" fill="#2e2518" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">—</text>
+
+      <!-- Arrow -->
+      <text x="250" y="48" fill="#f59e0b" font-family="IBM Plex Mono" font-size="20">→</text>
+
+      <!-- Steps annotation -->
+      <text x="280" y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10" font-weight="600">STEPS:</text>
+      <text x="280" y="38" fill="#fbbf24" font-family="IBM Plex Mono" font-size="10">① top = top + 1  →  top becomes 3</text>
+      <text x="280" y="55" fill="#fbbf24" font-family="IBM Plex Mono" font-size="10">② data[3] = 50</text>
+      <text x="280" y="72" fill="#22c55e" font-family="IBM Plex Mono" font-size="10">✓ O(1) always</text>
+
+      <!-- AFTER -->
+      <text x="10" y="110" fill="#fbbf24" font-family="IBM Plex Mono" font-size="10" font-weight="600">STATE AFTER push(50)</text>
+      <rect x="10" y="118" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="37" y="142" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">10</text>
+      <rect x="67" y="118" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="94" y="142" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">20</text>
+      <rect x="124" y="118" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="151" y="142" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">30</text>
+      <!-- NEW element -->
+      <rect x="181" y="118" width="55" height="38" rx="4" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="208" y="142" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700" text-anchor="middle">50</text>
+      <text x="208" y="168" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">top=3 ← NEW</text>
+    </svg>
+  </div>
+
+  <!-- POP DIAGRAM -->
+  <div class="diag">
+    <div class="diag-title">▸ POP Operation — step by step</div>
+    <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;display:block;">
+      <!-- BEFORE -->
+      <text x="10" y="16" fill="#ef4444" font-family="IBM Plex Mono" font-size="10" font-weight="600">STATE BEFORE pop()</text>
+      <rect x="10" y="24" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="37" y="48" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">10</text>
+      <rect x="67" y="24" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="94" y="48" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">20</text>
+      <rect x="124" y="24" width="55" height="38" rx="4" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="151" y="48" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700" text-anchor="middle">30</text>
+      <text x="151" y="75" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">top=2</text>
+
+      <text x="200" y="48" fill="#ef4444" font-family="IBM Plex Mono" font-size="20">→</text>
+
+      <text x="240" y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10" font-weight="600">STEPS:</text>
+      <text x="240" y="38" fill="#ef4444" font-family="IBM Plex Mono" font-size="10">① save = data[top]  →  save = 30</text>
+      <text x="240" y="55" fill="#ef4444" font-family="IBM Plex Mono" font-size="10">② data[top] = null  (help GC)</text>
+      <text x="240" y="72" fill="#ef4444" font-family="IBM Plex Mono" font-size="10">③ top = top - 1  →  top becomes 1</text>
+      <text x="240" y="89" fill="#ef4444" font-family="IBM Plex Mono" font-size="10">④ return save  →  returns 30</text>
+
+      <!-- AFTER -->
+      <text x="10" y="110" fill="#ef4444" font-family="IBM Plex Mono" font-size="10" font-weight="600">STATE AFTER pop() → returns 30</text>
+      <rect x="10" y="118" width="55" height="38" rx="4" fill="#1e1a14" stroke="#3d3020"/>
+      <text x="37" y="142" fill="#78716c" font-family="IBM Plex Mono" font-size="12" text-anchor="middle">10</text>
+      <rect x="67" y="118" width="55" height="38" rx="4" fill="#261f16" stroke="#f59e0b" stroke-width="2"/>
+      <text x="94" y="142" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700" text-anchor="middle">20</text>
+      <text x="94" y="168" fill="#f59e0b" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">top=1 ← NEW</text>
+      <rect x="124" y="118" width="55" height="38" rx="4" fill="#0a0806" stroke="#2e2518" stroke-dasharray="4,3"/>
+      <text x="151" y="142" fill="#2e2518" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">null</text>
+      <text x="151" y="168" fill="#2e2518" font-family="IBM Plex Mono" font-size="8" text-anchor="middle">GC eligible</text>
+    </svg>
+  </div>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 04 — PATTERNS ═══════════════════════ -->
+<section class="section" id="patterns">
+<div class="wrap">
+  <div class="sec-tag">// 04 — Coding Patterns</div>
+  <h2>The 7 Essential Stack Patterns</h2>
+  <p class="sec-sub">These are the reusable blueprints for solving stack problems. Recognize the pattern → the code writes itself.</p>
+
+  <!-- ─── PATTERN 1: BALANCED BRACKETS ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-a">🔢</div>
+      <div>
+        <span class="pcard-title">Pattern 1: Balanced Brackets / Valid Parentheses</span>
+        <span class="ptag">CLASSIC</span>
+      </div>
+    </div>
+    <p>Push every opening bracket. When you see a closing bracket, <strong>pop the stack and check if it matches</strong>. At the end, the stack must be empty for balance. This exact algorithm powers IDE syntax checkers, JSON validators, and SQL parsers.</p>
+
+    <div class="diag" style="margin:0 0 14px;">
+      <div class="diag-title">▸ Tracing "{[()]}" through the algorithm</div>
+      <svg viewBox="0 0 680 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;">
+        <!-- Headers -->
+        <text x="10" y="16" fill="#78716c" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">CHAR</text>
+        <text x="70" y="16" fill="#78716c" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">ACTION</text>
+        <text x="220" y="16" fill="#78716c" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">STACK STATE</text>
+        <text x="430" y="16" fill="#78716c" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">RESULT</text>
+
+        <!-- Row 1: { -->
+        <text x="10" y="34" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700">{</text>
+        <text x="70" y="34" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">opening → push</text>
+        <text x="220" y="34" fill="#f59e0b" font-family="IBM Plex Mono" font-size="10">[ { ]</text>
+        <!-- Row 2: [ -->
+        <text x="10" y="50" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700">[</text>
+        <text x="70" y="50" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">opening → push</text>
+        <text x="220" y="50" fill="#f59e0b" font-family="IBM Plex Mono" font-size="10">[ { [ ]</text>
+        <!-- Row 3: ( -->
+        <text x="10" y="66" fill="#fbbf24" font-family="IBM Plex Mono" font-size="13" font-weight="700">(</text>
+        <text x="70" y="66" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">opening → push</text>
+        <text x="220" y="66" fill="#f59e0b" font-family="IBM Plex Mono" font-size="10">[ { [ ( ]</text>
+        <!-- Row 4: ) -->
+        <text x="10" y="82" fill="#2dd4bf" font-family="IBM Plex Mono" font-size="13" font-weight="700">)</text>
+        <text x="70" y="82" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">closing → pop, check ( ✓</text>
+        <text x="220" y="82" fill="#f59e0b" font-family="IBM Plex Mono" font-size="10">[ { [ ]</text>
+        <text x="430" y="82" fill="#22c55e" font-family="IBM Plex Mono" font-size="10">match!</text>
+
+        <!-- separator -->
+        <line x1="400" y1="20" x2="400" y2="92" stroke="#2e2518" stroke-width="1"/>
+
+        <!-- Row 5: ] -->
+        <text x="440" y="34" fill="#2dd4bf" font-family="IBM Plex Mono" font-size="13" font-weight="700">]</text>
+        <text x="480" y="34" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">pop, check [ ✓</text>
+        <!-- Row 6: } -->
+        <text x="440" y="50" fill="#2dd4bf" font-family="IBM Plex Mono" font-size="13" font-weight="700">}</text>
+        <text x="480" y="50" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">pop, check { ✓</text>
+        <text x="440" y="66" fill="#a8a29e" font-family="IBM Plex Mono" font-size="10">END → stack empty</text>
+        <text x="440" y="82" fill="#22c55e" font-family="IBM Plex Mono" font-size="11" font-weight="700">→ VALID ✓</text>
+      </svg>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">ValidParentheses.java</span></div>
+      <pre><span class="kw">public boolean</span> <span class="fn">isValid</span>(<span class="cls">String</span> s) {
+    <span class="cls">Deque</span>&lt;<span class="typ">Character</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="kw">char</span> c : s.<span class="fn">toCharArray</span>()) {
+        <span class="cmt">// Push opening brackets</span>
+        <span class="kw">if</span> (c == <span class="str">'('</span> || c == <span class="str">'{'</span> || c == <span class="str">'['</span>) {
+            stack.<span class="fn">push</span>(c);
+        } <span class="kw">else</span> {
+            <span class="cmt">// Closing bracket: stack must not be empty AND must match</span>
+            <span class="kw">if</span> (stack.<span class="fn">isEmpty</span>()) <span class="kw">return false</span>;
+            <span class="kw">char</span> top = stack.<span class="fn">pop</span>();
+            <span class="kw">if</span> (c == <span class="str">')'</span> &amp;&amp; top != <span class="str">'('</span>) <span class="kw">return false</span>;
+            <span class="kw">if</span> (c == <span class="str">'}'</span> &amp;&amp; top != <span class="str">'{'</span>) <span class="kw">return false</span>;
+            <span class="kw">if</span> (c == <span class="str">']'</span> &amp;&amp; top != <span class="str">'['</span>) <span class="kw">return false</span>;
+        }
+    }
+    <span class="kw">return</span> stack.<span class="fn">isEmpty</span>();  <span class="cmt">// must be empty at the end</span>
+}
+<span class="cmt">// "()[]{}}" → false  |  "{[()]}" → true  |  "([)]" → false</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">Time</span><span class="cv">O(n)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(n)</span></span>
+      <span class="cx"><span class="cl">Use</span><span class="cv">JSON/XML validation, SQL parsers</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 2: MONOTONIC STACK ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-g">📈</div>
+      <div>
+        <span class="pcard-title">Pattern 2: Monotonic Stack</span>
+        <span class="ptag">POWERFUL</span>
+      </div>
+    </div>
+    <p>A stack that is always kept in sorted order (increasing or decreasing). When a new element violates the order, pop until it doesn't. Used for <strong>Next Greater Element</strong>, stock span, histogram problems. Classic in time-series data analysis.</p>
+
+    <div class="diag" style="margin:0 0 14px;">
+      <div class="diag-title">▸ Next Greater Element — [2, 1, 5, 3, 6, 4] → [5, 5, 6, 6, -1, -1]</div>
+      <svg viewBox="0 0 660 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:660px;display:block;">
+        <text x="10"  y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">2</text>
+        <text x="70"  y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">1</text>
+        <text x="130" y="20" fill="#fbbf24" font-family="IBM Plex Mono" font-size="11" font-weight="700" text-anchor="middle">5</text>
+        <text x="190" y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">3</text>
+        <text x="250" y="20" fill="#fbbf24" font-family="IBM Plex Mono" font-size="11" font-weight="700" text-anchor="middle">6</text>
+        <text x="310" y="20" fill="#a8a29e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">4</text>
+
+        <text x="10"  y="50" fill="#22c55e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">→5</text>
+        <text x="70"  y="50" fill="#22c55e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">→5</text>
+        <text x="130" y="50" fill="#22c55e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">→6</text>
+        <text x="190" y="50" fill="#22c55e" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">→6</text>
+        <text x="250" y="50" fill="#ef4444" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">-1</text>
+        <text x="310" y="50" fill="#ef4444" font-family="IBM Plex Mono" font-size="11" text-anchor="middle">-1</text>
+
+        <text x="380" y="30" fill="#44403c" font-family="IBM Plex Mono" font-size="10">5 is greater than both 2 and 1 → pop both, assign 5</text>
+        <text x="380" y="46" fill="#44403c" font-family="IBM Plex Mono" font-size="10">6 is greater than 5 and 3 → pop both, assign 6</text>
+        <text x="380" y="62" fill="#44403c" font-family="IBM Plex Mono" font-size="10">6 and 4 have no greater element to the right → -1</text>
+      </svg>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">NextGreaterElement.java</span></div>
+      <pre><span class="kw">public int</span>[] <span class="fn">nextGreater</span>(<span class="kw">int</span>[] nums) {
+    <span class="kw">int</span>[] result = <span class="kw">new int</span>[nums.length];
+    <span class="cls">Arrays</span>.<span class="fn">fill</span>(result, <span class="num">-1</span>);              <span class="cmt">// default: no greater element</span>
+    <span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;(); <span class="cmt">// stores INDICES</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; nums.length; i++) {
+        <span class="cmt">// While stack has indices AND current element is GREATER than top</span>
+        <span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>() &amp;&amp; nums[i] &gt; nums[stack.<span class="fn">peek</span>()]) {
+            <span class="kw">int</span> idx = stack.<span class="fn">pop</span>();       <span class="cmt">// this index found its answer</span>
+            result[idx] = nums[i];        <span class="cmt">// current element is the NGE</span>
+        }
+        stack.<span class="fn">push</span>(i);  <span class="cmt">// push current index — waiting for its NGE</span>
+    }
+    <span class="kw">return</span> result;
+}
+<span class="cmt">// [2,1,5,3,6,4] → [5,5,6,6,-1,-1]
+// Key: store INDICES in stack, not values — lets you fill the result array</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">Time</span><span class="cv">O(n)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(n)</span></span>
+      <span class="cx"><span class="cl">Use</span><span class="cv">Stock prices, rainfall, temperature</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 3: EXPRESSION EVALUATION ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-t">🧮</div>
+      <div>
+        <span class="pcard-title">Pattern 3: Expression Evaluation</span>
+        <span class="ptag">TWO STACKS</span>
+      </div>
+    </div>
+    <p>Use <strong>two stacks</strong> — one for operands (numbers), one for operators. When an operator of lower precedence is seen, pop and compute from the top. This is how compilers evaluate arithmetic. DE relevance: SQL query engines, formula parsers, Spark expression trees.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">EvalRPN.java — Reverse Polish Notation (Postfix)</span></div>
+      <pre><span class="cmt">// Evaluate Reverse Polish Notation: ["2","1","+","3","*"] → 9
+// Means: (2 + 1) * 3 = 9
+// RPN is what Spark's physical plan uses internally for expressions</span>
+
+<span class="kw">public int</span> <span class="fn">evalRPN</span>(<span class="cls">String</span>[] tokens) {
+    <span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="cls">String</span> token : tokens) {
+        <span class="kw">switch</span> (token) {
+            <span class="kw">case</span> <span class="str">"+"</span> -&gt; stack.<span class="fn">push</span>(stack.<span class="fn">pop</span>() + stack.<span class="fn">pop</span>());
+            <span class="kw">case</span> <span class="str">"-"</span> -&gt; { <span class="kw">int</span> b = stack.<span class="fn">pop</span>(), a = stack.<span class="fn">pop</span>(); stack.<span class="fn">push</span>(a - b); }
+            <span class="kw">case</span> <span class="str">"*"</span> -&gt; stack.<span class="fn">push</span>(stack.<span class="fn">pop</span>() * stack.<span class="fn">pop</span>());
+            <span class="kw">case</span> <span class="str">"/"</span> -&gt; { <span class="kw">int</span> b = stack.<span class="fn">pop</span>(), a = stack.<span class="fn">pop</span>(); stack.<span class="fn">push</span>(a / b); }
+            <span class="kw">default</span>  -&gt; stack.<span class="fn">push</span>(<span class="cls">Integer</span>.<span class="fn">parseInt</span>(token));  <span class="cmt">// number</span>
+        }
+    }
+    <span class="kw">return</span> stack.<span class="fn">pop</span>();  <span class="cmt">// final result</span>
+}
+<span class="cmt">// Trace: ["2","1","+","3","*"]
+// push 2 → [2]
+// push 1 → [2,1]
+// "+"  → pop 1 and 2, push 3  → [3]
+// push 3 → [3,3]
+// "*"  → pop 3 and 3, push 9  → [9]  → return 9</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">Time</span><span class="cv">O(n)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(n)</span></span>
+      <span class="cx"><span class="cl">DE Use</span><span class="cv">SQL engines, Spark physical plans</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 4: MIN STACK ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-r">📊</div>
+      <div>
+        <span class="pcard-title">Pattern 4: Min Stack (O(1) getMin)</span>
+        <span class="ptag">DESIGN PROBLEM</span>
+      </div>
+    </div>
+    <p>A stack that supports <code>getMin()</code> in O(1) time. Use a <strong>second "shadow" stack</strong> that tracks the current minimum at every state. Whenever you push, also push to the min-stack only if the new value ≤ current min.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">MinStack.java</span></div>
+      <pre><span class="kw">class</span> <span class="cls">MinStack</span> {
+    <span class="kw">private final</span> <span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack    = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+    <span class="kw">private final</span> <span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; minStack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+
+    <span class="kw">public void</span> <span class="fn">push</span>(<span class="kw">int</span> val) {
+        stack.<span class="fn">push</span>(val);
+        <span class="cmt">// Push to minStack if it's empty OR val ≤ current min</span>
+        <span class="kw">if</span> (minStack.<span class="fn">isEmpty</span>() || val &lt;= minStack.<span class="fn">peek</span>())
+            minStack.<span class="fn">push</span>(val);
+    }
+
+    <span class="kw">public void</span> <span class="fn">pop</span>() {
+        <span class="kw">int</span> val = stack.<span class="fn">pop</span>();
+        <span class="cmt">// Remove from minStack only if it was the current min</span>
+        <span class="kw">if</span> (val == minStack.<span class="fn">peek</span>()) minStack.<span class="fn">pop</span>();
+    }
+
+    <span class="kw">public int</span> <span class="fn">top</span>()    { <span class="kw">return</span> stack.<span class="fn">peek</span>(); }
+    <span class="kw">public int</span> <span class="fn">getMin</span>() { <span class="kw">return</span> minStack.<span class="fn">peek</span>(); }  <span class="cmt">// O(1) !</span>
+}
+<span class="cmt">// push(5) → stack:[5]    minStack:[5]
+// push(3) → stack:[3,5]  minStack:[3,5]
+// push(7) → stack:[7,3,5] minStack:[3,5]   ← 7 > 3, not pushed to minStack
+// getMin()→ 3  (peek minStack)
+// pop()   → stack:[3,5]  minStack:[3,5]    ← 7 removed, not in minStack
+// getMin()→ 3  still correct!</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">All ops</span><span class="cv">O(1)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(n)</span></span>
+      <span class="cx"><span class="cl">DE Use</span><span class="cv">Sliding window min, stream stats</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 5: ITERATIVE DFS / TREE TRAVERSAL ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-a">🌲</div>
+      <div>
+        <span class="pcard-title">Pattern 5: Iterative DFS / Tree Traversal</span>
+        <span class="ptag">RECURSION → STACK</span>
+      </div>
+    </div>
+    <p>Any recursive DFS can be converted to an iterative version using an explicit stack. Push right child before left child so left is processed first (LIFO!). Critical for environments with stack size limits — like massive Spark job DAGs.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">IterativeDFS.java — Preorder Tree Traversal</span></div>
+      <pre><span class="kw">public</span> <span class="cls">List</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">preorder</span>(<span class="cls">TreeNode</span> root) {
+    <span class="cls">List</span>&lt;<span class="typ">Integer</span>&gt; result = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> result;
+
+    <span class="cls">Deque</span>&lt;<span class="cls">TreeNode</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+    stack.<span class="fn">push</span>(root);
+
+    <span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+        <span class="cls">TreeNode</span> node = stack.<span class="fn">pop</span>();
+        result.<span class="fn">add</span>(node.val);                   <span class="cmt">// visit node</span>
+
+        <span class="cmt">// Push RIGHT first so LEFT is processed first (LIFO!)</span>
+        <span class="kw">if</span> (node.right != <span class="kw">null</span>) stack.<span class="fn">push</span>(node.right);
+        <span class="kw">if</span> (node.left  != <span class="kw">null</span>) stack.<span class="fn">push</span>(node.left);
+    }
+    <span class="kw">return</span> result;  <span class="cmt">// Root → Left → Right (Preorder)</span>
+}
+
+<span class="cmt">// Why push RIGHT before LEFT?
+// Stack is LIFO — last pushed = first popped.
+// We want to pop LEFT first → so push RIGHT first.
+// This is the core "reversal" insight of stack-based DFS.</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">Time</span><span class="cv">O(n)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(h)</span></span>
+      <span class="cx"><span class="cl">Note</span><span class="cv">h = height of tree</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 6: DECODE / NESTED STRINGS ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-g">🔤</div>
+      <div>
+        <span class="pcard-title">Pattern 6: Decode / Nested String Expansion</span>
+        <span class="ptag">TWO STACKS</span>
+      </div>
+    </div>
+    <p>When you hit a <code>[</code>, save current state to stack and start fresh. When you hit <code>]</code>, pop the saved state and combine. Used in template engines, configuration expansion, and nested JSON processing — all common in DE pipelines.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">DecodeString.java — "3[a2[c]]" → "accaccacc"</span></div>
+      <pre><span class="kw">public</span> <span class="cls">String</span> <span class="fn">decodeString</span>(<span class="cls">String</span> s) {
+    <span class="cls">Deque</span>&lt;<span class="typ">Integer</span>&gt; countStack  = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();  <span class="cmt">// stores repeat counts</span>
+    <span class="cls">Deque</span>&lt;<span class="cls">String</span>&gt;  stringStack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();  <span class="cmt">// stores built strings</span>
+    <span class="cls">String</span> current = <span class="str">""</span>;
+    <span class="kw">int</span> k = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">char</span> c : s.<span class="fn">toCharArray</span>()) {
+        <span class="kw">if</span> (<span class="cls">Character</span>.<span class="fn">isDigit</span>(c)) {
+            k = k * <span class="num">10</span> + (c - <span class="str">'0'</span>);         <span class="cmt">// handle multi-digit numbers</span>
+        } <span class="kw">else if</span> (c == <span class="str">'['</span>) {
+            countStack.<span class="fn">push</span>(k);              <span class="cmt">// save count</span>
+            stringStack.<span class="fn">push</span>(current);       <span class="cmt">// save current string</span>
+            current = <span class="str">""</span>; k = <span class="num">0</span>;            <span class="cmt">// reset for inner content</span>
+        } <span class="kw">else if</span> (c == <span class="str">']'</span>) {
+            <span class="kw">int</span> repeat = countStack.<span class="fn">pop</span>();
+            <span class="cls">String</span> prev = stringStack.<span class="fn">pop</span>();
+            current = prev + current.<span class="fn">repeat</span>(repeat); <span class="cmt">// expand and append</span>
+        } <span class="kw">else</span> {
+            current += c;                      <span class="cmt">// regular char</span>
+        }
+    }
+    <span class="kw">return</span> current;
+}
+<span class="cmt">// "3[a2[c]]"  →  "accaccacc"
+// "2[bc]3[a]" →  "bcbcaaa"</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">Time</span><span class="cv">O(n·k)</span></span>
+      <span class="cx"><span class="cl">Space</span><span class="cv ok">O(n)</span></span>
+      <span class="cx"><span class="cl">DE Use</span><span class="cv">Template engines, config expansion</span></span>
+    </div>
+  </div>
+
+  <!-- ─── PATTERN 7: UNDO/REDO ─── -->
+  <div class="pcard">
+    <div class="pcard-head">
+      <div class="pcard-icon pi-t">↩</div>
+      <div>
+        <span class="pcard-title">Pattern 7: Undo / Redo with Two Stacks</span>
+        <span class="ptag">SYSTEM DESIGN</span>
+      </div>
+    </div>
+    <p>Classic application of two stacks. Every action pushed to <strong>undoStack</strong>. On undo: pop from undoStack → push to <strong>redoStack</strong>. On redo: pop from redoStack → push back to undoStack. Used in editors, DB transaction logs, version control staging areas.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">UndoRedoSystem.java</span></div>
+      <pre><span class="kw">class</span> <span class="cls">TextEditor</span> {
+    <span class="cls">Deque</span>&lt;<span class="cls">String</span>&gt; undoStack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+    <span class="cls">Deque</span>&lt;<span class="cls">String</span>&gt; redoStack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+    <span class="cls">String</span> current = <span class="str">""</span>;
+
+    <span class="kw">public void</span> <span class="fn">type</span>(<span class="cls">String</span> text) {
+        undoStack.<span class="fn">push</span>(current);  <span class="cmt">// save current state before changing</span>
+        redoStack.<span class="fn">clear</span>();         <span class="cmt">// new action clears redo history</span>
+        current = current + text;
+    }
+
+    <span class="kw">public void</span> <span class="fn">undo</span>() {
+        <span class="kw">if</span> (undoStack.<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+        redoStack.<span class="fn">push</span>(current);   <span class="cmt">// save for redo</span>
+        current = undoStack.<span class="fn">pop</span>(); <span class="cmt">// restore previous state</span>
+    }
+
+    <span class="kw">public void</span> <span class="fn">redo</span>() {
+        <span class="kw">if</span> (redoStack.<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+        undoStack.<span class="fn">push</span>(current);   <span class="cmt">// save for undo</span>
+        current = redoStack.<span class="fn">pop</span>(); <span class="cmt">// restore redo state</span>
+    }
+}
+<span class="cmt">// type("Hello")  → current="Hello"      undo:[]       redo:[]
+// type(" World") → current="Hello World" undo:["Hello"] redo:[]
+// undo()         → current="Hello"       undo:[]       redo:["Hello World"]
+// redo()         → current="Hello World" undo:["Hello"] redo:[]</span></pre>
+    </div>
+    <div class="cx-row">
+      <span class="cx"><span class="cl">All ops</span><span class="cv">O(1)</span></span>
+      <span class="cx"><span class="cl">DE Use</span><span class="cv">DB transaction log, ETL rollback</span></span>
+    </div>
+  </div>
+
+  <!-- PATTERN SUMMARY TABLE -->
+  <h3 style="font-family:'Syne',sans-serif;margin:24px 0 12px;font-size:1.1rem;">Pattern Quick Reference</h3>
+  <table>
+    <tr><th>#</th><th>Pattern</th><th>Key Signal</th><th>Stacks Used</th><th>Classic Problem</th></tr>
+    <tr><td>1</td><td>Balanced Brackets</td><td>"matching" brackets</td><td class="good">1</td><td>Valid Parentheses</td></tr>
+    <tr><td>2</td><td>Monotonic Stack</td><td>"next greater/smaller"</td><td class="good">1</td><td>Next Greater Element</td></tr>
+    <tr><td>3</td><td>Expression Eval</td><td>operators + operands</td><td class="ok">2</td><td>Evaluate RPN</td></tr>
+    <tr><td>4</td><td>Min/Max Stack</td><td>"O(1) min" constraint</td><td class="ok">2</td><td>Design Min Stack</td></tr>
+    <tr><td>5</td><td>Iterative DFS</td><td>"traverse tree without recursion"</td><td class="good">1</td><td>Preorder Traversal</td></tr>
+    <tr><td>6</td><td>Nested Decode</td><td>"expand nested structure"</td><td class="ok">2</td><td>Decode String</td></tr>
+    <tr><td>7</td><td>Undo/Redo</td><td>"history + reverse"</td><td class="ok">2</td><td>Text Editor Design</td></tr>
+  </table>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 05 — DATA ENGINEERING ═══════════════════════ -->
+<section class="section" id="de">
+<div class="wrap">
+  <div class="sec-tag">// 05 — Real-World DE Connections</div>
+  <h2>Stacks in Data Engineering</h2>
+  <p class="sec-sub">Every major DE tool uses stacks internally. Understanding this makes you a better systems thinker.</p>
+
+  <div class="g2">
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <div class="card-tag">🔥 Apache Spark</div>
+      <h3>Catalyst Optimizer — Expression Tree</h3>
+      <p>Spark's SQL engine uses a stack to evaluate expression trees in its Catalyst Optimizer. When it parses <code>SELECT a + b * c</code>, it builds an AST and uses a stack to evaluate operator precedence — exactly Pattern 3.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--teal);">
+      <div class="card-tag">🌊 Apache Flink</div>
+      <h3>Checkpoint & Rollback</h3>
+      <p>Flink's checkpointing mechanism pushes state snapshots to a log. On failure, it pops back to the last consistent checkpoint. This is the undo-stack pattern applied to distributed streaming pipelines.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--green);">
+      <div class="card-tag">🗄 PostgreSQL</div>
+      <h3>Transaction Savepoints</h3>
+      <p>Database transaction savepoints are a stack. <code>SAVEPOINT sp1</code> = push. <code>ROLLBACK TO sp1</code> = pop back. <code>RELEASE sp1</code> = commit and discard. Nested transactions literally use a stack structure.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--ember);">
+      <div class="card-tag">🔀 Apache Airflow</div>
+      <h3>DAG Task Scheduling (DFS)</h3>
+      <p>Airflow uses Depth-First Search (stack-based) to resolve task dependencies when scheduling. It traverses the DAG and pushes tasks onto a stack, executing in topological order — Pattern 5 at scale.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--sky);">
+      <div class="card-tag">📋 dbt (data build tool)</div>
+      <h3>Ref() Resolution & Lineage</h3>
+      <p>When dbt compiles your model graph, it resolves <code>ref()</code> calls using a DFS traversal with a stack to detect cycles and build execution order. If a circular ref exists, the stack detects it (like cycle detection in linked lists).</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <div class="card-tag">🔍 JSON / Parquet Parsing</div>
+      <h3>Nested Structure Parsing</h3>
+      <p>Parsing nested JSON or Parquet schema uses the bracket-matching pattern. Every <code>{</code> or <code>[</code> pushes context onto a stack. Every <code>}</code> or <code>]</code> pops and validates — Pattern 1 + Pattern 6 combined.</p>
+    </div>
+  </div>
+
+  <!-- DE CODE EXAMPLE: Spark-like expression tree evaluation -->
+  <div class="code-wrap" style="margin-top:24px;">
+    <div class="code-header"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span style="margin-left:10px">SparkLikeExpressionEval.java — How Spark evaluates column expressions</span></div>
+    <pre><span class="cmt">// Simplified version of how Spark's Catalyst evaluates:
+// col("revenue") - col("cost") * 0.1
+// represented as RPN: ["revenue", "cost", "0.1", "*", "-"]</span>
+
+<span class="kw">public double</span> <span class="fn">evalColumnExpr</span>(<span class="cls">String</span>[] tokens, <span class="cls">Map</span>&lt;<span class="cls">String</span>, <span class="cls">Double</span>&gt; row) {
+    <span class="cls">Deque</span>&lt;<span class="cls">Double</span>&gt; stack = <span class="kw">new</span> <span class="cls">ArrayDeque</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="cls">String</span> token : tokens) {
+        <span class="kw">if</span> (row.<span class="fn">containsKey</span>(token)) {
+            stack.<span class="fn">push</span>(row.<span class="fn">get</span>(token));        <span class="cmt">// column value from row</span>
+        } <span class="kw">else if</span> (token.<span class="fn">matches</span>(<span class="str">"-?\\d+(\\.\\d+)?"</span>)) {
+            stack.<span class="fn">push</span>(<span class="cls">Double</span>.<span class="fn">parseDouble</span>(token)); <span class="cmt">// literal number</span>
+        } <span class="kw">else</span> {
+            <span class="kw">double</span> b = stack.<span class="fn">pop</span>(), a = stack.<span class="fn">pop</span>();
+            <span class="kw">switch</span> (token) {
+                <span class="kw">case</span> <span class="str">"+"</span> -&gt; stack.<span class="fn">push</span>(a + b);
+                <span class="kw">case</span> <span class="str">"-"</span> -&gt; stack.<span class="fn">push</span>(a - b);
+                <span class="kw">case</span> <span class="str">"*"</span> -&gt; stack.<span class="fn">push</span>(a * b);
+                <span class="kw">case</span> <span class="str">"/"</span> -&gt; stack.<span class="fn">push</span>(a / b);
+            }
+        }
+    }
+    <span class="kw">return</span> stack.<span class="fn">pop</span>();
+}
+
+<span class="cmt">// Usage:
+// Map row = {"revenue": 1000.0, "cost": 200.0}
+// tokens  = ["revenue", "cost", "0.1", "*", "-"]
+// Result  = 1000 - (200 * 0.1) = 980.0
+// This is how Spark evaluates column transformations row by row!</span></pre>
+  </div>
+</div>
+</section>
+
+
+<!-- ═══════════════════════ 06 — CHEAT SHEET ═══════════════════════ -->
+<section class="section" id="cheat">
+<div class="wrap">
+  <div class="sec-tag">// 06 — Cheat Sheet</div>
+  <h2>Everything at a Glance</h2>
+  <p class="sec-sub">Bookmark this section. Everything you need to recall in an interview or on the job.</p>
+
+  <!-- Java API Quick Reference -->
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem;margin-bottom:12px;">Java Stack API (ArrayDeque)</h3>
+  <table>
+    <tr><th>Method</th><th>Description</th><th>Throws if empty?</th><th>Complexity</th></tr>
+    <tr><td><code>push(e)</code></td><td>Add to top</td><td>No</td><td class="good">O(1)</td></tr>
+    <tr><td><code>pop()</code></td><td>Remove + return top</td><td class="bad">Yes — NoSuchElement</td><td class="good">O(1)</td></tr>
+    <tr><td><code>peek()</code></td><td>View top (no remove)</td><td class="bad">Yes — NoSuchElement</td><td class="good">O(1)</td></tr>
+    <tr><td><code>isEmpty()</code></td><td>True if no elements</td><td>No</td><td class="good">O(1)</td></tr>
+    <tr><td><code>size()</code></td><td>Number of elements</td><td>No</td><td class="good">O(1)</td></tr>
+    <tr><td><code>clear()</code></td><td>Remove all elements</td><td>No</td><td class="ok">O(n)</td></tr>
+  </table>
+
+  <hr class="soft">
+
+  <!-- Pattern Recognition -->
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem;margin-bottom:12px;">Pattern Recognition Map</h3>
+  <table>
+    <tr><th>Problem says / asks…</th><th>→ Use Pattern</th><th>Key Tip</th></tr>
+    <tr><td>"valid brackets / braces / parentheses"</td><td class="good">Balanced Brackets</td><td>Push opens, pop on close</td></tr>
+    <tr><td>"next greater / smaller element"</td><td class="good">Monotonic Stack</td><td>Store indices, not values</td></tr>
+    <tr><td>"evaluate expression / RPN"</td><td class="ok">Expression Eval</td><td>Two stacks: nums + ops</td></tr>
+    <tr><td>"design stack with O(1) min"</td><td class="ok">Min Stack</td><td>Shadow min-stack</td></tr>
+    <tr><td>"traverse tree without recursion"</td><td class="good">Iterative DFS</td><td>Push right before left</td></tr>
+    <tr><td>"expand nested / repeated string"</td><td class="ok">Nested Decode</td><td>Push on [, pop on ]</td></tr>
+    <tr><td>"undo/redo / history navigation"</td><td class="ok">Undo/Redo</td><td>Two stacks: undo + redo</td></tr>
+    <tr><td>"largest rectangle / area"</td><td class="good">Monotonic Stack</td><td>Histogram variation</td></tr>
+    <tr><td>"convert infix to postfix"</td><td class="ok">Expression Eval</td><td>Shunting-yard algo</td></tr>
+  </table>
+
+  <hr class="soft">
+
+  <div class="g2">
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <p><strong>Use a Stack when:</strong> Order of processing must be reversed. You need to track "pending" work while diving deeper. You're implementing any DFS, undo, bracket matching, or expression parsing. The last item added should be the first processed.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <p><strong>Avoid a Stack when:</strong> You need FIFO order (use a Queue). You need random access by index (use an ArrayList). You need sorted access (use a TreeSet/PriorityQueue). You need bidirectional traversal (use Deque as queue).</p>
+    </div>
+  </div>
+
+  <div class="callout de" style="margin-top:6px;">
+    <span class="callout-icon">🚀</span>
+    <p><strong>Your DE Mastery Path:</strong> 1) Implement ArrayStack from scratch → 2) Solve all 7 patterns (LeetCode 20, 496, 150, 155, 144, 394, Undo/Redo) → 3) Read Spark Catalyst source to see real stack usage → 4) Trace a PostgreSQL SAVEPOINT to see LIFO in production SQL → 5) Build a mini expression evaluator for a custom column transform. You'll think in stacks naturally after this.</p>
+  </div>
+
+  <hr class="soft">
+
+  <!-- Stack vs Queue vs Deque -->
+  <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem;margin-bottom:12px;">Stack vs Queue vs Deque</h3>
+  <table>
+    <tr><th>Structure</th><th>Order</th><th>Add</th><th>Remove</th><th>Java Class</th></tr>
+    <tr><td><strong>Stack</strong></td><td class="ok">LIFO</td><td>push (top)</td><td>pop (top)</td><td>ArrayDeque (as stack)</td></tr>
+    <tr><td><strong>Queue</strong></td><td class="good">FIFO</td><td>offer (back)</td><td>poll (front)</td><td>ArrayDeque (as queue)</td></tr>
+    <tr><td><strong>Deque</strong></td><td class="good">Both ends</td><td>offerFirst / offerLast</td><td>pollFirst / pollLast</td><td>ArrayDeque</td></tr>
+    <tr><td><strong>PriorityQueue</strong></td><td class="ok">Priority</td><td>offer</td><td>poll (min/max)</td><td>PriorityQueue</td></tr>
+  </table>
+</div>
+</section>
+
+
+<!-- FOOTER -->
+<footer style="background:var(--surface);border-top:1px solid var(--border);padding:28px 48px;">
+  <div style="max-width:1060px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:4px;">Stack Mastery</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:3px;">DATA ENGINEER'S GUIDE · JAVA · VOL.2</div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-align:right;">
+      Patterns: Brackets · Monotonic · Expression · MinStack · DFS · Decode · Undo/Redo
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

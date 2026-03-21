@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked List Mastery — Data Engineer's Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,wght@0,300;0,700;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #10b981;
+    --yellow: #fbbf24;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --node-bg: #162032;
+    --code-bg: #0d1525;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a0e1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.06) 0%, transparent 60%);
+  }
+  .hero-label {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    max-width: 600px;
+    margin-bottom: 28px;
+  }
+  .badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .badge-java { color: var(--accent2); border-color: rgba(255,107,53,0.3); background: rgba(255,107,53,0.07); }
+  .badge-de { color: var(--green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.07); }
+  .badge-lvl { color: var(--accent); border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.07); }
+
+  /* NAV */
+  .toc {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .toc-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-right: 8px; letter-spacing: 2px; }
+  .toc a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .toc a:hover { color: var(--accent); border-color: var(--border); background: var(--surface2); }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+  .section { padding: 60px 0 40px; border-bottom: 1px solid var(--border); }
+  .section:last-child { border-bottom: none; }
+
+  /* SECTION HEADER */
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .section-sub { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 36px; max-width: 680px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .card h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 10px; }
+  .card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; }
+
+  /* TERM BOX */
+  .term-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .term-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .term-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  }
+  .term-box.blue::before { background: var(--accent); }
+  .term-box.orange::before { background: var(--accent2); }
+  .term-box.purple::before { background: var(--accent3); }
+  .term-box.green::before { background: var(--green); }
+  .term-box.yellow::before { background: var(--yellow); }
+  .term-box .term { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+  .term-box.blue .term { color: var(--accent); }
+  .term-box.orange .term { color: var(--accent2); }
+  .term-box.purple .term { color: var(--accent3); }
+  .term-box.green .term { color: var(--green); }
+  .term-box.yellow .term { color: var(--yellow); }
+  .term-box p { color: var(--text-dim); font-size: 0.83rem; line-height: 1.6; }
+
+  /* CODE */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px 24px;
+    overflow-x: auto;
+    margin: 18px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+  }
+  .code-header {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .code-header + pre { border-radius: 0 0 8px 8px; margin-top: 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ef4444; } .dot-y { background: #fbbf24; } .dot-g { background: #10b981; }
+
+  /* SYNTAX COLORS */
+  .kw { color: #7c3aed; }
+  .cls { color: #00d4ff; }
+  .fn { color: #fbbf24; }
+  .str { color: #10b981; }
+  .cmt { color: #475569; font-style: italic; }
+  .num { color: #ff6b35; }
+  .typ { color: #a78bfa; }
+
+  /* SVG DIAGRAMS */
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .diagram-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  /* STEPS */
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 0.95rem; margin-bottom: 4px; }
+  .step-content p { color: var(--text-dim); font-size: 0.87rem; }
+
+  /* COMPARISON TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.87rem; }
+  th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  td { padding: 12px 16px; border: 1px solid var(--border); color: var(--text-dim); }
+  tr:hover td { background: var(--surface2); color: var(--text); }
+  .good { color: var(--green); }
+  .bad { color: var(--red); }
+  .ok { color: var(--yellow); }
+
+  /* PATTERN BOX */
+  .pattern-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
+  }
+  .pattern-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .pattern-icon.blue { background: rgba(0,212,255,0.1); }
+  .pattern-icon.orange { background: rgba(255,107,53,0.1); }
+  .pattern-icon.purple { background: rgba(124,58,237,0.1); }
+  .pattern-icon.green { background: rgba(16,185,129,0.1); }
+  .pattern-name { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 700; }
+  .pattern-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; padding: 3px 8px;
+    border-radius: 3px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+  }
+
+  .complexity-row { display: flex; gap: 20px; flex-wrap: wrap; margin: 12px 0; }
+  .complexity-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .complexity-item .label { color: var(--text-muted); margin-right: 6px; }
+  .complexity-item .val { color: var(--green); }
+  .complexity-item .val.bad { color: var(--red); }
+
+  /* INFO CALLOUT */
+  .callout {
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    display: flex; gap: 14px;
+    font-size: 0.9rem;
+  }
+  .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+  .callout.info { background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2); }
+  .callout.tip { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); }
+  .callout.warn { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); }
+  .callout.de { background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2); }
+  .callout p { color: var(--text-dim); line-height: 1.7; }
+  .callout strong { color: var(--text); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* MEMORY LAYOUT */
+  .mem-row { display: flex; gap: 4px; align-items: center; margin: 14px 0; flex-wrap: wrap; }
+  .mem-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-align: center;
+    min-width: 70px;
+  }
+  .mem-cell .addr { color: var(--text-muted); font-size: 0.65rem; margin-bottom: 4px; }
+  .mem-cell .val { color: var(--accent); font-weight: 600; }
+  .mem-cell .ptr { color: var(--accent2); font-size: 0.7rem; }
+  .mem-arrow { color: var(--text-muted); font-size: 1.2rem; }
+
+  hr.soft { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .hero { padding: 40px 20px; }
+    .container { padding: 0 20px; }
+    .toc { padding: 14px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-label">// Data Engineer's Study Guide</div>
+    <h1>Mastering <span>Linked Lists</span><br>in Java</h1>
+    <p>A complete guide from fundamentals to advanced patterns — built for engineers who think in data flow, pipelines, and system design.</p>
+    <div class="badges">
+      <span class="badge badge-java">☕ Java</span>
+      <span class="badge badge-de">⚙ Data Engineering</span>
+      <span class="badge badge-lvl">Step-by-Step</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc">
+  <span class="toc-label">JUMP TO</span>
+  <a href="#prereq">Prerequisites</a>
+  <a href="#what">What is a LL?</a>
+  <a href="#types">Types</a>
+  <a href="#ops">Operations</a>
+  <a href="#patterns">Patterns</a>
+  <a href="#de">DE Use Cases</a>
+  <a href="#cheatsheet">Cheat Sheet</a>
+</nav>
+
+<!-- ─── SECTION 0: PREREQUISITES ─── -->
+<section class="section" id="prereq">
+<div class="container">
+  <div class="section-num">// 00 — PREREQUISITE TOPICS</div>
+  <h2>Before You Begin</h2>
+  <p class="section-sub">These are the foundational concepts you need to understand before diving into linked lists. Each one is explained below.</p>
+
+  <div class="term-grid">
+    <div class="term-box blue">
+      <div class="term">📦 Object / Class</div>
+      <p>A class is a blueprint. An object is a real thing made from that blueprint. Example: <code>Node myNode = new Node(5);</code> — here Node is the class, myNode is the object.</p>
+    </div>
+    <div class="term-box orange">
+      <div class="term">🔗 Reference (Pointer)</div>
+      <p>In Java, variables for objects hold a <em>reference</em> — like a street address to where the object lives in memory. Not the object itself, but directions to find it.</p>
+    </div>
+    <div class="term-box purple">
+      <div class="term">🧠 Memory (Heap vs Stack)</div>
+      <p><strong>Stack</strong>: fast, small, stores local variables. <strong>Heap</strong>: large, stores objects. When you do <code>new Node()</code>, the node goes on the heap.</p>
+    </div>
+    <div class="term-box green">
+      <div class="term">🎭 null</div>
+      <p><code>null</code> means "points to nothing." In linked lists, the last node's <code>next</code> pointer is set to <code>null</code> to signal the end of the chain.</p>
+    </div>
+    <div class="term-box yellow">
+      <div class="term">🔁 Iteration / Traversal</div>
+      <p>Moving through a sequence one step at a time. In arrays: <code>arr[i]</code>. In linked lists: following <code>node.next</code> until you reach <code>null</code>.</p>
+    </div>
+    <div class="term-box blue">
+      <div class="term">📐 Generic Types &lt;T&gt;</div>
+      <p>Java generics let you write code that works with any data type. <code>LinkedList&lt;Integer&gt;</code> stores integers; <code>LinkedList&lt;String&gt;</code> stores strings — same class, different type.</p>
+    </div>
+    <div class="term-box orange">
+      <div class="term">🧩 Big O Notation</div>
+      <p>A way to measure how an algorithm scales with input size. <strong>O(1)</strong> = instant, <strong>O(n)</strong> = grows linearly with size, <strong>O(n²)</strong> = slow for large inputs.</p>
+    </div>
+    <div class="term-box purple">
+      <div class="term">🏗️ Data Structure</div>
+      <p>A way of organizing data so it can be stored and accessed efficiently. Arrays, lists, stacks, queues, trees — each solves different problems differently.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <p><strong>Data Engineer tip:</strong> Think of a reference/pointer like a foreign key in a database — it doesn't store the actual data, it stores the <em>address</em> to find that data. Linked lists are essentially a chain of "records with foreign keys pointing to the next record."</p>
+  </div>
+</div>
+</section>
+
+<!-- ─── SECTION 1: WHAT IS A LINKED LIST ─── -->
+<section class="section" id="what">
+<div class="container">
+  <div class="section-num">// 01 — FOUNDATION</div>
+  <h2>What is a Linked List?</h2>
+  <p class="section-sub">A linked list is a sequence of nodes where each node stores data and a pointer to the next node. Unlike arrays, nodes are scattered in memory — not stored in one contiguous block.</p>
+
+  <!-- MEMORY ANALOGY -->
+  <div class="card">
+    <div class="card-title">🏠 Analogy: Treasure Hunt</div>
+    <p>Imagine a treasure hunt where each clue tells you <strong>the data (treasure at this spot)</strong> and <strong>the address of the next clue</strong>. You can only find clue #3 by reading clue #2 first. You can't skip directly to clue #7. That's a linked list.</p>
+  </div>
+
+  <!-- DIAGRAM: Array vs LL Memory -->
+  <div class="diagram-wrap">
+    <div class="diagram-title">▸ Array vs Linked List — Memory Layout</div>
+    <svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;display:block;">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#00d4ff"/>
+        </marker>
+        <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ff6b35"/>
+        </marker>
+      </defs>
+
+      <!-- Array section -->
+      <text x="20" y="32" fill="#64748b" font-family="JetBrains Mono" font-size="11" letter-spacing="2">ARRAY — contiguous memory</text>
+      <rect x="20" y="44" width="72" height="54" rx="4" fill="#162032" stroke="#1e2d45"/>
+      <rect x="95" y="44" width="72" height="54" rx="4" fill="#162032" stroke="#1e2d45"/>
+      <rect x="170" y="44" width="72" height="54" rx="4" fill="#162032" stroke="#1e2d45"/>
+      <rect x="245" y="44" width="72" height="54" rx="4" fill="#162032" stroke="#1e2d45"/>
+      <rect x="320" y="44" width="72" height="54" rx="4" fill="#162032" stroke="#1e2d45"/>
+      <text x="56" y="66" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">10</text>
+      <text x="131" y="66" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">20</text>
+      <text x="206" y="66" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">30</text>
+      <text x="281" y="66" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">40</text>
+      <text x="356" y="66" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">50</text>
+      <text x="56" y="85" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x100</text>
+      <text x="131" y="85" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x101</text>
+      <text x="206" y="85" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x102</text>
+      <text x="281" y="85" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x103</text>
+      <text x="356" y="85" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x104</text>
+      <text x="56" y="110" fill="#10b981" font-family="JetBrains Mono" font-size="9" text-anchor="middle">[0]</text>
+      <text x="131" y="110" fill="#10b981" font-family="JetBrains Mono" font-size="9" text-anchor="middle">[1]</text>
+      <text x="206" y="110" fill="#10b981" font-family="JetBrains Mono" font-size="9" text-anchor="middle">[2]</text>
+      <text x="281" y="110" fill="#10b981" font-family="JetBrains Mono" font-size="9" text-anchor="middle">[3]</text>
+      <text x="356" y="110" fill="#10b981" font-family="JetBrains Mono" font-size="9" text-anchor="middle">[4]</text>
+      <text x="420" y="75" fill="#475569" font-family="JetBrains Mono" font-size="10">← addresses are sequential</text>
+
+      <!-- LL section -->
+      <text x="20" y="170" fill="#64748b" font-family="JetBrains Mono" font-size="11" letter-spacing="2">LINKED LIST — scattered memory</text>
+      <!-- Node 1 -->
+      <rect x="20" y="182" width="100" height="56" rx="6" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <line x1="70" y1="182" x2="70" y2="238" stroke="#1e2d45" stroke-width="1"/>
+      <text x="44" y="205" fill="#00d4ff" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">10</text>
+      <text x="85" y="201" fill="#ff6b35" font-family="JetBrains Mono" font-size="9" text-anchor="middle">next</text>
+      <text x="85" y="216" fill="#ff6b35" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x3A1</text>
+      <text x="44" y="225" fill="#475569" font-family="JetBrains Mono" font-size="9" text-anchor="middle">@0x100</text>
+      <!-- Node 2 at different address -->
+      <rect x="220" y="182" width="100" height="56" rx="6" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <line x1="270" y1="182" x2="270" y2="238" stroke="#1e2d45" stroke-width="1"/>
+      <text x="244" y="205" fill="#00d4ff" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">20</text>
+      <text x="285" y="201" fill="#ff6b35" font-family="JetBrains Mono" font-size="9" text-anchor="middle">next</text>
+      <text x="285" y="216" fill="#ff6b35" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0x7F2</text>
+      <text x="244" y="225" fill="#475569" font-family="JetBrains Mono" font-size="9" text-anchor="middle">@0x3A1</text>
+      <!-- Node 3 -->
+      <rect x="440" y="182" width="100" height="56" rx="6" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <line x1="490" y1="182" x2="490" y2="238" stroke="#1e2d45" stroke-width="1"/>
+      <text x="464" y="205" fill="#00d4ff" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">30</text>
+      <text x="505" y="201" fill="#ff6b35" font-family="JetBrains Mono" font-size="9" text-anchor="middle">next</text>
+      <text x="505" y="214" fill="#475569" font-family="JetBrains Mono" font-size="10" text-anchor="middle">null</text>
+      <text x="464" y="225" fill="#475569" font-family="JetBrains Mono" font-size="9" text-anchor="middle">@0x7F2</text>
+      <!-- Arrows between nodes -->
+      <line x1="120" y1="208" x2="218" y2="208" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="320" y1="208" x2="438" y2="208" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="555" y="212" fill="#ef4444" font-family="JetBrains Mono" font-size="11" font-weight="700">← END</text>
+    </svg>
+  </div>
+
+  <!-- NODE ANATOMY -->
+  <div class="diagram-wrap">
+    <div class="diagram-title">▸ Anatomy of a Single Node</div>
+    <svg viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;display:block;">
+      <rect x="40" y="20" width="200" height="80" rx="8" fill="#162032" stroke="#00d4ff" stroke-width="2"/>
+      <line x1="140" y1="20" x2="140" y2="100" stroke="#00d4ff" stroke-width="1.5"/>
+      <!-- Data -->
+      <text x="90" y="48" fill="#94a3b8" font-family="JetBrains Mono" font-size="10" text-anchor="middle">DATA</text>
+      <text x="90" y="68" fill="#00d4ff" font-family="JetBrains Mono" font-size="18" font-weight="700" text-anchor="middle">42</text>
+      <text x="90" y="88" fill="#475569" font-family="JetBrains Mono" font-size="9" text-anchor="middle">int / any type</text>
+      <!-- Next -->
+      <text x="170" y="48" fill="#94a3b8" font-family="JetBrains Mono" font-size="10" text-anchor="middle">NEXT</text>
+      <text x="170" y="68" fill="#ff6b35" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle">→ ref</text>
+      <text x="170" y="88" fill="#475569" font-family="JetBrains Mono" font-size="9" text-anchor="middle">Node pointer</text>
+      <!-- Arrow -->
+      <line x1="240" y1="60" x2="330" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr2)"/>
+      <text x="350" y="55" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">next node</text>
+      <text x="350" y="70" fill="#64748b" font-family="JetBrains Mono" font-size="9">or null if last</text>
+    </svg>
+  </div>
+
+  <!-- Node Java Code -->
+  <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">Node.java — The Building Block</span></div>
+  <pre><span class="cmt">// A Node is the single building block of a Linked List.</span>
+<span class="cmt">// Think of it as one "record" in a chain.</span>
+
+<span class="kw">public class</span> <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; {
+
+    <span class="kw">public</span> <span class="typ">T</span> data;          <span class="cmt">// stores the actual value (any type)</span>
+    <span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; next;   <span class="cmt">// reference (address) to the next node</span>
+
+    <span class="cmt">// Constructor: creates a node with given data, next = null by default</span>
+    <span class="kw">public</span> <span class="fn">Node</span>(<span class="typ">T</span> data) {
+        <span class="kw">this</span>.data = data;
+        <span class="kw">this</span>.next = <span class="kw">null</span>;   <span class="cmt">// starts unlinked</span>
+    }
+}
+
+<span class="cmt">// Usage:</span>
+<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; first  = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(<span class="num">10</span>);
+<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; second = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(<span class="num">20</span>);
+<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; third  = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(<span class="num">30</span>);
+
+first.next  = second;  <span class="cmt">// 10 → 20</span>
+second.next = third;   <span class="cmt">// 20 → 30</span>
+<span class="cmt">// third.next is already null → end of list</span></pre>
+</div>
+</section>
+
+<!-- ─── SECTION 2: TYPES ─── -->
+<section class="section" id="types">
+<div class="container">
+  <div class="section-num">// 02 — TYPES OF LINKED LISTS</div>
+  <h2>The Four Types</h2>
+  <p class="section-sub">Each type is suited to different use cases. Understanding which to use is a key engineering decision.</p>
+
+  <!-- TYPE 1: Singly -->
+  <div class="card" style="border-left: 3px solid var(--accent);">
+    <div class="pattern-header">
+      <div class="pattern-icon blue">1️⃣</div>
+      <div>
+        <div class="pattern-name">Singly Linked List</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);margin-top:3px">Each node points only FORWARD. The most basic type.</div>
+      </div>
+    </div>
+    <div class="diagram-wrap" style="margin-top:0">
+      <svg viewBox="0 0 640 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;display:block;">
+        <defs><marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#00d4ff"/></marker></defs>
+        <!-- HEAD label -->
+        <text x="30" y="18" fill="#10b981" font-family="JetBrains Mono" font-size="10">HEAD</text>
+        <line x1="50" y1="22" x2="50" y2="34" stroke="#10b981" stroke-width="1" marker-end="url(#a1)"/>
+        <!-- Nodes -->
+        <rect x="20" y="36" width="60" height="34" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="50" y="58" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">10</text>
+        <line x1="80" y1="53" x2="118" y2="53" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#a1)"/>
+
+        <rect x="120" y="36" width="60" height="34" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="150" y="58" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">20</text>
+        <line x1="180" y1="53" x2="218" y2="53" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#a1)"/>
+
+        <rect x="220" y="36" width="60" height="34" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="250" y="58" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">30</text>
+        <line x1="280" y1="53" x2="318" y2="53" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#a1)"/>
+
+        <rect x="320" y="36" width="60" height="34" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="350" y="58" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">40</text>
+        <line x1="380" y1="53" x2="410" y2="53" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="415" y="57" fill="#ef4444" font-family="JetBrains Mono" font-size="12" font-weight="700">null</text>
+        <text x="470" y="18" fill="#10b981" font-family="JetBrains Mono" font-size="10">TAIL</text>
+        <line x1="480" y1="22" x2="480" y2="34" stroke="#10b981" stroke-width="1" marker-end="url(#a1)"/>
+        <rect x="455" y="36" width="60" height="34" rx="5" fill="#162032" stroke="#10b981" stroke-width="1.5"/>
+        <text x="485" y="58" fill="#10b981" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">50</text>
+        <text x="520" y="57" fill="#ef4444" font-family="JetBrains Mono" font-size="11">→ null</text>
+      </svg>
+    </div>
+    <div class="complexity-row">
+      <span class="complexity-item"><span class="label">Access</span><span class="val bad">O(n)</span></span>
+      <span class="complexity-item"><span class="label">Insert (head)</span><span class="val">O(1)</span></span>
+      <span class="complexity-item"><span class="label">Insert (tail)</span><span class="val bad">O(n)</span></span>
+      <span class="complexity-item"><span class="label">Space</span><span class="val">O(n)</span></span>
+    </div>
+  </div>
+
+  <!-- TYPE 2: Doubly -->
+  <div class="card" style="border-left: 3px solid var(--accent2);">
+    <div class="pattern-header">
+      <div class="pattern-icon orange">2️⃣</div>
+      <div>
+        <div class="pattern-name">Doubly Linked List</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);margin-top:3px">Each node has both NEXT and PREV pointers. Traverse in both directions.</div>
+      </div>
+    </div>
+    <div class="diagram-wrap" style="margin-top:0">
+      <svg viewBox="0 0 640 90" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;display:block;">
+        <defs>
+          <marker id="fw" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#00d4ff"/></marker>
+          <marker id="bw" markerWidth="7" markerHeight="5" refX="0" refY="2.5" orient="auto"><polygon points="7 0, 0 2.5, 7 5" fill="#ff6b35"/></marker>
+        </defs>
+        <text x="10" y="14" fill="#64748b" font-family="JetBrains Mono" font-size="10">null ←</text>
+        <!-- Node A -->
+        <rect x="60" y="20" width="70" height="50" rx="5" fill="#162032" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="95" y="50" fill="#ff6b35" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">10</text>
+        <!-- forward arrow -->
+        <line x1="130" y1="38" x2="160" y2="38" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#fw)"/>
+        <!-- backward arrow -->
+        <line x1="160" y1="52" x2="130" y2="52" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#bw)"/>
+
+        <!-- Node B -->
+        <rect x="162" y="20" width="70" height="50" rx="5" fill="#162032" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="197" y="50" fill="#ff6b35" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">20</text>
+        <line x1="232" y1="38" x2="262" y2="38" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#fw)"/>
+        <line x1="262" y1="52" x2="232" y2="52" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#bw)"/>
+
+        <!-- Node C -->
+        <rect x="264" y="20" width="70" height="50" rx="5" fill="#162032" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="299" y="50" fill="#ff6b35" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">30</text>
+        <line x1="334" y1="38" x2="364" y2="38" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#fw)"/>
+        <line x1="364" y1="52" x2="334" y2="52" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#bw)"/>
+
+        <!-- Node D -->
+        <rect x="366" y="20" width="70" height="50" rx="5" fill="#162032" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="401" y="50" fill="#ff6b35" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">40</text>
+        <text x="445" y="45" fill="#ef4444" font-family="JetBrains Mono" font-size="10">→ null</text>
+
+        <text x="30" y="38" fill="#00d4ff" font-family="JetBrains Mono" font-size="9">next →</text>
+        <text x="30" y="55" fill="#ff6b35" font-family="JetBrains Mono" font-size="9">← prev</text>
+      </svg>
+    </div>
+    <div class="complexity-row">
+      <span class="complexity-item"><span class="label">Insert (any)</span><span class="val">O(1)*</span></span>
+      <span class="complexity-item"><span class="label">Delete (any)</span><span class="val">O(1)*</span></span>
+      <span class="complexity-item"><span class="label">Extra space</span><span class="val bad">2× pointers</span></span>
+    </div>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px">* O(1) only if you already have a reference to the node; otherwise O(n) to find it.</p>
+  </div>
+
+  <!-- TYPE 3: Circular -->
+  <div class="card" style="border-left: 3px solid var(--accent3);">
+    <div class="pattern-header">
+      <div class="pattern-icon purple">3️⃣</div>
+      <div>
+        <div class="pattern-name">Circular Linked List</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);margin-top:3px">The last node's NEXT points back to the HEAD. No null end. Useful for round-robin scheduling.</div>
+      </div>
+    </div>
+    <div class="diagram-wrap" style="margin-top:0">
+      <svg viewBox="0 0 500 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;display:block;">
+        <defs><marker id="a3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#7c3aed"/></marker></defs>
+        <rect x="30" y="30" width="70" height="44" rx="5" fill="#162032" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="65" y="57" fill="#a78bfa" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">10</text>
+        <line x1="100" y1="52" x2="128" y2="52" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <rect x="130" y="30" width="70" height="44" rx="5" fill="#162032" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="165" y="57" fill="#a78bfa" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">20</text>
+        <line x1="200" y1="52" x2="228" y2="52" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <rect x="230" y="30" width="70" height="44" rx="5" fill="#162032" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="265" y="57" fill="#a78bfa" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">30</text>
+        <line x1="300" y1="52" x2="328" y2="52" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+
+        <rect x="330" y="30" width="70" height="44" rx="5" fill="#162032" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="365" y="57" fill="#a78bfa" font-family="JetBrains Mono" font-size="15" font-weight="700" text-anchor="middle">40</text>
+        <!-- Circular arrow back -->
+        <path d="M 400 52 Q 420 110 250 110 Q 80 110 65 74" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a3)"/>
+        <text x="210" y="125" fill="#7c3aed" font-family="JetBrains Mono" font-size="9" text-anchor="middle">wraps back to HEAD →</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <h3 style="margin:30px 0 14px;font-family:'Fraunces',serif;">Quick Comparison</h3>
+  <table>
+    <tr><th>Type</th><th>Traversal</th><th>Memory</th><th>Best Use Case</th></tr>
+    <tr><td>Singly</td><td class="good">Forward only</td><td class="good">Low</td><td>Stacks, simple queues</td></tr>
+    <tr><td>Doubly</td><td class="good">Both ways</td><td class="ok">Medium</td><td>Undo/redo, browser history</td></tr>
+    <tr><td>Circular</td><td class="ok">Loop forever</td><td class="good">Low</td><td>Round-robin, OS scheduling</td></tr>
+    <tr><td>Doubly Circular</td><td class="good">Both + loop</td><td class="bad">High</td><td>Advanced data structures</td></tr>
+  </table>
+</div>
+</section>
+
+<!-- ─── SECTION 3: CORE OPERATIONS ─── -->
+<section class="section" id="ops">
+<div class="container">
+  <div class="section-num">// 03 — CORE OPERATIONS</div>
+  <h2>Core Operations in Java</h2>
+  <p class="section-sub">The full implementation of a Singly Linked List — understanding every operation step by step.</p>
+
+  <!-- Full LL Class -->
+  <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">SinglyLinkedList.java — Complete Implementation</span></div>
+  <pre><span class="kw">public class</span> <span class="cls">SinglyLinkedList</span>&lt;<span class="typ">T</span>&gt; {
+
+    <span class="kw">private</span> <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; head;   <span class="cmt">// always points to the first node</span>
+    <span class="kw">private int</span> size;       <span class="cmt">// tracks count for O(1) size check</span>
+
+    <span class="cmt">// ── 1. INSERT AT HEAD ─────────────────────────────────</span>
+    <span class="cmt">// O(1) — Just re-wire the head pointer</span>
+    <span class="kw">public void</span> <span class="fn">addFirst</span>(<span class="typ">T</span> data) {
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; newNode = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(data);  <span class="cmt">// 1. create new node</span>
+        newNode.next = head;                    <span class="cmt">// 2. new → old head</span>
+        head = newNode;                         <span class="cmt">// 3. head = new node</span>
+        size++;
+    }
+
+    <span class="cmt">// ── 2. INSERT AT TAIL ─────────────────────────────────</span>
+    <span class="cmt">// O(n) — Must walk to the end first</span>
+    <span class="kw">public void</span> <span class="fn">addLast</span>(<span class="typ">T</span> data) {
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; newNode = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(data);
+        <span class="kw">if</span> (head == <span class="kw">null</span>) { head = newNode; size++; <span class="kw">return</span>; }
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; current = head;
+        <span class="kw">while</span> (current.next != <span class="kw">null</span>) {  <span class="cmt">// walk until last node</span>
+            current = current.next;
+        }
+        current.next = newNode;             <span class="cmt">// attach new node at end</span>
+        size++;
+    }
+
+    <span class="cmt">// ── 3. DELETE BY VALUE ────────────────────────────────</span>
+    <span class="cmt">// O(n) — Find the node before the target, then bypass it</span>
+    <span class="kw">public void</span> <span class="fn">delete</span>(<span class="typ">T</span> target) {
+        <span class="kw">if</span> (head == <span class="kw">null</span>) <span class="kw">return</span>;
+        <span class="kw">if</span> (head.data.equals(target)) { <span class="cmt">// target is the head itself</span>
+            head = head.next;
+            size--; <span class="kw">return</span>;
+        }
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; prev = head;
+        <span class="kw">while</span> (prev.next != <span class="kw">null</span>) {
+            <span class="kw">if</span> (prev.next.data.equals(target)) {
+                prev.next = prev.next.next;  <span class="cmt">// skip over the target node</span>
+                size--; <span class="kw">return</span>;
+            }
+            prev = prev.next;
+        }
+    }
+
+    <span class="cmt">// ── 4. SEARCH / CONTAINS ──────────────────────────────</span>
+    <span class="cmt">// O(n) — Linear scan from head</span>
+    <span class="kw">public boolean</span> <span class="fn">contains</span>(<span class="typ">T</span> target) {
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; current = head;
+        <span class="kw">while</span> (current != <span class="kw">null</span>) {
+            <span class="kw">if</span> (current.data.equals(target)) <span class="kw">return true</span>;
+            current = current.next;
+        }
+        <span class="kw">return false</span>;
+    }
+
+    <span class="cmt">// ── 5. PRINT / TRAVERSE ───────────────────────────────</span>
+    <span class="kw">public void</span> <span class="fn">print</span>() {
+        <span class="cls">Node</span>&lt;<span class="typ">T</span>&gt; current = head;
+        <span class="cls">StringBuilder</span> sb = <span class="kw">new</span> <span class="cls">StringBuilder</span>();
+        <span class="kw">while</span> (current != <span class="kw">null</span>) {
+            sb.append(current.data);
+            <span class="kw">if</span> (current.next != <span class="kw">null</span>) sb.append(<span class="str">" → "</span>);
+            current = current.next;
+        }
+        sb.append(<span class="str">" → null"</span>);
+        <span class="cls">System</span>.out.println(sb);
+    }
+}</pre>
+
+  <!-- INSERT DIAGRAM -->
+  <div class="diagram-wrap">
+    <div class="diagram-title">▸ Insert at Head — Step by Step</div>
+    <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;">
+      <defs>
+        <marker id="ga" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/></marker>
+        <marker id="ca" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#00d4ff"/></marker>
+      </defs>
+      <!-- Step labels -->
+      <text x="10" y="18" fill="#fbbf24" font-family="JetBrains Mono" font-size="11" font-weight="700">BEFORE:</text>
+      <text x="10" y="108" fill="#fbbf24" font-family="JetBrains Mono" font-size="11" font-weight="700">AFTER:</text>
+
+      <!-- BEFORE: HEAD → 20 → 30 → null -->
+      <text x="90" y="18" fill="#10b981" font-family="JetBrains Mono" font-size="10">HEAD</text>
+      <line x1="110" y1="22" x2="130" y2="30" stroke="#10b981" stroke-width="1.2" marker-end="url(#ga)"/>
+      <rect x="130" y="25" width="60" height="40" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="160" y="50" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">20</text>
+      <line x1="190" y1="45" x2="220" y2="45" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#ca)"/>
+      <rect x="222" y="25" width="60" height="40" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="252" y="50" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">30</text>
+      <text x="286" y="48" fill="#ef4444" font-family="JetBrains Mono" font-size="11">→ null</text>
+
+      <!-- Insert new node = 10 -->
+      <text x="350" y="18" fill="#64748b" font-family="JetBrains Mono" font-size="10">new node (10)</text>
+      <rect x="350" y="25" width="60" height="40" rx="5" fill="#162032" stroke="#10b981" stroke-width="2" stroke-dasharray="4,2"/>
+      <text x="380" y="50" fill="#10b981" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">10</text>
+
+      <!-- AFTER: HEAD → 10 → 20 → 30 -->
+      <text x="80" y="108" fill="#10b981" font-family="JetBrains Mono" font-size="10">HEAD</text>
+      <line x1="100" y1="112" x2="120" y2="120" stroke="#10b981" stroke-width="1.2" marker-end="url(#ga)"/>
+      <rect x="120" y="115" width="60" height="40" rx="5" fill="#162032" stroke="#10b981" stroke-width="2"/>
+      <text x="150" y="140" fill="#10b981" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">10</text>
+      <line x1="180" y1="135" x2="208" y2="135" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#ca)"/>
+      <rect x="210" y="115" width="60" height="40" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="240" y="140" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">20</text>
+      <line x1="270" y1="135" x2="298" y2="135" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#ca)"/>
+      <rect x="300" y="115" width="60" height="40" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="330" y="140" fill="#00d4ff" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">30</text>
+      <text x="364" y="138" fill="#ef4444" font-family="JetBrains Mono" font-size="11">→ null</text>
+
+      <!-- Steps annotation -->
+      <text x="450" y="120" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">① newNode.next = head</text>
+      <text x="450" y="136" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">② head = newNode</text>
+    </svg>
+  </div>
+</div>
+</section>
+
+<!-- ─── SECTION 4: PATTERNS ─── -->
+<section class="section" id="patterns">
+<div class="container">
+  <div class="section-num">// 04 — CODING PATTERNS</div>
+  <h2>The 6 Essential Patterns</h2>
+  <p class="section-sub">These patterns are reusable templates for solving linked list problems. Master these and 90% of interview and real-world problems become recognizable.</p>
+
+  <!-- PATTERN 1: TWO POINTERS -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="pattern-header">
+      <div class="pattern-icon blue">👆</div>
+      <div>
+        <div class="pattern-name">Pattern 1: Two Pointers (Slow & Fast)</div>
+        <span class="pattern-tag">Floyd's Algorithm</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Use two pointers moving at different speeds. The slow pointer moves 1 step; the fast pointer moves 2 steps. Used to <strong>detect cycles</strong>, find the <strong>middle node</strong>, or find <strong>k-th from end</strong>.</p>
+
+    <div class="diagram-wrap" style="margin-top:0">
+      <div class="diagram-title">▸ Finding Middle Node with Slow/Fast Pointers</div>
+      <svg viewBox="0 0 660 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:660px;display:block;">
+        <defs>
+          <marker id="sp" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/></marker>
+          <marker id="fp" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#ff6b35"/></marker>
+        </defs>
+        <!-- nodes -->
+        <rect x="20" y="35" width="50" height="38" rx="5" fill="#162032" stroke="#1e2d45" stroke-width="1.5"/>
+        <text x="45" y="59" fill="#94a3b8" font-family="JetBrains Mono" font-size="14" text-anchor="middle">1</text>
+        <line x1="70" y1="54" x2="88" y2="54" stroke="#475569" stroke-width="1"/>
+
+        <rect x="90" y="35" width="50" height="38" rx="5" fill="#162032" stroke="#1e2d45" stroke-width="1.5"/>
+        <text x="115" y="59" fill="#94a3b8" font-family="JetBrains Mono" font-size="14" text-anchor="middle">2</text>
+        <line x1="140" y1="54" x2="158" y2="54" stroke="#475569" stroke-width="1"/>
+
+        <rect x="160" y="35" width="50" height="38" rx="5" fill="#162032" stroke="#fbbf24" stroke-width="2"/>
+        <text x="185" y="59" fill="#fbbf24" font-family="JetBrains Mono" font-size="14" font-weight="700" text-anchor="middle">3</text>
+        <line x1="210" y1="54" x2="228" y2="54" stroke="#475569" stroke-width="1"/>
+
+        <rect x="230" y="35" width="50" height="38" rx="5" fill="#162032" stroke="#1e2d45" stroke-width="1.5"/>
+        <text x="255" y="59" fill="#94a3b8" font-family="JetBrains Mono" font-size="14" text-anchor="middle">4</text>
+        <line x1="280" y1="54" x2="298" y2="54" stroke="#475569" stroke-width="1"/>
+
+        <rect x="300" y="35" width="50" height="38" rx="5" fill="#162032" stroke="#1e2d45" stroke-width="1.5"/>
+        <text x="325" y="59" fill="#94a3b8" font-family="JetBrains Mono" font-size="14" text-anchor="middle">5</text>
+        <text x="356" y="57" fill="#ef4444" font-family="JetBrains Mono" font-size="10">→null</text>
+
+        <!-- Pointer arrows -->
+        <line x1="45" y1="34" x2="45" y2="20" stroke="#10b981" stroke-width="2" marker-end="url(#sp)"/>
+        <text x="20" y="14" fill="#10b981" font-family="JetBrains Mono" font-size="10">slow</text>
+
+        <line x1="45" y1="74" x2="45" y2="88" stroke="#ff6b35" stroke-width="2" marker-end="url(#fp)"/>
+        <text x="20" y="98" fill="#ff6b35" font-family="JetBrains Mono" font-size="10">fast</text>
+
+        <text x="420" y="40" fill="#fbbf24" font-family="JetBrains Mono" font-size="11">When fast reaches end,</text>
+        <text x="420" y="55" fill="#fbbf24" font-family="JetBrains Mono" font-size="11">slow is at middle (3)</text>
+        <text x="420" y="70" fill="#64748b" font-family="JetBrains Mono" font-size="10">slow: 1 step/iter</text>
+        <text x="420" y="83" fill="#64748b" font-family="JetBrains Mono" font-size="10">fast: 2 steps/iter</text>
+      </svg>
+    </div>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">FindMiddle.java</span></div>
+    <pre><span class="cmt">// Pattern: Slow-Fast Pointer — Find Middle Node</span>
+<span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">findMiddle</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; slow = head;  <span class="cmt">// moves 1 step</span>
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; fast = head;  <span class="cmt">// moves 2 steps</span>
+
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;        <span class="cmt">// 1 hop</span>
+        fast = fast.next.next;   <span class="cmt">// 2 hops</span>
+    }
+    <span class="kw">return</span> slow;  <span class="cmt">// slow is now at the middle</span>
+}
+
+<span class="cmt">// Cycle Detection (Floyd's) — same pattern</span>
+<span class="kw">public boolean</span> <span class="fn">hasCycle</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; slow = head, fast = head;
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+        <span class="kw">if</span> (slow == fast) <span class="kw">return true</span>;  <span class="cmt">// they met → cycle exists</span>
+    }
+    <span class="kw">return false</span>;  <span class="cmt">// fast hit null → no cycle</span>
+}</pre>
+  </div>
+
+  <!-- PATTERN 2: REVERSE -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="pattern-header">
+      <div class="pattern-icon orange">🔄</div>
+      <div>
+        <div class="pattern-name">Pattern 2: In-Place Reversal</div>
+        <span class="pattern-tag">Three Pointer Technique</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Reverse the direction of all pointers using three variables: <code>prev</code>, <code>current</code>, and <code>next</code>. O(n) time, O(1) space — no extra list created.</p>
+
+    <div class="diagram-wrap" style="margin-top:0">
+      <div class="diagram-title">▸ Reversing Pointers In-Place</div>
+      <svg viewBox="0 0 640 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;display:block;">
+        <defs><marker id="rv" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#ff6b35"/></marker></defs>
+        <!-- BEFORE -->
+        <text x="10" y="16" fill="#fbbf24" font-family="JetBrains Mono" font-size="10" font-weight="700">BEFORE: 1→2→3→4→null</text>
+        <rect x="10" y="24" width="50" height="36" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/><text x="35" y="47" fill="#00d4ff" font-family="JetBrains Mono" font-size="13" text-anchor="middle">1</text>
+        <line x1="60" y1="42" x2="78" y2="42" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#rv)"/>
+        <rect x="80" y="24" width="50" height="36" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/><text x="105" y="47" fill="#00d4ff" font-family="JetBrains Mono" font-size="13" text-anchor="middle">2</text>
+        <line x1="130" y1="42" x2="148" y2="42" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#rv)"/>
+        <rect x="150" y="24" width="50" height="36" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/><text x="175" y="47" fill="#00d4ff" font-family="JetBrains Mono" font-size="13" text-anchor="middle">3</text>
+        <line x1="200" y1="42" x2="218" y2="42" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#rv)"/>
+        <rect x="220" y="24" width="50" height="36" rx="5" fill="#162032" stroke="#00d4ff" stroke-width="1.5"/><text x="245" y="47" fill="#00d4ff" font-family="JetBrains Mono" font-size="13" text-anchor="middle">4</text>
+        <text x="274" y="45" fill="#ef4444" font-family="JetBrains Mono" font-size="10">→null</text>
+
+        <!-- AFTER -->
+        <text x="10" y="108" fill="#fbbf24" font-family="JetBrains Mono" font-size="10" font-weight="700">AFTER: 4→3→2→1→null</text>
+        <rect x="10" y="116" width="50" height="36" rx="5" fill="#162032" stroke="#10b981" stroke-width="1.5"/><text x="35" y="139" fill="#10b981" font-family="JetBrains Mono" font-size="13" text-anchor="middle">4</text>
+        <line x1="60" y1="134" x2="78" y2="134" stroke="#10b981" stroke-width="1.5" marker-end="url(#ga)"/>
+        <rect x="80" y="116" width="50" height="36" rx="5" fill="#162032" stroke="#10b981" stroke-width="1.5"/><text x="105" y="139" fill="#10b981" font-family="JetBrains Mono" font-size="13" text-anchor="middle">3</text>
+        <line x1="130" y1="134" x2="148" y2="134" stroke="#10b981" stroke-width="1.5" marker-end="url(#ga)"/>
+        <rect x="150" y="116" width="50" height="36" rx="5" fill="#162032" stroke="#10b981" stroke-width="1.5"/><text x="175" y="139" fill="#10b981" font-family="JetBrains Mono" font-size="13" text-anchor="middle">2</text>
+        <line x1="200" y1="134" x2="218" y2="134" stroke="#10b981" stroke-width="1.5" marker-end="url(#ga)"/>
+        <rect x="220" y="116" width="50" height="36" rx="5" fill="#162032" stroke="#10b981" stroke-width="1.5"/><text x="245" y="139" fill="#10b981" font-family="JetBrains Mono" font-size="13" text-anchor="middle">1</text>
+        <text x="274" y="137" fill="#ef4444" font-family="JetBrains Mono" font-size="10">→null</text>
+
+        <!-- pointer vars -->
+        <text x="340" y="38" fill="#7c3aed" font-family="JetBrains Mono" font-size="11">prev    = null</text>
+        <text x="340" y="54" fill="#fbbf24" font-family="JetBrains Mono" font-size="11">current = head (1)</text>
+        <text x="340" y="70" fill="#ff6b35" font-family="JetBrains Mono" font-size="11">next    = current.next</text>
+        <text x="340" y="90" fill="#64748b" font-family="JetBrains Mono" font-size="10">Each step: current.next = prev</text>
+        <text x="340" y="104" fill="#64748b" font-family="JetBrains Mono" font-size="10">then advance all three pointers</text>
+      </svg>
+    </div>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">ReverseList.java</span></div>
+    <pre><span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">reverse</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; prev    = <span class="kw">null</span>;
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; current = head;
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; next    = <span class="kw">null</span>;
+
+    <span class="kw">while</span> (current != <span class="kw">null</span>) {
+        next          = current.next;  <span class="cmt">// ① save next before we overwrite it</span>
+        current.next  = prev;          <span class="cmt">// ② flip the pointer BACKWARD</span>
+        prev          = current;       <span class="cmt">// ③ advance prev</span>
+        current       = next;          <span class="cmt">// ④ advance current</span>
+    }
+    <span class="kw">return</span> prev;  <span class="cmt">// prev is now the new HEAD</span>
+}</pre>
+  </div>
+
+  <!-- PATTERN 3: MERGE -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="pattern-header">
+      <div class="pattern-icon purple">🔀</div>
+      <div>
+        <div class="pattern-name">Pattern 3: Merge Two Sorted Lists</div>
+        <span class="pattern-tag">Dummy Head Trick</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Compare heads of two lists, pick the smaller one, advance that pointer. The "dummy head" simplifies edge cases — you never need to handle empty lists specially.</p>
+
+    <div class="callout de">
+      <span class="callout-icon">⚙</span>
+      <p><strong>Data Engineer context:</strong> This is essentially a <strong>merge step in merge sort</strong>, which is the backbone of <strong>external sort</strong> in databases and big data tools like Spark. When Spark merges sorted partitions, it uses this exact algorithm!</p>
+    </div>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">MergeSortedLists.java</span></div>
+    <pre><span class="cmt">// Merge: [1→3→5] + [2→4→6] → [1→2→3→4→5→6]</span>
+<span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">mergeSorted</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; l1, <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; l2) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; dummy = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(<span class="num">0</span>);  <span class="cmt">// dummy head — skip edge cases</span>
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; tail  = dummy;
+
+    <span class="kw">while</span> (l1 != <span class="kw">null</span> &amp;&amp; l2 != <span class="kw">null</span>) {
+        <span class="kw">if</span> (l1.data &lt;= l2.data) {
+            tail.next = l1;   <span class="cmt">// pick from list 1</span>
+            l1 = l1.next;
+        } <span class="kw">else</span> {
+            tail.next = l2;   <span class="cmt">// pick from list 2</span>
+            l2 = l2.next;
+        }
+        tail = tail.next;    <span class="cmt">// advance tail</span>
+    }
+    tail.next = (l1 != <span class="kw">null</span>) ? l1 : l2;  <span class="cmt">// attach remaining</span>
+    <span class="kw">return</span> dummy.next;  <span class="cmt">// skip dummy, return real head</span>
+}</pre>
+  </div>
+
+  <!-- PATTERN 4: REMOVE NTH FROM END -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="pattern-header">
+      <div class="pattern-icon green">🎯</div>
+      <div>
+        <div class="pattern-name">Pattern 4: Remove Nth from End (One Pass)</div>
+        <span class="pattern-tag">Gap Pointer Technique</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Move a "lead" pointer N steps ahead, then advance both pointers together. When lead reaches end, "trail" is at the target node. One pass, no second traversal.</p>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">RemoveNthFromEnd.java</span></div>
+    <pre><span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">removeNthFromEnd</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head, <span class="kw">int</span> n) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; dummy = <span class="kw">new</span> <span class="cls">Node</span>&lt;&gt;(<span class="num">0</span>);
+    dummy.next = head;
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; lead  = dummy;
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; trail = dummy;
+
+    <span class="cmt">// Move lead n+1 steps ahead (to create a gap of n)</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;= n; i++) lead = lead.next;
+
+    <span class="cmt">// Move both until lead hits null</span>
+    <span class="kw">while</span> (lead != <span class="kw">null</span>) {
+        lead  = lead.next;
+        trail = trail.next;
+    }
+    trail.next = trail.next.next;  <span class="cmt">// skip the target node</span>
+    <span class="kw">return</span> dummy.next;
+}</pre>
+  </div>
+
+  <!-- PATTERN 5: PALINDROME CHECK -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="pattern-header">
+      <div class="pattern-icon blue">🪞</div>
+      <div>
+        <div class="pattern-name">Pattern 5: Palindrome Check</div>
+        <span class="pattern-tag">Find Middle + Reverse + Compare</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">Combines Pattern 1 (find middle) and Pattern 2 (reverse). Find the middle, reverse the second half, compare both halves.</p>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">PalindromeCheck.java</span></div>
+    <pre><span class="kw">public boolean</span> <span class="fn">isPalindrome</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head) {
+    <span class="kw">if</span> (head == <span class="kw">null</span> || head.next == <span class="kw">null</span>) <span class="kw">return true</span>;
+
+    <span class="cmt">// Step 1: Find middle (slow/fast pointers)</span>
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; slow = head, fast = head;
+    <span class="kw">while</span> (fast.next != <span class="kw">null</span> &amp;&amp; fast.next.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+
+    <span class="cmt">// Step 2: Reverse second half</span>
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; secondHalf = <span class="fn">reverse</span>(slow.next);
+
+    <span class="cmt">// Step 3: Compare first and reversed second half</span>
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; p1 = head, p2 = secondHalf;
+    <span class="kw">while</span> (p2 != <span class="kw">null</span>) {
+        <span class="kw">if</span> (!p1.data.equals(p2.data)) <span class="kw">return false</span>;
+        p1 = p1.next; p2 = p2.next;
+    }
+    <span class="kw">return true</span>;
+}</pre>
+  </div>
+
+  <!-- PATTERN 6: DETECT CYCLE START -->
+  <div class="card">
+    <div class="pattern-header">
+      <div class="pattern-icon orange">⭕</div>
+      <div>
+        <div class="pattern-name">Pattern 6: Find Cycle Start Node</div>
+        <span class="pattern-tag">Floyd's Phase 2</span>
+      </div>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:14px;">After detecting a cycle (slow == fast), reset one pointer to head. Move both one step at a time. Where they meet again is the <strong>start of the cycle</strong>.</p>
+
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">FindCycleStart.java</span></div>
+    <pre><span class="kw">public</span> <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">findCycleStart</span>(<span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; head) {
+    <span class="cls">Node</span>&lt;<span class="typ">Integer</span>&gt; slow = head, fast = head;
+
+    <span class="cmt">// Phase 1: Detect cycle</span>
+    <span class="kw">while</span> (fast != <span class="kw">null</span> &amp;&amp; fast.next != <span class="kw">null</span>) {
+        slow = slow.next;
+        fast = fast.next.next;
+        <span class="kw">if</span> (slow == fast) <span class="kw">break</span>;  <span class="cmt">// cycle detected</span>
+    }
+
+    <span class="cmt">// Phase 2: Find the start of the cycle</span>
+    slow = head;  <span class="cmt">// reset slow to head</span>
+    <span class="kw">while</span> (slow != fast) {
+        slow = slow.next;  <span class="cmt">// both move 1 step</span>
+        fast = fast.next;
+    }
+    <span class="kw">return</span> slow;  <span class="cmt">// this is the cycle start node</span>
+}</pre>
+  </div>
+
+  <!-- PATTERNS OVERVIEW TABLE -->
+  <h3 style="margin:32px 0 14px;font-family:'Fraunces',serif;">Pattern Summary</h3>
+  <table>
+    <tr><th>Pattern</th><th>Key Idea</th><th>Time</th><th>Space</th><th>Solves</th></tr>
+    <tr><td>Two Pointers</td><td>Slow + Fast pointers</td><td class="good">O(n)</td><td class="good">O(1)</td><td>Middle, Cycle detect</td></tr>
+    <tr><td>In-Place Reverse</td><td>3-pointer flip</td><td class="good">O(n)</td><td class="good">O(1)</td><td>Reverse, Palindrome</td></tr>
+    <tr><td>Merge</td><td>Dummy head + compare</td><td class="good">O(n+m)</td><td class="good">O(1)</td><td>Sorted merge</td></tr>
+    <tr><td>Gap Pointer</td><td>Lead N steps ahead</td><td class="good">O(n)</td><td class="good">O(1)</td><td>Nth from end</td></tr>
+    <tr><td>Palindrome</td><td>Middle + Reverse + Compare</td><td class="good">O(n)</td><td class="good">O(1)</td><td>Palindrome</td></tr>
+    <tr><td>Floyd Phase 2</td><td>Reset one pointer</td><td class="good">O(n)</td><td class="good">O(1)</td><td>Cycle start</td></tr>
+  </table>
+</div>
+</section>
+
+<!-- ─── SECTION 5: DATA ENGINEER USE CASES ─── -->
+<section class="section" id="de">
+<div class="container">
+  <div class="section-num">// 05 — DATA ENGINEERING CONTEXT</div>
+  <h2>Real-World DE Correlations</h2>
+  <p class="section-sub">How linked list concepts directly map to data engineering systems you work with every day.</p>
+
+  <div class="grid-2">
+    <div class="card" style="border-left:3px solid var(--accent3);">
+      <div class="card-title">🔀 Kafka / Message Queue</div>
+      <h3>Singly Linked List = Log Segment Chain</h3>
+      <p>Kafka's partition log is essentially a linked list of segments. Each segment points to the next offset. Consumers traverse from their last committed offset — same as traversing from a node. The "tail" is where new messages are appended in O(1).</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--green);">
+      <div class="card-title">🔃 Spark Shuffle / Sort</div>
+      <h3>Merge Pattern = External Merge Sort</h3>
+      <p>When Spark merges sorted partitions during a sort operation, it uses the exact two-sorted-list merge algorithm. Each partition is a "linked list" of records sorted in order. The merge step creates the final sorted output stream.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--accent2);">
+      <div class="card-title">🔄 DAG / Pipeline</div>
+      <h3>Linked List = Linear Pipeline Stage</h3>
+      <p>An ETL pipeline (Extract → Transform → Load) is a singly linked list of stages. Each stage processes data and passes it to the next. Airflow DAGs are a generalized graph, but single-path pipelines are linked lists at their core.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--yellow);">
+      <div class="card-title">💾 LRU Cache (Redis)</div>
+      <h3>Doubly Linked List + HashMap</h3>
+      <p>Redis's LRU eviction policy uses a doubly linked list. Recently accessed items move to the head. The least recently used item is always at the tail and gets evicted first. The hashmap provides O(1) lookup; the doubly linked list provides O(1) move-to-head.</p>
+    </div>
+  </div>
+
+  <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">LRUCache.java — Classic DE Interview Problem</span></div>
+  <pre><span class="cmt">// LRU Cache = HashMap + Doubly Linked List</span>
+<span class="cmt">// Used in: Redis eviction, database buffer pool, CDN caching</span>
+<span class="kw">import</span> java.util.*;
+
+<span class="kw">class</span> <span class="cls">LRUCache</span> {
+    <span class="kw">private final int</span> capacity;
+    <span class="kw">private final</span> <span class="cls">Map</span>&lt;<span class="typ">Integer</span>, <span class="cls">DNode</span>&gt; map = <span class="kw">new</span> <span class="cls">HashMap</span>&lt;&gt;();
+    <span class="kw">private final</span> <span class="cls">DNode</span> head = <span class="kw">new</span> <span class="cls">DNode</span>(<span class="num">0</span>, <span class="num">0</span>);  <span class="cmt">// dummy head</span>
+    <span class="kw">private final</span> <span class="cls">DNode</span> tail = <span class="kw">new</span> <span class="cls">DNode</span>(<span class="num">0</span>, <span class="num">0</span>);  <span class="cmt">// dummy tail</span>
+
+    <span class="fn">LRUCache</span>(<span class="kw">int</span> capacity) {
+        <span class="kw">this</span>.capacity = capacity;
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    <span class="kw">public int</span> <span class="fn">get</span>(<span class="kw">int</span> key) {
+        <span class="kw">if</span> (!map.containsKey(key)) <span class="kw">return -1</span>;
+        <span class="cls">DNode</span> node = map.get(key);
+        <span class="fn">moveToFront</span>(node);   <span class="cmt">// mark as recently used</span>
+        <span class="kw">return</span> node.val;
+    }
+
+    <span class="kw">public void</span> <span class="fn">put</span>(<span class="kw">int</span> key, <span class="kw">int</span> val) {
+        <span class="kw">if</span> (map.containsKey(key)) {
+            <span class="cls">DNode</span> n = map.get(key); n.val = val; <span class="fn">moveToFront</span>(n); <span class="kw">return</span>;
+        }
+        <span class="kw">if</span> (map.size() == capacity) {
+            map.remove(tail.prev.key);
+            <span class="fn">remove</span>(tail.prev);            <span class="cmt">// evict LRU (tail side)</span>
+        }
+        <span class="cls">DNode</span> node = <span class="kw">new</span> <span class="cls">DNode</span>(key, val);
+        map.put(key, node);
+        <span class="fn">addToFront</span>(node);                 <span class="cmt">// most recently used = near head</span>
+    }
+
+    <span class="kw">private void</span> <span class="fn">remove</span>(<span class="cls">DNode</span> n) {
+        n.prev.next = n.next;
+        n.next.prev = n.prev;
+    }
+
+    <span class="kw">private void</span> <span class="fn">addToFront</span>(<span class="cls">DNode</span> n) {
+        n.next = head.next; n.prev = head;
+        head.next.prev = n; head.next = n;
+    }
+
+    <span class="kw">private void</span> <span class="fn">moveToFront</span>(<span class="cls">DNode</span> n) { <span class="fn">remove</span>(n); <span class="fn">addToFront</span>(n); }
+
+    <span class="kw">static class</span> <span class="cls">DNode</span> {
+        <span class="kw">int</span> key, val;
+        <span class="cls">DNode</span> prev, next;
+        <span class="fn">DNode</span>(<span class="kw">int</span> k, <span class="kw">int</span> v) { key = k; val = v; }
+    }
+}</pre>
+</div>
+</section>
+
+<!-- ─── SECTION 6: ARRAY VS LL FINAL ─── -->
+<section class="section" id="cheatsheet">
+<div class="container">
+  <div class="section-num">// 06 — CHEAT SHEET</div>
+  <h2>Quick Reference</h2>
+  <p class="section-sub">Everything you need to remember at a glance.</p>
+
+  <table>
+    <tr><th>Operation</th><th>Array</th><th>Singly LL</th><th>Doubly LL</th></tr>
+    <tr><td>Access by index</td><td class="good">O(1)</td><td class="bad">O(n)</td><td class="bad">O(n)</td></tr>
+    <tr><td>Search</td><td class="bad">O(n)</td><td class="bad">O(n)</td><td class="bad">O(n)</td></tr>
+    <tr><td>Insert at head</td><td class="bad">O(n)</td><td class="good">O(1)</td><td class="good">O(1)</td></tr>
+    <tr><td>Insert at tail</td><td class="good">O(1)*</td><td class="bad">O(n)</td><td class="good">O(1)**</td></tr>
+    <tr><td>Insert in middle</td><td class="bad">O(n)</td><td class="bad">O(n)</td><td class="bad">O(n)</td></tr>
+    <tr><td>Delete at head</td><td class="bad">O(n)</td><td class="good">O(1)</td><td class="good">O(1)</td></tr>
+    <tr><td>Delete at tail</td><td class="good">O(1)</td><td class="bad">O(n)</td><td class="good">O(1)**</td></tr>
+    <tr><td>Memory overhead</td><td class="good">Low</td><td class="ok">+1 pointer/node</td><td class="bad">+2 pointers/node</td></tr>
+    <tr><td>Cache friendliness</td><td class="good">High</td><td class="bad">Low</td><td class="bad">Low</td></tr>
+  </table>
+  <p style="font-size:0.8rem;color:var(--text-muted);margin-top:6px">* Amortized. ** Only if tail pointer is maintained.</p>
+
+  <hr class="soft">
+
+  <h3 style="font-family:'Fraunces',serif;margin-bottom:16px;">When to Use What</h3>
+  <div class="grid-2">
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <p><strong>Use Linked List when:</strong> You need frequent insertions/deletions at head. You don't know the size upfront. You're building stacks, queues, or deques. You're implementing LRU Cache, undo history, or playlist management.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <p><strong>Use Array when:</strong> You need random access by index. Data is fixed size or rarely changes. You need cache efficiency (CPU prefetching). You need binary search.</p>
+    </div>
+  </div>
+
+  <hr class="soft">
+
+  <h3 style="font-family:'Fraunces',serif;margin-bottom:16px;">The Pattern Recognition Map</h3>
+  <table>
+    <tr><th>Problem says...</th><th>Think Pattern</th><th>Key Variable</th></tr>
+    <tr><td>Find middle / detect cycle</td><td class="good">Slow-Fast pointers</td><td>slow, fast</td></tr>
+    <tr><td>Reverse the list</td><td class="ok">3-pointer in-place</td><td>prev, cur, next</td></tr>
+    <tr><td>Merge two sorted lists</td><td class="good">Dummy head + compare</td><td>dummy, tail</td></tr>
+    <tr><td>Nth from end</td><td class="ok">Lead pointer ahead N steps</td><td>lead, trail</td></tr>
+    <tr><td>Is palindrome</td><td class="good">Middle + Reverse + Compare</td><td>mid, p1, p2</td></tr>
+    <tr><td>Find cycle start</td><td class="ok">Floyd's Phase 2</td><td>slow, fast → reset</td></tr>
+    <tr><td>Intersection of two lists</td><td class="good">Length equalization</td><td>pA, pB</td></tr>
+  </table>
+
+  <div class="callout de" style="margin-top:24px">
+    <span class="callout-icon">🚀</span>
+    <p><strong>Your Learning Path:</strong> 1) Master Node class & manual pointer manipulation → 2) Code all 6 patterns from scratch → 3) Solve LeetCode 206, 21, 141, 19, 234, 142 → 4) Implement LRU Cache → 5) Understand how Kafka/Spark use these internally. You'll go from "what is a node?" to interviewing at FAANG data teams.</p>
+  </div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<div style="background:var(--surface);border-top:1px solid var(--border);padding:30px 40px;margin-top:0;">
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div style="font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:4px;">Linked List Mastery</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;">DATA ENGINEER'S GUIDE · JAVA</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">
+      Patterns: Two Pointers · Reverse · Merge · Gap · Palindrome · Floyd's
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
