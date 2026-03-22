@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Unity Catalog – Complete Guide | Azure Databricks</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0d0f12;--ink2:#2a2d35;--ink3:#4a4f5c;
+  --paper:#fafaf8;--paper2:#f2f2ee;--paper3:#e8e8e2;
+  --blue:#1846f0;--blue-soft:#dce5ff;--blue-mid:#4c6ef5;
+  --teal:#0a8a6e;--teal-soft:#d0f5ed;
+  --amber:#c97800;--amber-soft:#fff0cc;
+  --red:#c1292e;--red-soft:#fde8e8;
+  --purple:#6234c8;--purple-soft:#ede5ff;
+  --green:#1a7a3e;--green-soft:#d8f5e4;
+  --border:#ddddd6;--border2:#c8c8c0;
+  --radius:14px;--radius-sm:8px;--radius-xs:5px;
+  --shadow:0 2px 8px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 20px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.05);
+  --mono:'JetBrains Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --display:'Sora',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);font-size:15px;color:var(--ink);background:var(--paper);line-height:1.75;}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+.sidebar{background:var(--ink);color:#e0e0d8;position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 40px;}
+.main{min-width:0;padding:0 0 100px;}
+
+/* ── SIDEBAR ────────────────────────────────────────────────── */
+.sb-brand{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-brand .badge{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:12px;margin-bottom:10px;}
+.sb-brand h2{font-family:var(--display);font-size:16px;font-weight:700;color:#fff;line-height:1.3;}
+.sb-brand p{font-size:11px;color:#888;margin-top:4px;}
+.sb-section{padding:18px 24px 4px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#555;}
+.sb-link{display:flex;align-items:center;gap:10px;padding:9px 24px;font-size:13px;color:#a0a09a;text-decoration:none;transition:all .18s;border-left:3px solid transparent;}
+.sb-link:hover,.sb-link.active{color:#fff;background:rgba(255,255,255,.05);border-left-color:var(--blue);}
+.sb-link .ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.sb-link .num{margin-left:auto;font-size:10px;background:rgba(255,255,255,.1);padding:1px 7px;border-radius:8px;}
+
+/* ── HERO ───────────────────────────────────────────────────── */
+.hero{background:var(--ink);color:#fff;padding:60px 64px 52px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(24,70,240,.35) 0%,transparent 70%);pointer-events:none;}
+.hero::after{content:'';position:absolute;bottom:-60px;left:200px;width:300px;height:300px;background:radial-gradient(circle,rgba(10,138,110,.2) 0%,transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px;}
+.hero h1{font-family:var(--display);font-size:48px;font-weight:800;line-height:1.1;margin-bottom:16px;position:relative;}
+.hero h1 span{color:var(--blue-mid);}
+.hero p{font-size:16px;color:rgba(255,255,255,.65);max-width:580px;line-height:1.7;margin-bottom:28px;}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px;}
+.hero-tag{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:12px;padding:5px 13px;border-radius:20px;}
+
+/* ── CONTENT AREA ───────────────────────────────────────────── */
+.content{padding:0 64px;}
+
+/* ── CHAPTER HEADER ─────────────────────────────────────────── */
+.chapter-head{padding:52px 0 8px;display:flex;align-items:flex-start;gap:18px;}
+.ch-num{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--blue);background:var(--blue-soft);padding:4px 12px;border-radius:20px;white-space:nowrap;margin-top:4px;}
+.ch-title{font-family:var(--display);font-size:26px;font-weight:800;color:var(--ink);line-height:1.2;}
+.ch-sub{font-size:14px;color:var(--ink3);margin-top:6px;}
+.ch-divider{height:2px;background:linear-gradient(90deg,var(--blue) 0%,var(--blue-soft) 50%,transparent 100%);margin:16px 0 28px;border:none;}
+
+/* ── CARDS ──────────────────────────────────────────────────── */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;box-shadow:var(--shadow);}
+.card-teal{border-left:4px solid var(--teal);}
+.card-blue{border-left:4px solid var(--blue);}
+.card-amber{border-left:4px solid var(--amber);}
+.card-red{border-left:4px solid var(--red);}
+.card-purple{border-left:4px solid var(--purple);}
+.card-green{border-left:4px solid var(--green);}
+
+/* ── TYPOGRAPHY ─────────────────────────────────────────────── */
+h2{font-family:var(--display);font-size:20px;font-weight:700;margin-bottom:12px;color:var(--ink);}
+h3{font-family:var(--display);font-size:16px;font-weight:700;margin-bottom:10px;color:var(--ink);}
+h4{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;color:var(--ink3);}
+p{margin-bottom:12px;color:var(--ink2);}
+ul,ol{padding-left:20px;margin-bottom:12px;color:var(--ink2);}
+li{margin-bottom:5px;}
+b,strong{font-weight:600;color:var(--ink);}
+a{color:var(--blue);text-decoration:none;}
+
+/* ── TAGS / BADGES ──────────────────────────────────────────── */
+.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;margin:2px;}
+.t-blue{background:var(--blue-soft);color:var(--blue);}
+.t-teal{background:var(--teal-soft);color:var(--teal);}
+.t-amber{background:var(--amber-soft);color:var(--amber);}
+.t-red{background:var(--red-soft);color:var(--red);}
+.t-purple{background:var(--purple-soft);color:var(--purple);}
+.t-green{background:var(--green-soft);color:var(--green);}
+.t-ink{background:var(--paper3);color:var(--ink);}
+
+/* ── CODE ───────────────────────────────────────────────────── */
+pre{background:#0f1117;color:#cdd6f4;border-radius:var(--radius-sm);padding:20px 22px;font-size:12.5px;overflow-x:auto;margin:14px 0;line-height:1.65;font-family:var(--mono);border:1px solid rgba(255,255,255,.05);}
+pre .cm{color:#545c7e;font-style:italic;}
+pre .kw{color:#89ddff;}
+pre .fn{color:#82aaff;}
+pre .str{color:#c3e88d;}
+pre .num{color:#f78c6c;}
+pre .cls{color:#ffcb6b;}
+pre .op{color:#89ddff;}
+code{font-family:var(--mono);font-size:12px;background:var(--paper2);padding:2px 6px;border-radius:4px;color:var(--blue);}
+
+/* ── COMPARISON TABLE ───────────────────────────────────────── */
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0;}
+.cmp th{padding:11px 14px;text-align:left;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+.cmp td{padding:10px 14px;border-bottom:1px solid var(--border);}
+.cmp tr:last-child td{border-bottom:none;}
+.cmp thead tr{background:var(--ink);color:#fff;}
+.cmp tbody tr:nth-child(even){background:var(--paper);}
+.cmp tbody tr:nth-child(odd){background:#fff;}
+
+/* ── GRID ───────────────────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+
+/* ── MEMORY BOX ─────────────────────────────────────────────── */
+.mem{background:var(--purple-soft);border:1.5px dashed var(--purple);border-radius:var(--radius-sm);padding:15px 18px;margin:14px 0;}
+.mem h4{color:var(--purple);}
+.mem p{color:#3d2580;margin-bottom:0;}
+
+/* ── CALLOUT ────────────────────────────────────────────────── */
+.callout{display:flex;gap:14px;padding:16px 18px;border-radius:var(--radius-sm);margin:14px 0;border:1px solid;}
+.callout .ico{font-size:20px;flex-shrink:0;line-height:1.3;}
+.callout.warn{background:var(--amber-soft);border-color:#f5c842;}
+.callout.info{background:var(--blue-soft);border-color:var(--blue);}
+.callout.danger{background:var(--red-soft);border-color:var(--red);}
+.callout.success{background:var(--green-soft);border-color:var(--green);}
+
+/* ── BEFORE/AFTER ───────────────────────────────────────────── */
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+.ba-box{border-radius:var(--radius-sm);padding:18px;}
+.ba-before{background:#fff0f0;border:1.5px solid var(--red);}
+.ba-after{background:#f0fff5;border:1.5px solid var(--green);}
+.ba-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.ba-before .ba-label{color:var(--red);}
+.ba-after .ba-label{color:var(--green);}
+.ba-box ul{font-size:13px;color:var(--ink2);}
+
+/* ── FLOW PILLS ─────────────────────────────────────────────── */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:14px 0;}
+.fp{background:var(--blue);color:#fff;padding:9px 18px;font-size:13px;font-weight:600;border-radius:4px;}
+.fp.t{background:var(--teal);}
+.fp.a{background:var(--amber);}
+.fp.p{background:var(--purple);}
+.fp.g{background:var(--green);}
+.arrow-pill{color:var(--ink3);font-size:18px;line-height:1;}
+
+/* ── STEP LIST ──────────────────────────────────────────────── */
+.steps{counter-reset:step;list-style:none;padding:0;}
+.steps li{counter-increment:step;display:flex;gap:16px;margin-bottom:18px;align-items:flex-start;}
+.steps li::before{content:counter(step);min-width:30px;height:30px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;margin-top:1px;}
+
+/* ── INTERVIEW BOX ──────────────────────────────────────────── */
+.interview{background:var(--amber-soft);border:1px solid #e8b400;border-radius:var(--radius);padding:22px 26px;margin-bottom:20px;}
+.interview-q{font-weight:700;font-size:14px;color:var(--amber);margin-bottom:10px;}
+.interview-a{font-size:14px;color:var(--ink2);}
+.interview-a b{color:var(--ink);}
+
+/* ── QUIZ ───────────────────────────────────────────────────── */
+.quiz-opt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 16px;margin:8px 0;font-size:14px;cursor:pointer;transition:all .18s;font-family:var(--sans);}
+.quiz-opt:hover{border-color:var(--blue);background:var(--blue-soft);}
+.quiz-opt.correct{background:#f0fff5;border-color:var(--green);color:#0f4d26;}
+.quiz-opt.wrong{background:var(--red-soft);border-color:var(--red);color:#7a1010;}
+#q-fb{margin-top:12px;padding:14px 18px;border-radius:var(--radius-sm);font-size:14px;display:none;line-height:1.6;}
+
+/* ── DIAGRAM ────────────────────────────────────────────────── */
+.diag{background:var(--paper2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:24px;margin:16px 0;overflow-x:auto;}
+svg{display:block;max-width:100%;}
+
+/* ── SCROLL ─────────────────────────────────────────────────── */
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .hero{padding:40px 28px;}
+  .hero h1{font-size:32px;}
+  .content{padding:0 24px;}
+  .g2,.g3,.g4,.ba-grid{grid-template-columns:1fr;}
+}
+
+/* ── SECTION ANCHOR ─────────────────────────────────────────── */
+.section-anchor{scroll-margin-top:24px;}
+
+/* ── PATTERN BOX ────────────────────────────────────────────── */
+.pattern{background:var(--ink);color:#cdd6f4;border-radius:var(--radius-sm);padding:14px 18px;font-family:var(--mono);font-size:13px;margin:10px 0;line-height:1.9;}
+.pattern .ph{color:#ffcb6b;}
+.pattern .kw{color:#89ddff;}
+.pattern .cm{color:#545c7e;font-style:italic;}
+
+/* ── HIERARCHY PILL ─────────────────────────────────────────── */
+.hierarchy{display:flex;align-items:center;gap:0;margin:16px 0;flex-wrap:wrap;}
+.hpill{padding:10px 22px;font-size:13px;font-weight:700;color:#fff;position:relative;}
+.hpill::after{content:'›';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--ink3);z-index:1;}
+.hpill:last-child::after{display:none;}
+.hp1{background:var(--ink2);border-radius:8px 0 0 8px;}
+.hp2{background:var(--blue);}
+.hp3{background:var(--purple);}
+.hp4{background:var(--teal);}
+.hp5{background:var(--green);border-radius:0 8px 8px 0;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="badge">Azure Databricks</div>
+    <h2>Unity Catalog<br/>Complete Guide</h2>
+    <p>Interview Ready · Production Grade</p>
+  </div>
+
+  <div class="sb-section">Foundations</div>
+  <a class="sb-link" href="#prereq"><span class="ico">📚</span> Ch 0 · Prerequisites<span class="num">0</span></a>
+  <a class="sb-link" href="#what"><span class="ico">🏛️</span> Ch 1 · What is UC?<span class="num">1</span></a>
+  <a class="sb-link" href="#why"><span class="ico">🤔</span> Ch 2 · Why UC?<span class="num">2</span></a>
+  <a class="sb-link" href="#before-after"><span class="ico">⚡</span> Ch 3 · Before vs After<span class="num">3</span></a>
+
+  <div class="sb-section">Architecture</div>
+  <a class="sb-link" href="#hierarchy"><span class="ico">🏗️</span> Ch 4 · 3-Level Hierarchy<span class="num">4</span></a>
+  <a class="sb-link" href="#create"><span class="ico">🔨</span> Ch 5 · Create & Setup<span class="num">5</span></a>
+  <a class="sb-link" href="#access"><span class="ico">🔐</span> Ch 6 · Access Control<span class="num">6</span></a>
+
+  <div class="sb-section">Data Engineering</div>
+  <a class="sb-link" href="#de-workflow"><span class="ico">⚙️</span> Ch 7 · DE Workflow<span class="num">7</span></a>
+  <a class="sb-link" href="#lineage"><span class="ico">🔗</span> Ch 8 · Lineage & Audit<span class="num">8</span></a>
+  <a class="sb-link" href="#patterns"><span class="ico">💡</span> Ch 9 · Syntax Patterns<span class="num">9</span></a>
+
+  <div class="sb-section">Interview Prep</div>
+  <a class="sb-link" href="#interview-ch"><span class="ico">🎯</span> Ch 10 · Interview Q&A<span class="num">10</span></a>
+  <a class="sb-link" href="#quiz"><span class="ico">🧪</span> Ch 11 · Quiz<span class="num">11</span></a>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Azure Databricks · Data Governance · Interview Ready</div>
+  <h1>Unity<br/><span>Catalog</span></h1>
+  <p>The unified governance layer for all your data and AI assets on Azure Databricks. From zero to production — step by step.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">Data Governance</span>
+    <span class="hero-tag">Access Control</span>
+    <span class="hero-tag">Data Lineage</span>
+    <span class="hero-tag">Metastore</span>
+    <span class="hero-tag">Delta Lake</span>
+    <span class="hero-tag">Banking Domain</span>
+    <span class="hero-tag">Interview Ready</span>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════ CH 0 · PREREQUISITES ═══════════ -->
+<div class="section-anchor" id="prereq">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 0</span>
+  <div><div class="ch-title">Prerequisites — Know These First</div><div class="ch-sub">Terms you must understand before Unity Catalog makes sense</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="g2">
+  <div class="card card-blue">
+    <h3>🗄️ Metastore</h3>
+    <p>A <b>central repository</b> that stores metadata — information about your data: table names, schemas, column types, file locations, permissions.</p>
+    <p style="font-size:13px;color:var(--ink3);">Think: The <b>library catalogue</b> — it doesn't hold the books, it tells you where every book is and who can borrow it.</p>
+    <p><b>Without it:</b> You'd have to manually track every table location across dozens of storage accounts.</p>
+  </div>
+  <div class="card card-teal">
+    <h3>🏢 Workspace</h3>
+    <p>An isolated Azure Databricks environment with its own notebooks, clusters, jobs, and users. One Azure subscription can have multiple workspaces (e.g., dev, test, prod).</p>
+    <p style="font-size:13px;color:var(--ink3);"><b>Banking example:</b> Retail banking workspace, Investment banking workspace, Risk workspace — each separate but needing shared data.</p>
+  </div>
+  <div class="card card-amber">
+    <h3>📦 Hive Metastore (Legacy)</h3>
+    <p>The <b>old default</b> metadata store in Databricks. Each workspace had its <b>own isolated Hive metastore</b> — tables registered in workspace A were invisible in workspace B.</p>
+    <p style="font-size:13px;color:var(--ink3);">This is exactly the problem Unity Catalog solves.</p>
+  </div>
+  <div class="card card-purple">
+    <h3>🛡️ RBAC vs ABAC</h3>
+    <p><b>RBAC</b> (Role-Based): Access based on role — "All Analysts can read". <b>ABAC</b> (Attribute-Based): Access based on data attributes — "Only see rows where branch = your branch".</p>
+    <p style="font-size:13px;color:var(--ink3);">Unity Catalog supports both — table-level RBAC + row/column-level ABAC.</p>
+  </div>
+</div>
+
+<div class="card card-green">
+  <h3>🏦 Banking Domain Glossary</h3>
+  <div class="g3">
+    <div><b>Bronze Layer</b> — Raw ingested data (transactions, core banking feeds). Read-only. Append-only.</div>
+    <div><b>Silver Layer</b> — Cleaned, enriched, joined data. Validated, conformed.</div>
+    <div><b>Gold Layer</b> — Business aggregates, reports, ML features. Business-ready.</div>
+  </div>
+  <p style="margin-top:10px;font-size:13px;color:var(--ink3);">Unity Catalog governs access to ALL three layers — different teams get different access levels per layer.</p>
+</div>
+</div>
+
+<!-- ═══════════ CH 1 · WHAT IS UNITY CATALOG ═══════════ -->
+<div class="section-anchor" id="what">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 1</span>
+  <div><div class="ch-title">What is Unity Catalog?</div><div class="ch-sub">One sentence, then the full picture</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="callout info"><span class="ico">💡</span><div><b>One-line definition:</b> Unity Catalog is a <b>unified data governance solution</b> for Azure Databricks that provides centralized access control, auditing, lineage, and data discovery across all workspaces in an organization — from a single place.</div></div>
+
+<div class="card">
+  <h2>Breaking Down the Definition Word by Word</h2>
+  <table class="cmp">
+    <thead><tr><th>Word/Term</th><th>What it means</th><th>Banking analogy</th></tr></thead>
+    <tbody>
+      <tr><td><b>Unified</b></td><td>Single system across all workspaces, clouds, asset types (tables, views, volumes, models)</td><td>One central compliance system for all bank branches</td></tr>
+      <tr><td><b>Data Governance</b></td><td>Rules, policies, controls about who can see, modify, or delete data</td><td>KYC policies — who can access customer PII</td></tr>
+      <tr><td><b>Centralized Access Control</b></td><td>Grant/revoke permissions from one place — applies everywhere</td><td>Single badge system for all bank buildings</td></tr>
+      <tr><td><b>Auditing</b></td><td>Complete log of who accessed what data, when, from where</td><td>RBI/SOX compliance — full audit trail</td></tr>
+      <tr><td><b>Lineage</b></td><td>Track data origin → transformations → destination automatically</td><td>Know that "fraud_report" came from "transactions" Bronze table</td></tr>
+      <tr><td><b>Data Discovery</b></td><td>Search and browse all available tables across all workspaces</td><td>Analysts can find what data exists without asking IT</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="diag">
+  <svg width="100%" viewBox="0 0 820 320">
+    <defs>
+      <marker id="a0" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1846f0" stroke-width="1.5"/></marker>
+      <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#555" stroke-width="1.5"/></marker>
+    </defs>
+    <!-- Central UC box -->
+    <rect x="280" y="110" width="260" height="100" rx="14" fill="#1846f0"/>
+    <text x="410" y="152" text-anchor="middle" font-family="Sora,sans-serif" font-size="16" font-weight="700" fill="#fff">Unity Catalog</text>
+    <text x="410" y="172" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="rgba(255,255,255,.75)">Metastore · Permissions · Lineage · Audit</text>
+    <text x="410" y="192" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="rgba(255,255,255,.6)">One Metastore per Azure region</text>
+
+    <!-- Workspaces -->
+    <rect x="20" y="30" width="170" height="56" rx="10" fill="#dce5ff" stroke="#1846f0" stroke-width="1"/>
+    <text x="105" y="56" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#1846f0">Workspace: Dev</text>
+    <text x="105" y="76" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#4a5580">Notebooks · Clusters</text>
+
+    <rect x="20" y="130" width="170" height="56" rx="10" fill="#dce5ff" stroke="#1846f0" stroke-width="1"/>
+    <text x="105" y="156" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#1846f0">Workspace: Prod</text>
+    <text x="105" y="176" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#4a5580">Jobs · Pipelines</text>
+
+    <rect x="20" y="230" width="170" height="56" rx="10" fill="#dce5ff" stroke="#1846f0" stroke-width="1"/>
+    <text x="105" y="256" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#1846f0">Workspace: ML</text>
+    <text x="105" y="276" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#4a5580">Models · Feature Store</text>
+
+    <!-- Right items -->
+    <rect x="630" y="30" width="170" height="56" rx="10" fill="#d0f5ed" stroke="#0a8a6e" stroke-width="1"/>
+    <text x="715" y="56" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#0a8a6e">ADLS Gen2</text>
+    <text x="715" y="76" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#0a8a6e">External Storage</text>
+
+    <rect x="630" y="130" width="170" height="56" rx="10" fill="#ede5ff" stroke="#6234c8" stroke-width="1"/>
+    <text x="715" y="156" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#6234c8">Azure AD / Entra</text>
+    <text x="715" y="176" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#6234c8">Identity Provider</text>
+
+    <rect x="630" y="230" width="170" height="56" rx="10" fill="#fff0cc" stroke="#c97800" stroke-width="1"/>
+    <text x="715" y="256" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="13" font-weight="600" fill="#c97800">Audit Logs</text>
+    <text x="715" y="276" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#c97800">Monitor · Compliance</text>
+
+    <!-- Arrows left -->
+    <line x1="192" y1="58" x2="278" y2="140" stroke="#1846f0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a0)"/>
+    <line x1="192" y1="158" x2="278" y2="160" stroke="#1846f0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a0)"/>
+    <line x1="192" y1="258" x2="278" y2="180" stroke="#1846f0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a0)"/>
+    <!-- Arrows right -->
+    <line x1="542" y1="140" x2="628" y2="58" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a1)"/>
+    <line x1="542" y1="160" x2="628" y2="158" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a1)"/>
+    <line x1="542" y1="180" x2="628" y2="258" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a1)"/>
+  </svg>
+</div>
+<div class="mem">
+  <h4>🧠 Memory Trick — "Unity" = One Ring to Rule Them All</h4>
+  <p>Unity Catalog is like a <b>central bank vault with one master key system</b>. Before it, every branch (workspace) had its own lock and key. After it, one system controls who enters which room in every branch, logs every entry, and shows you the map of every room.</p>
+</div>
+</div>
+
+<!-- ═══════════ CH 2 · WHY UNITY CATALOG ═══════════ -->
+<div class="section-anchor" id="why">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 2</span>
+  <div><div class="ch-title">Why Do We Need Unity Catalog?</div><div class="ch-sub">The real problems it solves in production</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="g3">
+  <div class="card card-red">
+    <h3>😰 Problem 1<br/>Workspace Silos</h3>
+    <p style="font-size:13px;">Dev team creates <code>transactions</code> table. Prod team can't see it. Every workspace is an island. Data Engineers manually copy schemas between workspaces.</p>
+    <p style="font-size:12px;color:var(--red);">Banking: Risk team can't access Retail team's customer table even though both are on Databricks.</p>
+  </div>
+  <div class="card card-red">
+    <h3>😰 Problem 2<br/>No Audit Trail</h3>
+    <p style="font-size:13px;">RBI/SOX audit asks: "Who accessed customer PAN data in the last 6 months?" Without Unity Catalog — no answer. Hive metastore doesn't log access.</p>
+    <p style="font-size:12px;color:var(--red);">Banks face regulatory penalties without complete data access audit logs.</p>
+  </div>
+  <div class="card card-red">
+    <h3>😰 Problem 3<br/>No Data Lineage</h3>
+    <p style="font-size:13px;">A downstream fraud model gives wrong results. Where does the data come from? Which transformation broke it? Without lineage — you're blind.</p>
+    <p style="font-size:12px;color:var(--red);">Root cause analysis takes days instead of minutes.</p>
+  </div>
+  <div class="card card-red">
+    <h3>😰 Problem 4<br/>Scattered Permissions</h3>
+    <p style="font-size:13px;">Permissions set in 5 different places: Hive metastore, ADLS ACLs, cluster-level policies, notebook permissions, job permissions. Out of sync, hard to audit.</p>
+    <p style="font-size:12px;color:var(--red);">Offboarding an employee requires changes in 10 places.</p>
+  </div>
+  <div class="card card-red">
+    <h3>😰 Problem 5<br/>No PII Protection</h3>
+    <p style="font-size:13px;">Customer Aadhaar numbers, PAN, salary data visible to all users who can query the table. No row-level or column-level security in Hive metastore.</p>
+    <p style="font-size:12px;color:var(--red);">DPDP Act violation risk in Indian banking context.</p>
+  </div>
+  <div class="card card-red">
+    <h3>😰 Problem 6<br/>No Data Discovery</h3>
+    <p style="font-size:13px;">New Data Analyst joins. They don't know what tables exist, where they are, what they contain. Has to ask senior engineers. Months to onboard.</p>
+    <p style="font-size:12px;color:var(--red);">Productivity lost, errors from using wrong/stale tables.</p>
+  </div>
+</div>
+
+<div class="callout success"><span class="ico">✅</span><div><b>Unity Catalog solves ALL 6 problems:</b> Unified namespace across workspaces · Complete audit logs · Auto data lineage · Centralized permissions · Column/row-level masking · Searchable data catalog.</div></div>
+</div>
+
+<!-- ═══════════ CH 3 · BEFORE vs AFTER ═══════════ -->
+<div class="section-anchor" id="before-after">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 3</span>
+  <div><div class="ch-title">Before Unity Catalog vs After</div><div class="ch-sub">The transformation in real banking engineering teams</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="ba-grid">
+  <div class="ba-box ba-before">
+    <div class="ba-label">❌ Before Unity Catalog (Hive Metastore Era)</div>
+    <ul>
+      <li>Each workspace has its own isolated Hive metastore</li>
+      <li>Dev tables invisible in Prod — must manually sync schemas</li>
+      <li>No audit log — can't answer "who accessed customer data?"</li>
+      <li>No auto lineage — manual documentation (often outdated)</li>
+      <li>Permissions in 5+ different systems out of sync</li>
+      <li>No column masking — PAN/Aadhaar visible to everyone</li>
+      <li>Security lives in ADLS ACLs + cluster config (complex)</li>
+      <li>No data search — must ask teammates what tables exist</li>
+      <li>External tables: manage storage credentials manually per cluster</li>
+      <li>Onboarding takes weeks; documentation is always stale</li>
+    </ul>
+  </div>
+  <div class="ba-box ba-after">
+    <div class="ba-label">✅ After Unity Catalog</div>
+    <ul>
+      <li>One metastore — all workspaces see the same catalog of tables</li>
+      <li>Dev and Prod use same catalog; permissions separate them</li>
+      <li>Full audit log — every query, every user, every timestamp</li>
+      <li>Automatic lineage — click a table and see full DAG of data flow</li>
+      <li>One GRANT/REVOKE applies everywhere — one source of truth</li>
+      <li>Column masking & row filters — DPDP/GDPR compliant out of box</li>
+      <li>Storage credentials managed centrally in UC — one place</li>
+      <li>Catalog Explorer — browse, search, tag, document all tables</li>
+      <li>External locations registered once, shared across all workspaces</li>
+      <li>New engineer can discover data within hours via UI search</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Impact Table — Banking Production Numbers</h2>
+  <table class="cmp">
+    <thead><tr><th>Metric</th><th>Before UC</th><th>After UC</th></tr></thead>
+    <tbody>
+      <tr><td>Time to onboard new analyst</td><td>2–3 weeks</td><td>1–2 days (self-service catalog)</td></tr>
+      <tr><td>Audit response time (compliance)</td><td>Days/weeks (manual)</td><td>Minutes (automated logs)</td></tr>
+      <tr><td>Permission change rollout</td><td>Multi-system, error-prone</td><td>Single SQL GRANT, instant</td></tr>
+      <tr><td>Data lineage tracing</td><td>Manual, often impossible</td><td>Auto, click-to-view DAG</td></tr>
+      <tr><td>PII exposure incidents</td><td>High risk</td><td>Near-zero (column masking)</td></tr>
+      <tr><td>Cross-workspace data sharing</td><td>Data copy/duplication</td><td>Delta Sharing (live, no copy)</td></tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- ═══════════ CH 4 · HIERARCHY ═══════════ -->
+<div class="section-anchor" id="hierarchy">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 4</span>
+  <div><div class="ch-title">The 3-Level Object Hierarchy</div><div class="ch-sub">Metastore → Catalog → Schema → Table — the backbone of everything</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="hierarchy">
+  <div class="hpill hp1">Metastore<br/><small style="font-weight:400;font-size:10px;">Region-level root</small></div>
+  <span class="arrow-pill">›</span>
+  <div class="hpill hp2">Catalog<br/><small style="font-weight:400;font-size:10px;">Top-level namespace</small></div>
+  <span class="arrow-pill">›</span>
+  <div class="hpill hp3">Schema (Database)<br/><small style="font-weight:400;font-size:10px;">Logical grouping</small></div>
+  <span class="arrow-pill">›</span>
+  <div class="hpill hp4">Tables / Views<br/><small style="font-weight:400;font-size:10px;">Data objects</small></div>
+  <span class="arrow-pill">›</span>
+  <div class="hpill hp5">Columns<br/><small style="font-weight:400;font-size:10px;">Field level</small></div>
+</div>
+
+<div class="g2">
+  <div class="card card-blue">
+    <h3>🌍 Metastore — The Root</h3>
+    <p><b>What:</b> Top-level container. One per Azure region per account. All catalogs, schemas, tables live inside it. Attached to multiple workspaces.</p>
+    <p><b>Who creates it:</b> Databricks Account Admin (not workspace admin).</p>
+    <p><b>Banking analogy:</b> The <b>RBI's master registry</b> for all banks in a region. Every bank (catalog) is registered here.</p>
+    <div class="callout warn" style="margin-top:8px;"><span class="ico">⚠️</span><div style="font-size:13px;"><b>Interview key:</b> You can only have <b>ONE metastore per region per Databricks account</b>. Multiple workspaces <b>share</b> one metastore.</div></div>
+  </div>
+  <div class="card card-purple">
+    <h3>📂 Catalog — Namespace Organizer</h3>
+    <p><b>What:</b> First level of the 3-part name. Organizes schemas. Use it to separate environments, domains, or business units.</p>
+    <p><b>Naming patterns used in banking:</b></p>
+    <ul style="font-size:13px;">
+      <li><code>retail_banking</code> — Retail domain catalog</li>
+      <li><code>risk_management</code> — Risk domain catalog</li>
+      <li><code>dev_retail_banking</code> — Dev environment</li>
+      <li><code>prod_retail_banking</code> — Prod environment</li>
+    </ul>
+    <p style="font-size:13px;color:var(--ink3);">Built-in catalogs: <code>main</code> (default), <code>hive_metastore</code> (legacy), <code>system</code> (audit logs).</p>
+  </div>
+  <div class="card card-teal">
+    <h3>🗂️ Schema (Database) — Logical Group</h3>
+    <p><b>What:</b> Container for tables, views, volumes, functions within a catalog. Equivalent to a database in traditional SQL.</p>
+    <p><b>Banking patterns:</b></p>
+    <ul style="font-size:13px;">
+      <li><code>bronze</code> / <code>silver</code> / <code>gold</code> — Medallion layers</li>
+      <li><code>transactions</code>, <code>customers</code>, <code>loans</code> — Domain schemas</li>
+      <li><code>reporting</code>, <code>ml_features</code> — Use-case schemas</li>
+    </ul>
+  </div>
+  <div class="card card-green">
+    <h3>📋 Tables, Views & More</h3>
+    <p><b>Managed Table:</b> UC owns storage. Drop table → data deleted. Stored under metastore's managed storage location.</p>
+    <p><b>External Table:</b> You own storage (ADLS Gen2). Drop table → metadata deleted, data stays.</p>
+    <p><b>View:</b> Saved SELECT query. Great for column masking and row-level security.</p>
+    <p><b>Volume:</b> UC-managed folder for <b>unstructured files</b> (PDFs, images, CSVs). New in UC!</p>
+    <p><b>Function:</b> SQL UDFs registered and governed centrally.</p>
+  </div>
+</div>
+
+<div class="diag">
+  <svg width="100%" viewBox="0 0 820 380">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#aaa" stroke-width="1.5"/></marker>
+    </defs>
+    <!-- Metastore -->
+    <rect x="20" y="10" width="780" height="360" rx="16" fill="#f5f5f0" stroke="#0d0f12" stroke-width="1.5" stroke-dasharray="8 4"/>
+    <text x="40" y="38" font-family="Sora,sans-serif" font-size="14" font-weight="700" fill="#0d0f12">Metastore (East US · bank_account)</text>
+
+    <!-- Catalog 1 -->
+    <rect x="40" y="52" width="350" height="300" rx="12" fill="#dce5ff" stroke="#1846f0" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="60" y="76" font-family="Sora,sans-serif" font-size="13" font-weight="700" fill="#1846f0">Catalog: prod_retail_banking</text>
+
+    <!-- Schema bronze -->
+    <rect x="60" y="90" width="150" height="130" rx="8" fill="#fff" stroke="#1846f0" stroke-width="1"/>
+    <text x="80" y="112" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#1846f0">Schema: bronze</text>
+    <rect x="72" y="122" width="125" height="26" rx="5" fill="#1846f0"/>
+    <text x="135" y="140" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">transactions_raw</text>
+    <rect x="72" y="154" width="125" height="26" rx="5" fill="#4c6ef5"/>
+    <text x="135" y="172" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">customers_raw</text>
+    <rect x="72" y="187" width="125" height="24" rx="5" fill="#7892f7"/>
+    <text x="135" y="204" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">loans_raw</text>
+
+    <!-- Schema gold -->
+    <rect x="222" y="90" width="152" height="130" rx="8" fill="#fff" stroke="#0a8a6e" stroke-width="1"/>
+    <text x="242" y="112" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#0a8a6e">Schema: gold</text>
+    <rect x="232" y="122" width="130" height="26" rx="5" fill="#0a8a6e"/>
+    <text x="297" y="140" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">risk_scores</text>
+    <rect x="232" y="154" width="130" height="26" rx="5" fill="#1dab88"/>
+    <text x="297" y="172" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">fraud_alerts</text>
+    <rect x="232" y="187" width="130" height="24" rx="5" fill="#4dc9a7"/>
+    <text x="297" y="204" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">daily_summary</text>
+
+    <!-- View -->
+    <rect x="60" y="235" width="315" height="50" rx="8" fill="#ede5ff" stroke="#6234c8" stroke-width="1"/>
+    <text x="218" y="257" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#6234c8">View: customer_masked_view</text>
+    <text x="218" y="276" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#6234c8">PAN → XXX-XX-1234 (Column masking)</text>
+
+    <!-- Catalog 2 -->
+    <rect x="412" y="52" width="370" height="200" rx="12" fill="#d0f5ed" stroke="#0a8a6e" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="432" y="76" font-family="Sora,sans-serif" font-size="13" font-weight="700" fill="#0a8a6e">Catalog: risk_management</text>
+
+    <rect x="432" y="90" width="155" height="130" rx="8" fill="#fff" stroke="#0a8a6e" stroke-width="1"/>
+    <text x="452" y="112" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#0a8a6e">Schema: silver</text>
+    <rect x="442" y="122" width="132" height="26" rx="5" fill="#0a8a6e"/>
+    <text x="508" y="140" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">credit_risk_features</text>
+    <rect x="442" y="154" width="132" height="26" rx="5" fill="#1dab88"/>
+    <text x="508" y="172" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">market_positions</text>
+    <rect x="442" y="187" width="132" height="24" rx="5" fill="#4dc9a7"/>
+    <text x="508" y="204" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#fff">limit_breaches</text>
+
+    <!-- Volume -->
+    <rect x="598" y="90" width="165" height="90" rx="8" fill="#fff0cc" stroke="#c97800" stroke-width="1"/>
+    <text x="680" y="112" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#c97800">Volume: docs</text>
+    <text x="680" y="134" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#c97800">📄 KYC PDFs</text>
+    <text x="680" y="153" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#c97800">🖼️ Signature images</text>
+    <text x="680" y="172" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#c97800">(Unstructured files)</text>
+
+    <!-- system catalog -->
+    <rect x="412" y="268" width="370" height="60" rx="10" fill="#f2f2ee" stroke="#555" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="597" y="292" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#444">Built-in: system.access.audit</text>
+    <text x="597" y="314" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#777">All query logs · All access events · Compliance</text>
+  </svg>
+</div>
+
+<div class="mem">
+  <h4>🧠 Memory Trick — 3-Part Naming</h4>
+  <p><b>catalog.schema.table</b> = <b>building.floor.room</b><br/>
+  <code>prod_retail_banking.gold.risk_scores</code> = In the Retail Bank building → Gold floor → Risk Scores room.<br/>
+  Always three parts. Always this order. Never skip levels.</p>
+</div>
+</div>
+
+<!-- ═══════════ CH 5 · CREATE & SETUP ═══════════ -->
+<div class="section-anchor" id="create">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 5</span>
+  <div><div class="ch-title">Creating Unity Catalog — Step by Step</div><div class="ch-sub">From account setup to your first governed table</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="callout info"><span class="ico">🔑</span><div><b>Prerequisites for setup:</b> Databricks Account Admin role (not just workspace admin) · Azure Databricks Premium SKU · ADLS Gen2 storage account · Service Principal with Storage Blob Data Contributor role on ADLS</div></div>
+
+<div class="card card-blue">
+  <h2>Setup Flow</h2>
+  <ol class="steps">
+    <li><div><b>Create a Metastore</b> — Done once per region by Account Admin in Databricks Account Console. Choose a root storage location (ADLS Gen2 path for managed tables).</div></li>
+    <li><div><b>Assign Metastore to Workspaces</b> — Link one or more workspaces to the metastore. All linked workspaces now share the same catalog/schema/table namespace.</div></li>
+    <li><div><b>Create Storage Credential</b> — Register a Managed Identity or Service Principal that UC uses to access ADLS Gen2.</div></li>
+    <li><div><b>Create External Location</b> — Register an ADLS Gen2 path (e.g., <code>abfss://bronze@bank.dfs.core.windows.net/</code>) tied to the storage credential.</div></li>
+    <li><div><b>Create Catalogs &amp; Schemas</b> — Organize your namespace. Set owners. Grant access.</div></li>
+    <li><div><b>Create Tables</b> — Managed (UC stores data) or External (your ADLS). Grant SELECT/MODIFY as needed.</div></li>
+  </ol>
+</div>
+
+<h3>Step 1–2: Metastore (Done in Account Console UI — or via Terraform)</h3>
+<pre><code><span class="cm"># Terraform approach (Infrastructure as Code — recommended for banking)</span>
+<span class="cls">resource</span> <span class="str">"databricks_metastore"</span> <span class="str">"bank_metastore"</span> {
+  name           = <span class="str">"bank-east-us-metastore"</span>
+  storage_root   = <span class="str">"abfss://unity-catalog@bankmetastore.dfs.core.windows.net/"</span>
+  owner          = <span class="str">"data-platform-admin@bank.com"</span>
+  region         = <span class="str">"eastus"</span>
+}
+
+<span class="cls">resource</span> <span class="str">"databricks_metastore_assignment"</span> <span class="str">"prod_assign"</span> {
+  workspace_id         = <span class="fn">databricks_mws_workspaces</span>.prod.workspace_id
+  metastore_id         = <span class="fn">databricks_metastore</span>.bank_metastore.id
+  default_catalog_name = <span class="str">"prod_retail_banking"</span>
+}</code></pre>
+
+<h3>Step 3: Storage Credential — Tell UC How to Access ADLS</h3>
+<pre><code><span class="cm">-- In Databricks SQL or Notebook</span>
+<span class="kw">CREATE</span> <span class="cls">STORAGE CREDENTIAL</span> bank_adls_credential
+  <span class="kw">WITH</span> AZURE_MANAGED_IDENTITY
+  (CREDENTIAL <span class="kw">= </span><span class="str">'/subscriptions/xxx/resourceGroups/rg-bank/providers/Microsoft.Databricks/accessConnectors/bank-uc-connector'</span>)
+  COMMENT <span class="str">'Managed Identity for Unity Catalog ADLS access'</span>;
+
+<span class="cm">-- Validate it works</span>
+<span class="kw">VALIDATE</span> <span class="cls">STORAGE CREDENTIAL</span> bank_adls_credential;</code></pre>
+
+<h3>Step 4: External Location — Register ADLS Path</h3>
+<pre><code><span class="kw">CREATE</span> <span class="cls">EXTERNAL LOCATION</span> bronze_location
+  <span class="kw">URL</span> <span class="str">'abfss://bronze@bankdatalake.dfs.core.windows.net/'</span>
+  <span class="kw">WITH</span> (<span class="cls">STORAGE CREDENTIAL</span> bank_adls_credential)
+  COMMENT <span class="str">'Bronze layer - raw transaction data'</span>;
+
+<span class="cm">-- Test access</span>
+<span class="kw">LIST</span> <span class="str">'abfss://bronze@bankdatalake.dfs.core.windows.net/'</span>;</code></pre>
+
+<h3>Step 5: Create Catalog, Schema</h3>
+<pre><code><span class="cm">-- Create catalog for production retail banking</span>
+<span class="kw">CREATE</span> <span class="cls">CATALOG</span> <span class="kw">IF NOT EXISTS</span> prod_retail_banking
+  COMMENT <span class="str">'Production catalog for retail banking domain'</span>;
+
+<span class="cm">-- Set the catalog context</span>
+<span class="kw">USE</span> <span class="cls">CATALOG</span> prod_retail_banking;
+
+<span class="cm">-- Create schemas for medallion layers</span>
+<span class="kw">CREATE</span> <span class="cls">SCHEMA</span> <span class="kw">IF NOT EXISTS</span> bronze COMMENT <span class="str">'Raw ingested data'</span>;
+<span class="kw">CREATE</span> <span class="cls">SCHEMA</span> <span class="kw">IF NOT EXISTS</span> silver COMMENT <span class="str">'Cleaned and enriched data'</span>;
+<span class="kw">CREATE</span> <span class="cls">SCHEMA</span> <span class="kw">IF NOT EXISTS</span> gold   COMMENT <span class="str">'Business-ready aggregates'</span>;</code></pre>
+
+<h3>Step 6: Create Tables (Managed vs External)</h3>
+<pre><code><span class="cm">-- MANAGED TABLE (UC controls storage)</span>
+<span class="kw">CREATE</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores (
+  customer_id   <span class="cls">BIGINT</span>,
+  risk_score    <span class="cls">DOUBLE</span>,
+  risk_category <span class="cls">STRING</span>,
+  score_date    <span class="cls">DATE</span>,
+  model_version <span class="cls">STRING</span>
+)
+USING delta
+COMMENT <span class="str">'Customer credit risk scores - updated daily'</span>
+TBLPROPERTIES (<span class="str">'delta.enableChangeDataFeed'</span> = <span class="str">'true'</span>);
+
+<span class="cm">-- EXTERNAL TABLE (data lives in your ADLS)</span>
+<span class="kw">CREATE</span> <span class="cls">TABLE</span> prod_retail_banking.bronze.transactions_raw
+USING delta
+<span class="kw">LOCATION</span> <span class="str">'abfss://bronze@bankdatalake.dfs.core.windows.net/transactions/'</span>
+COMMENT <span class="str">'Raw transactions from core banking system (external)'</span>;
+
+<span class="cm">-- VOLUME (for unstructured files like KYC docs)</span>
+<span class="kw">CREATE</span> <span class="cls">VOLUME</span> prod_retail_banking.bronze.kyc_documents
+  <span class="kw">LOCATION</span> <span class="str">'abfss://bronze@bankdatalake.dfs.core.windows.net/kyc_docs/'</span>
+  COMMENT <span class="str">'KYC PDFs and images'</span>;</code></pre>
+</div>
+
+<!-- ═══════════ CH 6 · ACCESS CONTROL ═══════════ -->
+<div class="section-anchor" id="access">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 6</span>
+  <div><div class="ch-title">Access Control — GRANT, REVOKE, Masking</div><div class="ch-sub">The most interview-critical chapter</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="card">
+  <h2>Privilege Hierarchy — Permissions Flow Down</h2>
+  <table class="cmp">
+    <thead><tr><th>Level</th><th>Privilege</th><th>What it allows</th><th>Banking use case</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag t-ink">Metastore</span></td><td><code>CREATE CATALOG</code></td><td>Create new catalogs</td><td>Data Platform team only</td></tr>
+      <tr><td><span class="tag t-blue">Catalog</span></td><td><code>USE CATALOG</code></td><td>Access catalogs and schemas within</td><td>All engineers need this minimum</td></tr>
+      <tr><td><span class="tag t-purple">Schema</span></td><td><code>USE SCHEMA</code> <code>CREATE TABLE</code></td><td>Access schema; create objects</td><td>DE team: CREATE TABLE in bronze</td></tr>
+      <tr><td><span class="tag t-teal">Table</span></td><td><code>SELECT</code> <code>MODIFY</code> <code>ALL PRIVILEGES</code></td><td>Read / write / full control</td><td>Analysts: SELECT on gold only</td></tr>
+      <tr><td><span class="tag t-amber">Column/Row</span></td><td>Dynamic Views / Masking</td><td>Filter rows or mask column values</td><td>Mask PAN for junior analysts</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>GRANT Syntax — Pattern to Remember</h3>
+<div class="pattern">
+  <span class="kw">GRANT</span> <span class="ph">&lt;privilege&gt;</span> <span class="kw">ON</span> <span class="ph">&lt;object_type&gt;</span> <span class="ph">&lt;object_name&gt;</span> <span class="kw">TO</span> <span class="ph">&lt;principal&gt;</span>;
+  <br/><span class="cm">-- Pattern: GRANT [what] ON [what type] [which object] TO [who]</span>
+  <br/><span class="cm">-- principal = user, group, or service principal</span>
+</div>
+
+<pre><code><span class="cm">-- Step 1: Always grant USE CATALOG first (required for any access)</span>
+<span class="kw">GRANT</span> USE CATALOG <span class="kw">ON</span> <span class="cls">CATALOG</span> prod_retail_banking
+  <span class="kw">TO</span> <span class="str">`analysts-group`</span>;
+
+<span class="cm">-- Step 2: Grant USE SCHEMA</span>
+<span class="kw">GRANT</span> USE SCHEMA <span class="kw">ON</span> <span class="cls">SCHEMA</span> prod_retail_banking.gold
+  <span class="kw">TO</span> <span class="str">`analysts-group`</span>;
+
+<span class="cm">-- Step 3: Grant table-level SELECT</span>
+<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores
+  <span class="kw">TO</span> <span class="str">`analysts-group`</span>;
+
+<span class="cm">-- Data Engineers: full access to bronze + silver</span>
+<span class="kw">GRANT</span> ALL PRIVILEGES <span class="kw">ON</span> <span class="cls">SCHEMA</span> prod_retail_banking.bronze
+  <span class="kw">TO</span> <span class="str">`data-engineers-group`</span>;
+
+<span class="cm">-- REVOKE access when someone leaves</span>
+<span class="kw">REVOKE</span> SELECT <span class="kw">ON</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores
+  <span class="kw">FROM</span> <span class="str">`ex-employee@bank.com`</span>;
+
+<span class="cm">-- Check who has what access</span>
+<span class="kw">SHOW</span> GRANTS <span class="kw">ON</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores;
+<span class="kw">SHOW</span> GRANTS <span class="kw">TO</span> <span class="str">`analysts-group`</span>;</code></pre>
+
+<div class="callout warn"><span class="ico">⚠️</span><div><b>Interview Gotcha!</b> You must grant <code>USE CATALOG</code> AND <code>USE SCHEMA</code> BEFORE table-level grants work. Forgetting this is the #1 "why can't I access the table?" issue in production. Think: you need a building pass (catalog) AND floor access (schema) before you can enter a room (table).</div></div>
+
+<h3>Column Masking — Protect PII (DPDP/GDPR Compliance)</h3>
+<pre><code><span class="cm">-- 1. Create a masking function</span>
+<span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="cls">FUNCTION</span> prod_retail_banking.silver.mask_pan(pan <span class="cls">STRING</span>)
+  <span class="kw">RETURN</span> <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> <span class="fn">IS_MEMBER</span>(<span class="str">'compliance-team'</span>) <span class="kw">THEN</span> pan        <span class="cm">-- full PAN for compliance</span>
+    <span class="kw">ELSE</span> <span class="fn">CONCAT</span>(<span class="str">'XXXXX'</span>, <span class="fn">RIGHT</span>(pan, <span class="num">5</span>))              <span class="cm">-- masked for everyone else</span>
+  <span class="kw">END</span>;
+
+<span class="cm">-- 2. Apply mask to the column</span>
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.silver.customers
+  <span class="kw">ALTER</span> <span class="cls">COLUMN</span> pan_number
+  SET MASK prod_retail_banking.silver.mask_pan;
+
+<span class="cm">-- Now: analysts see XXXXX1234X, compliance sees full PAN</span></code></pre>
+
+<h3>Row-Level Security — Branch-Based Data Isolation</h3>
+<pre><code><span class="cm">-- Row filter: each analyst sees only their branch's transactions</span>
+<span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="cls">FUNCTION</span> prod_retail_banking.gold.branch_filter(branch_id <span class="cls">STRING</span>)
+  <span class="kw">RETURN</span> <span class="fn">IS_MEMBER</span>(<span class="str">'admin-group'</span>)
+    <span class="kw">OR</span> branch_id = <span class="fn">CURRENT_USER</span>()
+    <span class="kw">OR</span> <span class="fn">IS_MEMBER</span>(<span class="fn">CONCAT</span>(<span class="str">'branch-'</span>, branch_id));
+
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.gold.daily_summary
+  SET ROW FILTER prod_retail_banking.gold.branch_filter
+    ON (branch_id);
+
+<span class="cm">-- Chennai analyst → sees only Chennai rows automatically</span>
+<span class="cm">-- Admin → sees all rows</span></code></pre>
+</div>
+
+<!-- ═══════════ CH 7 · DE WORKFLOW ═══════════ -->
+<div class="section-anchor" id="de-workflow">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 7</span>
+  <div><div class="ch-title">Data Engineer Workflow with Unity Catalog</div><div class="ch-sub">What to check at every stage of a project</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="callout info"><span class="ico">🏗️</span><div><b>As a Data Engineer, your UC checklist has 5 phases:</b> Project Start → Ingestion → Transformation → Output → Monitoring. Each phase has specific UC interactions.</div></div>
+
+<div class="card card-blue">
+  <h3>📋 Phase 1: Project Kickoff — What to Check</h3>
+  <ol class="steps">
+    <li><div><b>Does the metastore exist?</b> Check Account Console. If not — block: no UC work possible until Account Admin creates it.</div></li>
+    <li><div><b>Is the metastore attached to your workspace?</b> Run <code>SELECT CURRENT_METASTORE();</code> in a notebook. If returns nothing — escalate to admin.</div></li>
+    <li><div><b>What catalogs exist?</b> Run <code>SHOW CATALOGS;</code> — understand the namespace structure already defined.</div></li>
+    <li><div><b>What's the storage location strategy?</b> Confirm ADLS paths for bronze/silver/gold and which external locations are registered.</div></li>
+    <li><div><b>What groups exist?</b> Coordinate with admin: <code>data-engineers</code>, <code>analysts</code>, <code>ml-team</code> groups should be in Azure AD/Entra ID.</div></li>
+  </ol>
+</div>
+
+<div class="card card-teal">
+  <h3>📋 Phase 2: Ingestion (Bronze Layer)</h3>
+  <pre><code><span class="cm"># PySpark in Databricks Notebook — Bronze Ingestion</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+<span class="cm"># Always use 3-part name: catalog.schema.table</span>
+df_raw = spark.read.format(<span class="str">"csv"</span>) \
+    .option(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .load(<span class="str">"abfss://landing@bankdatalake.dfs.core.windows.net/transactions/"</span>)
+
+<span class="cm"># Write to UC-governed external table in Bronze</span>
+df_raw.write \
+    .format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"append"</span>) \
+    .option(<span class="str">"path"</span>, <span class="str">"abfss://bronze@bankdatalake.dfs.core.windows.net/transactions/"</span>) \
+    .saveAsTable(<span class="str">"prod_retail_banking.bronze.transactions_raw"</span>)
+<span class="cm"># ↑ saveAsTable with 3-part name = registered in Unity Catalog</span>
+
+<span class="cm"># What DE must check:</span>
+<span class="cm"># 1. Does external location cover this ADLS path? → SHOW EXTERNAL LOCATIONS;</span>
+<span class="cm"># 2. Does the service principal on the job cluster have WRITE access?</span>
+<span class="cm"># 3. Does the target schema exist?</span></code></pre>
+</div>
+
+<div class="card card-purple">
+  <h3>📋 Phase 3: Transformation (Silver/Gold)</h3>
+  <pre><code><span class="cm"># Always qualify table names with catalog.schema.table</span>
+transactions = spark.table(<span class="str">"prod_retail_banking.bronze.transactions_raw"</span>)
+customers    = spark.table(<span class="str">"prod_retail_banking.silver.customers_enriched"</span>)
+
+<span class="cm"># UC enforces: if job SP doesn't have SELECT on bronze → fails with AnalysisException</span>
+enriched = transactions \
+    .join(customers, <span class="str">"customer_id"</span>) \
+    .withColumn(<span class="str">"risk_band"</span>,
+        F.when(F.col(<span class="str">"credit_score"</span>) &lt; <span class="num">600</span>, <span class="str">"HIGH"</span>)
+         .when(F.col(<span class="str">"credit_score"</span>) &lt; <span class="num">750"</span>, <span class="str">"MEDIUM"</span>)
+         .otherwise(<span class="str">"LOW"</span>))
+
+<span class="cm"># Write to Silver — UC creates lineage link: bronze.transactions_raw → silver.loan_risk</span>
+enriched.write \
+    .format(<span class="str">"delta"</span>) \
+    .mode(<span class="str">"overwrite"</span>) \
+    .option(<span class="str">"overwriteSchema"</span>, <span class="str">"true"</span>) \
+    .saveAsTable(<span class="str">"prod_retail_banking.silver.loan_risk"</span>)</code></pre>
+</div>
+
+<div class="card card-amber">
+  <h3>📋 Phase 4: Output — Check Permissions Before Delivery</h3>
+  <pre><code><span class="cm">-- Before delivering a table to analysts, set up governance:</span>
+
+<span class="cm">-- 1. Add tags for data classification</span>
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores
+  SET TAGS (<span class="str">'domain'</span> = <span class="str">'risk'</span>, <span class="str">'pii'</span> = <span class="str">'false'</span>, <span class="str">'sla'</span> = <span class="str">'daily'</span>);
+
+<span class="cm">-- 2. Add column-level comments (helps data discovery)</span>
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores
+  <span class="kw">ALTER</span> <span class="cls">COLUMN</span> risk_score COMMENT <span class="str">'Credit risk score 0-1000. Higher = riskier.'</span>;
+
+<span class="cm">-- 3. Grant access to consumer group</span>
+<span class="kw">GRANT</span> USE CATALOG <span class="kw">ON</span> <span class="cls">CATALOG</span> prod_retail_banking <span class="kw">TO</span> <span class="str">`risk-analysts`</span>;
+<span class="kw">GRANT</span> USE SCHEMA   <span class="kw">ON</span> <span class="cls">SCHEMA</span>  prod_retail_banking.gold <span class="kw">TO</span> <span class="str">`risk-analysts`</span>;
+<span class="kw">GRANT</span> SELECT       <span class="kw">ON</span> <span class="cls">TABLE</span>   prod_retail_banking.gold.risk_scores <span class="kw">TO</span> <span class="str">`risk-analysts`</span>;
+
+<span class="cm">-- 4. Verify grants look correct</span>
+<span class="kw">SHOW</span> GRANTS <span class="kw">ON</span> <span class="cls">TABLE</span> prod_retail_banking.gold.risk_scores;</code></pre>
+</div>
+
+<div class="card card-green">
+  <h3>📋 Phase 5: Monitoring — UC Health Checks</h3>
+  <pre><code><span class="cm">-- Audit: who queried sensitive tables today?</span>
+<span class="kw">SELECT</span>
+  event_time, user_name, action_name, request_params.table_full_name
+<span class="kw">FROM</span> system.access.audit
+<span class="kw">WHERE</span>
+  action_name <span class="kw">IN</span> (<span class="str">'selectTable'</span>, <span class="str">'commandSubmit'</span>)
+  <span class="kw">AND</span> request_params.table_full_name
+      <span class="kw">LIKE</span> <span class="str">'prod_retail_banking.silver.customers%'</span>
+  <span class="kw">AND</span> <span class="fn">DATE</span>(event_time) = <span class="fn">CURRENT_DATE</span>()
+<span class="kw">ORDER BY</span> event_time <span class="kw">DESC</span>;
+
+<span class="cm">-- Check all tables and their owners</span>
+<span class="kw">SELECT</span> table_catalog, table_schema, table_name, table_owner, created_by
+<span class="kw">FROM</span> system.information_schema.tables
+<span class="kw">WHERE</span> table_catalog = <span class="str">'prod_retail_banking'</span>;
+
+<span class="cm">-- Find tables with no comments (documentation debt)</span>
+<span class="kw">SELECT</span> table_name <span class="kw">FROM</span> system.information_schema.tables
+<span class="kw">WHERE</span> table_catalog = <span class="str">'prod_retail_banking'</span>
+  <span class="kw">AND</span> comment <span class="kw">IS NULL</span>;</code></pre>
+</div>
+</div>
+
+<!-- ═══════════ CH 8 · LINEAGE & AUDIT ═══════════ -->
+<div class="section-anchor" id="lineage">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 8</span>
+  <div><div class="ch-title">Data Lineage & Audit Logs</div><div class="ch-sub">Automatic tracking — the compliance superpower</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="g2">
+  <div class="card card-teal">
+    <h3>🔗 Data Lineage — Automatic</h3>
+    <p>Unity Catalog <b>automatically captures column-level lineage</b> every time you run a Spark/SQL query. No configuration needed — it just works.</p>
+    <p><b>What it tracks:</b></p>
+    <ul style="font-size:13px;">
+      <li>Which tables were read to produce this table</li>
+      <li>Which notebooks/jobs wrote to a table</li>
+      <li>Column-level: <code>risk_score</code> was derived from <code>credit_history.score</code></li>
+      <li>Upstream + downstream impact analysis</li>
+    </ul>
+    <p style="font-size:13px;color:var(--teal);"><b>Banking use case:</b> A data quality issue in <code>transactions_raw</code> — UC lineage shows all 12 downstream tables affected in seconds.</p>
+  </div>
+  <div class="card card-purple">
+    <h3>📊 system.access.audit</h3>
+    <p>Unity Catalog writes ALL data access events to a system table you can query with SQL. Available to all UC users.</p>
+    <p><b>Key columns:</b></p>
+    <ul style="font-size:13px;">
+      <li><code>event_time</code> — exact timestamp</li>
+      <li><code>user_name</code> — who accessed</li>
+      <li><code>action_name</code> — selectTable, createTable, dropTable…</li>
+      <li><code>request_params</code> — full query context</li>
+      <li><code>workspace_id</code> — which workspace</li>
+    </ul>
+    <p style="font-size:13px;color:var(--purple);"><b>Banking use case:</b> RBI audit asks for all accesses to customer PII tables in Q3 → single SQL query, 5 minutes.</p>
+  </div>
+</div>
+
+<div class="diag">
+  <svg width="100%" viewBox="0 0 820 200">
+    <defs><marker id="alin" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0a8a6e" stroke-width="2"/></marker></defs>
+    <!-- Source -->
+    <rect x="20" y="70" width="150" height="60" rx="10" fill="#d0f5ed" stroke="#0a8a6e" stroke-width="1.5"/>
+    <text x="95" y="97" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#0a8a6e">bronze.</text>
+    <text x="95" y="115" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#0a8a6e">transactions_raw</text>
+    <!-- Arrow -->
+    <line x1="172" y1="100" x2="218" y2="100" stroke="#0a8a6e" stroke-width="2" marker-end="url(#alin)"/>
+    <text x="195" y="92" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#555">filter+join</text>
+
+    <rect x="220" y="60" width="155" height="80" rx="10" fill="#dce5ff" stroke="#1846f0" stroke-width="1.5"/>
+    <text x="297" y="90" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#1846f0">silver.</text>
+    <text x="297" y="108" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#1846f0">loan_risk</text>
+    <text x="297" y="128" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#555">Notebook: loan_pipeline</text>
+
+    <line x1="377" y1="100" x2="420" y2="85" stroke="#0a8a6e" stroke-width="2" marker-end="url(#alin)"/>
+    <line x1="377" y1="100" x2="420" y2="125" stroke="#0a8a6e" stroke-width="2" marker-end="url(#alin)"/>
+    <text x="395" y="95" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#555">groupBy</text>
+
+    <rect x="422" y="50" width="150" height="50" rx="10" fill="#ede5ff" stroke="#6234c8" stroke-width="1.5"/>
+    <text x="497" y="72" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#6234c8">gold.risk_scores</text>
+    <text x="497" y="90" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#6234c8">Job: daily_risk_job</text>
+
+    <rect x="422" y="120" width="150" height="50" rx="10" fill="#fff0cc" stroke="#c97800" stroke-width="1.5"/>
+    <text x="497" y="142" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#c97800">gold.loan_summary</text>
+    <text x="497" y="160" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#c97800">Job: daily_risk_job</text>
+
+    <line x1="574" y1="75" x2="618" y2="100" stroke="#0a8a6e" stroke-width="2" marker-end="url(#alin)"/>
+    <line x1="574" y1="145" x2="618" y2="120" stroke="#0a8a6e" stroke-width="2" marker-end="url(#alin)"/>
+
+    <rect x="620" y="70" width="170" height="60" rx="10" fill="#fde8e8" stroke="#c1292e" stroke-width="1.5"/>
+    <text x="705" y="96" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#c1292e">Power BI Report</text>
+    <text x="705" y="114" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="#c1292e">Risk Dashboard</text>
+
+    <text x="410" y="195" text-anchor="middle" font-family="Sora,sans-serif" font-size="12" font-weight="700" fill="#0a8a6e">← UC captures this entire lineage automatically →</text>
+  </svg>
+</div>
+</div>
+
+<!-- ═══════════ CH 9 · SYNTAX PATTERNS ═══════════ -->
+<div class="section-anchor" id="patterns">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 9</span>
+  <div><div class="ch-title">Syntax Patterns — Remember Them Easily</div><div class="ch-sub">Every UC SQL command with a memorable pattern</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="card">
+  <h2>The Master Pattern Card</h2>
+  <div class="pattern">
+    <span class="cm">-- CREATE pattern: what → name → options → location</span><br/>
+    <span class="kw">CREATE</span> <span class="ph">[CATALOG|SCHEMA|TABLE|VIEW|VOLUME|FUNCTION]</span> <span class="ph">&lt;3-part-name&gt;</span> [<span class="ph">options</span>];<br/><br/>
+    <span class="cm">-- GRANT pattern: privilege → object_type → name → who</span><br/>
+    <span class="kw">GRANT</span> <span class="ph">&lt;privilege&gt;</span> <span class="kw">ON</span> <span class="ph">&lt;type&gt;</span> <span class="ph">&lt;name&gt;</span> <span class="kw">TO</span> <span class="ph">&lt;principal&gt;</span>;<br/><br/>
+    <span class="cm">-- ACCESS pattern (always 3 levels: catalog → schema → table)</span><br/>
+    <span class="kw">GRANT</span> USE CATALOG ... → <span class="kw">GRANT</span> USE SCHEMA ... → <span class="kw">GRANT</span> SELECT ...<br/><br/>
+    <span class="cm">-- SHOW pattern: what you want to inspect</span><br/>
+    <span class="kw">SHOW</span> <span class="ph">[CATALOGS|SCHEMAS IN &lt;catalog&gt;|TABLES IN &lt;schema&gt;|GRANTS ON &lt;object&gt;]</span>;<br/><br/>
+    <span class="cm">-- USE pattern: set default context to avoid repeating catalog/schema</span><br/>
+    <span class="kw">USE</span> <span class="cls">CATALOG</span> <span class="ph">&lt;catalog&gt;</span>;  <span class="kw">USE</span> <span class="cls">SCHEMA</span> <span class="ph">&lt;schema&gt;</span>;<br/>
+  </div>
+</div>
+
+<div class="g2">
+  <div class="card card-blue">
+    <h3>🔍 Discovery Commands</h3>
+    <pre><code><span class="kw">SHOW</span> CATALOGS;
+<span class="kw">SHOW</span> SCHEMAS <span class="kw">IN</span> prod_retail_banking;
+<span class="kw">SHOW</span> TABLES  <span class="kw">IN</span> prod_retail_banking.gold;
+<span class="kw">SHOW</span> VOLUMES <span class="kw">IN</span> prod_retail_banking.bronze;
+<span class="kw">DESCRIBE</span> <span class="cls">TABLE</span> <span class="kw">EXTENDED</span>
+  prod_retail_banking.gold.risk_scores;
+<span class="kw">SHOW</span> GRANTS <span class="kw">ON</span> <span class="cls">CATALOG</span> prod_retail_banking;
+<span class="kw">SELECT</span> CURRENT_METASTORE();
+<span class="kw">SELECT</span> CURRENT_CATALOG();</code></pre>
+  </div>
+  <div class="card card-teal">
+    <h3>🏷️ Tag & Document</h3>
+    <pre><code><span class="cm">-- Tag a table</span>
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.silver.customers
+  SET TAGS (<span class="str">'pii'</span>=<span class="str">'true'</span>, <span class="str">'domain'</span>=<span class="str">'retail'</span>);
+
+<span class="cm">-- Add column comment</span>
+<span class="kw">ALTER</span> <span class="cls">TABLE</span> prod_retail_banking.silver.customers
+  <span class="kw">ALTER</span> <span class="cls">COLUMN</span> pan_number
+  COMMENT <span class="str">'PAN card number - DPDP sensitive'</span>;
+
+<span class="cm">-- Search by tag in catalog UI</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> system.information_schema.tables
+<span class="kw">WHERE</span> <span class="fn">array_contains</span>(tags, <span class="str">'pii'</span>);</code></pre>
+  </div>
+</div>
+
+<div class="mem">
+  <h4>🧠 Memory Trick — The 3-Level Access Staircase</h4>
+  <p>Always climb 3 stairs:<br/>
+  <b>Stair 1:</b> GRANT USE CATALOG → enter the building<br/>
+  <b>Stair 2:</b> GRANT USE SCHEMA → take the elevator to the floor<br/>
+  <b>Stair 3:</b> GRANT SELECT/MODIFY → open the specific room<br/>
+  Miss any stair → error! The staircase is not optional.</p>
+</div>
+</div>
+
+<!-- ═══════════ CH 10 · INTERVIEW ═══════════ -->
+<div class="section-anchor" id="interview-ch">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 10</span>
+  <div><div class="ch-title">Interview Insights — Q&A with Model Answers</div><div class="ch-sub">Direct, indirect, and scenario-based questions</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="interview">
+  <div class="interview-q">Q1 (Direct): "What is Unity Catalog and why would you use it over Hive Metastore?"</div>
+  <div class="interview-a">
+    <b>✅ Model Answer:</b> "Unity Catalog is Databricks's unified governance layer that provides a single metastore shared across all workspaces. The key difference from Hive Metastore is that Hive is workspace-isolated — tables in one workspace aren't visible in another, there's no audit log, no lineage, and no centralized permissions. Unity Catalog solves all of this: one catalog across all workspaces, automatic data lineage, SQL-based access control at catalog/schema/table/column level, and a system audit log. In banking, this is critical for regulatory compliance — we need to prove who accessed customer data, when, and trace where risk models get their data from."
+  </div>
+</div>
+
+<div class="interview">
+  <div class="interview-q">Q2 (Scenario): "A new analyst joins your bank's data team. Walk me through how you'd give them access to the Gold risk tables."</div>
+  <div class="interview-a">
+    <b>✅ Model Answer:</b> "First, I'd ensure the analyst's Azure AD account is in the right Databricks group — say <code>risk-analysts</code>. Then in Unity Catalog I'd run three grants in order: <code>GRANT USE CATALOG ON CATALOG prod_retail_banking TO 'risk-analysts'</code>, then <code>GRANT USE SCHEMA ON SCHEMA prod_retail_banking.gold TO 'risk-analysts'</code>, then <code>GRANT SELECT ON TABLE prod_retail_banking.gold.risk_scores TO 'risk-analysts'</code>. The key thing is the order — you must grant catalog access first, then schema, then table. If there's sensitive PAN data in any of those tables, I'd also check if column masking is applied so they only see masked values. Finally I'd verify with <code>SHOW GRANTS ON TABLE</code>."
+  </div>
+</div>
+
+<div class="interview">
+  <div class="interview-q">Q3 (Indirect — "Describe your data pipeline"): They're listening for whether you use 3-part table names and mention governance</div>
+  <div class="interview-a">
+    <b>✅ What to say:</b> "...we write to <code>prod_retail_banking.bronze.transactions_raw</code> using <code>saveAsTable</code> with the full 3-part name so Unity Catalog registers it. Downstream, the silver job reads from the same UC-registered table, which means lineage is automatically captured. We use Delta Lake format throughout so UC can track column-level lineage too. Before the gold table goes to analysts, we apply column masking for PII fields and set row filters for branch isolation..."
+  </div>
+</div>
+
+<div class="interview">
+  <div class="interview-q">Q4 (Tricky): "What's the difference between a managed table and external table in Unity Catalog? When would you use each?"</div>
+  <div class="interview-a">
+    <b>✅ Model Answer:</b> "In Unity Catalog, a <b>managed table</b> means UC owns both the metadata and the underlying data files — when you <code>DROP TABLE</code>, both are deleted. An <b>external table</b> means you own the files in ADLS; dropping the table only removes the metadata, files remain. In banking, I use <b>external tables for Bronze</b> — raw data from core banking systems lands in ADLS and we register it, but we never want a DROP command accidentally deleting raw data. For <b>Gold tables</b> I use managed tables — UC owns the lifecycle, storage is abstracted, and it's simpler to manage. The tradeoff is that external tables require an External Location and Storage Credential to be set up first."
+  </div>
+</div>
+
+<div class="interview">
+  <div class="interview-q">Q5 (Scenario): "Your RBI auditor asks: show me everyone who accessed the customers table containing Aadhaar data in the last 3 months."</div>
+  <div class="interview-a">
+    <b>✅ Model Answer:</b> "With Unity Catalog this is straightforward. I'd query the <code>system.access.audit</code> table: <code>SELECT event_time, user_name, action_name FROM system.access.audit WHERE request_params.table_full_name LIKE '%customers%' AND event_time >= DATEADD(month, -3, CURRENT_DATE())</code>. This gives a complete timestamped log of every access — including reads. Without Unity Catalog, this would be impossible as Hive Metastore doesn't track access events."
+  </div>
+</div>
+
+<div class="card card-red">
+  <h3>⚡ Indirect / Trap Questions — Know These</h3>
+  <table class="cmp">
+    <thead><tr><th>Interviewer Says</th><th>They're Testing</th><th>Key Point</th></tr></thead>
+    <tbody>
+      <tr><td>"Why can't the analyst see the table even after GRANT SELECT?"</td><td>3-level access staircase</td><td>Missing USE CATALOG or USE SCHEMA grant</td></tr>
+      <tr><td>"How many metastores can you have per Azure account?"</td><td>UC architecture</td><td>One per region — multiple workspaces share it</td></tr>
+      <tr><td>"What happens when you DROP a managed vs external table?"</td><td>Table types</td><td>Managed: data deleted. External: only metadata deleted</td></tr>
+      <tr><td>"How does lineage work in Unity Catalog?"</td><td>Auto vs manual</td><td>Automatic — no config; captured via Spark/SQL query execution</td></tr>
+      <tr><td>"Can you use Unity Catalog without Delta Lake?"</td><td>UC requirements</td><td>UC works with Delta (default), Parquet, CSV too — but Delta gives column lineage</td></tr>
+      <tr><td>"What's a Volume in Unity Catalog?"</td><td>Non-tabular assets</td><td>UC-governed folder for unstructured files (PDFs, images). New in UC — not in Hive</td></tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- ═══════════ CH 11 · QUIZ ═══════════ -->
+<div class="section-anchor" id="quiz">
+<div class="chapter-head">
+  <span class="ch-num">Chapter 11</span>
+  <div><div class="ch-title">Quiz — Test Your Understanding</div><div class="ch-sub">One question that combines multiple concepts</div></div>
+</div>
+<hr class="ch-divider"/>
+
+<div class="card card-red">
+  <h3>🧪 Scenario Question</h3>
+  <p style="font-size:15px;">A banking Data Engineer runs this code in an Azure Databricks notebook:</p>
+  <pre><code>df.write.format(<span class="str">"delta"</span>).mode(<span class="str">"overwrite"</span>) \
+    .saveAsTable(<span class="str">"prod_retail_banking.gold.fraud_summary"</span>)</code></pre>
+  <p style="font-size:15px;font-weight:600;margin:16px 0 12px;">The job fails with <code>AnalysisException: SCHEMA_NOT_FOUND</code>. What are the TWO most likely causes?</p>
+
+  <button class="quiz-opt" id="qA" onclick="ans('A')">A) The Spark cluster is too small and ran out of memory</button>
+  <button class="quiz-opt" id="qB" onclick="ans('B')">B) The schema 'gold' doesn't exist in catalog 'prod_retail_banking', OR the job's service principal doesn't have CREATE TABLE privilege on the schema</button>
+  <button class="quiz-opt" id="qC" onclick="ans('C')">C) Unity Catalog is not available — you need Hive Metastore for saveAsTable</button>
+  <button class="quiz-opt" id="qD" onclick="ans('D')">D) The table name uses too many parts — you should use only schema.table format</button>
+
+  <div id="q-fb"></div>
+</div>
+
+<div style="margin-top:32px;padding:24px;background:var(--ink);border-radius:var(--radius);color:rgba(255,255,255,.7);font-size:13px;line-height:1.8;">
+  <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;">🚀 Further Topics to Explore</div>
+  <div class="g3" style="margin-top:0;">
+    <div><b style="color:#fff;">Delta Sharing</b><br/>Share live data across organizations without copying — governed by UC</div>
+    <div><b style="color:#fff;">Lakehouse Federation</b><br/>Query external databases (Postgres, Snowflake) via UC without moving data</div>
+    <div><b style="color:#fff;">Databricks Asset Bundles</b><br/>Deploy UC objects (tables, permissions) as code using CI/CD pipelines</div>
+    <div><b style="color:#fff;">System Tables</b><br/><code>system.billing</code>, <code>system.compute</code> — cost and compute analytics via SQL</div>
+    <div><b style="color:#fff;">AI/BI Genie</b><br/>Natural language queries on UC-governed tables using LLMs</div>
+    <div><b style="color:#fff;">Unity Catalog + Terraform</b><br/>Infrastructure-as-code for all UC objects — essential for enterprise banking</div>
+  </div>
+</div>
+</div>
+
+</div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<script>
+// Sidebar active state
+document.querySelectorAll('.sb-link').forEach(l => {
+  l.addEventListener('click', () => {
+    document.querySelectorAll('.sb-link').forEach(x => x.classList.remove('active'));
+    l.classList.add('active');
+  });
+});
+// Scroll spy
+const sections = document.querySelectorAll('.section-anchor');
+const links = document.querySelectorAll('.sb-link');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const id = e.target.getAttribute('id');
+      const match = document.querySelector(`.sb-link[href="#${id}"]`);
+      if(match) match.classList.add('active');
+    }
+  });
+}, {threshold:0.3});
+sections.forEach(s => obs.observe(s));
+
+// Quiz
+const correct = 'B';
+const explanations = {
+  A: '❌ Incorrect. Memory errors give different exceptions (OutOfMemoryError). SCHEMA_NOT_FOUND is a metadata/permission issue, not a compute one.',
+  B: '✅ Correct! Two causes: (1) The schema "gold" was never created — you need <code>CREATE SCHEMA prod_retail_banking.gold</code> first. (2) Even if the schema exists, the job\'s service principal needs <code>CREATE TABLE</code> privilege on that schema AND <code>USE SCHEMA</code>. Both are common in real banking projects.',
+  C: '❌ Incorrect. Unity Catalog fully supports saveAsTable with 3-part names — that\'s the recommended way to register tables in UC. Hive Metastore is the legacy option.',
+  D: '❌ Incorrect. Unity Catalog requires the 3-part naming convention: catalog.schema.table. Using only schema.table would write to the legacy Hive metastore, not Unity Catalog.'
+};
+function ans(opt) {
+  ['A','B','C','D'].forEach(o => {
+    const el = document.getElementById('q'+o);
+    el.classList.remove('correct','wrong');
+    el.disabled = true;
+  });
+  document.getElementById('q'+opt).classList.add(opt===correct?'correct':'wrong');
+  if(opt!==correct) document.getElementById('q'+correct).classList.add('correct');
+  const fb = document.getElementById('q-fb');
+  fb.innerHTML = explanations[opt];
+  fb.style.display = 'block';
+  fb.style.background = opt===correct?'#f0fff5':'#fff0f0';
+  fb.style.border = '1.5px solid '+(opt===correct?'#1a7a3e':'#c1292e');
+  fb.style.color = opt===correct?'#0f4d26':'#7a1010';
+  fb.style.padding = '14px 18px';
+  fb.style.borderRadius = '8px';
+}
+</script>
+</body>
+</html>
