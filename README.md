@@ -52,3 +52,11 @@ DSA:
 2. https://gokul1077.github.io/dbricks2026-gk/DSA/02_stack_mastery.html
 
 https://colab.research.google.com/drive/1jf3LgZaw-H4hXxr6GKp_lZbyEpVIoPiv#scrollTo=pqleFZ4Cc3-s
+
+
+List of the problems that we have answered till now
+Day1: https://lnkd.in/gE6u7Hju
+Day2: https://lnkd.in/g3MjQ84J
+Day3: https://lnkd.in/gpHZUv4E
+Day4: https://lnkd.in/g9XWruNq
+Day5: https://lnkd.in/gut9spSd
